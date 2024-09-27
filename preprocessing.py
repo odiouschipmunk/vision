@@ -1,42 +1,62 @@
+# preprocess_and_annotate.py
+
 import cv2
 import os
-import imgaug.augmenters as iaa
-from PIL import Image
 import numpy as np
+from openpose import pyopenpose as op
 
-# Extract frames from video
-def extract_frames(video_path, output_dir, frame_rate=10):
+def preprocess_frame(frame):
+    # Example preprocessing: normalize
+    normalized_frame = frame / 255.0
+    return normalized_frame
+
+def annotate_frame(frame, pose_keypoints):
+    # Draw OpenPose keypoints
+    for person in pose_keypoints:
+        for i in range(len(person)):
+            cv2.circle(frame, (int(person[i][0]), int(person[i][1])), 5, (0, 0, 255), -1)
+    return frame
+
+def process_videos(input_dir, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    cap = cv2.VideoCapture(video_path)
-    frame_count = 0
-    success = True
+    params = dict()
+    params["model_folder"] = "models/"
 
-    while success:
-        success, frame = cap.read()
-        if frame_count % frame_rate == 0 and success:
-            cv2.imwrite(f"{output_dir}/frame_{frame_count}.jpg", frame)
-        frame_count += 1
+    opWrapper = op.WrapperPython()
+    opWrapper.configure(params)
+    opWrapper.start()
 
-    cap.release()
-    cv2.destroyAllWindows()
+    for filename in os.listdir(input_dir):
+        if filename.endswith('.mp4'):
+            input_path = os.path.join(input_dir, filename)
+            output_path = os.path.join(output_dir, filename)
 
-# Augmentation sequence
-seq = iaa.Sequential([
-    iaa.Fliplr(0.5),  # Flip 50% of the images
-    iaa.Affine(rotate=(-10, 10)),  # Rotate between -10 to 10 degrees
-    iaa.Multiply((0.8, 1.2))  # Brightness change 80-120%
-])
+            cap = cv2.VideoCapture(input_path)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter(output_path, fourcc, 20.0, (width, height))
 
-# Augment image
-def augment_image(image_path):
-    image = Image.open(image_path)
-    image_np = np.array(image)
-    augmented_image = seq(image=image_np)
-    return Image.fromarray(augmented_image)
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-# Example: Extract frames and augment
-extract_frames('squash_video.mp4', 'output_frames', frame_rate=10)
-augmented_image = augment_image("output_frames/frame_1000.jpg")
-augmented_image.save("augmented_frame_1000.jpg")
+                datum = op.Datum()
+                datum.cvInputData = frame
+                opWrapper.emplaceAndPop([datum])
+
+                preprocessed_frame = preprocess_frame(frame)
+                annotated_frame = annotate_frame(preprocessed_frame, datum.poseKeypoints)
+                out.write((annotated_frame * 255).astype('uint8'))
+
+            cap.release()
+            out.release()
+
+if __name__ == "__main__":
+    input_dir = 'videos'
+    output_dir = 'annotated_videos'
+
+    process_videos(input_dir, output_dir)
