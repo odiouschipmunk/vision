@@ -1,75 +1,89 @@
 import cv2
-import os
-import numpy as np
 import mediapipe as mp
-import tensorflow as tf
-from multiprocessing import Pool
-
-# Suppress TensorFlow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow logging
+import os
+import torch
+import warnings
+from tqdm import tqdm
+# Suppress specific FutureWarnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="torch.cuda.amp")
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(static_image_mode=False, model_complexity=2, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
 
-# Ensure TensorFlow uses the GPU
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if physical_devices:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    print("TensorFlow is using the GPU")
-else:
-    print("No GPU found. TensorFlow will use the CPU.")
+# Load YOLOv5 model
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
+model.cuda()  # Use GPU
 
-def process_video(video_path, output_folder):
-    cap = cv2.VideoCapture(video_path)
-    output_video_path = os.path.join(output_folder, os.path.basename(video_path))
+# Path to the videos folder
+videos_folder = 'videos'
 
-    # Get video properties
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# Create output folder if it doesn't exist
+output_folder = 'labeled_videos'
+os.makedirs(output_folder, exist_ok=True)
 
-    # Output video writer
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+# Process each video in the folder
+i=0
+for video_file in os.listdir(videos_folder):
+    if video_file.endswith('.mp4'):
+        video_path = os.path.join(videos_folder, video_file)
+        cap = cv2.VideoCapture(video_path)
+        
+        # Get video properties
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        
+        # Define the codec and create VideoWriter object
+        out = cv2.VideoWriter(os.path.join(output_folder, video_file), 
+                              cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+        
+        if not out.isOpened():
+            print(f"Error: Could not open video writer for {video_file}")
+            cap.release()
+            continue
+        
+        try:
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                
+                # Convert the BGR image to RGB
+                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                image.flags.writeable = False
+                
+                # Process the image and detect the pose
+                results = pose.process(image)
+                
+                # Convert the image back to BGR for OpenCV
+                image.flags.writeable = True
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                
+                # Detect objects (ball and racket) using YOLOv5
+                with torch.amp.autocast('cuda'):
+                    results_yolo = model(image)
+                for detection in results_yolo.xyxy[0]:
+                    x1, y1, x2, y2, conf, cls = detection
+                    label = model.names[int(cls)]
+                    if label in ['sports ball', 'tennis racket']:
+                        cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                        cv2.putText(image, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                
+                # Draw the pose annotation on the image
+                if results.pose_landmarks:
+                    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+                
+                # Write the frame with the pose and object annotations
+                out.write(image)
+        except Exception as e:
+            print(f"Error processing video {video_file}: {e}")
+        finally:
+            print(i)
+            i=i+1
+            cap.release()
+            out.release()
 
-    with mp_pose.Pose() as pose:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            # Convert BGR image to RGB
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Process the frame to get pose landmarks
-            result = pose.process(rgb_frame)
-
-            # Draw pose landmarks on the frame
-            if result.pose_landmarks:
-                mp_drawing.draw_landmarks(frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-            # Write the processed frame to output video
-            out.write(frame)
-
-    cap.release()
-    out.release()
-
-def auto_label_videos(input_folder, output_folder):
-    # Ensure output folder exists
-    os.makedirs(output_folder, exist_ok=True)
-
-    video_files = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.endswith('.mp4') or f.endswith('.avi')]
-    
-    # Use multiprocessing to process videos in parallel
-    with Pool() as pool:
-        pool.starmap(process_video, [(video_file, output_folder) for video_file in video_files])
-
-if __name__ == "__main__":
-    # Define input and output directories
-    input_folders = ["videos"]
-    output_folder = "processed_videos"
-
-    for folder in input_folders:
-        print(f"Processing folder: {folder}")
-        auto_label_videos(folder, output_folder)
+pose.close()
+print("Processing complete. Labeled videos are saved in the 'labeled_videos' folder.")
