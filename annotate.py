@@ -1,6 +1,9 @@
+'''
 import torch
 import cv2
 import os
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 # Load pre-trained YOLOv5 model (e.g., yolov5s)
 pretrained_model = torch.hub.load("ultralytics/yolov5", "yolov5s")
@@ -12,12 +15,12 @@ custom_model = torch.hub.load("ultralytics/yolov5", "custom", path="yolov5/runs/
 num_classes = len(custom_model.names)
 
 # Modify the final layer of the pre-trained model to match the number of classes in the custom model
-pretrained_model.model.model[-1] = torch.nn.Conv2d(
-    in_channels=pretrained_model.model.model[-1].in_channels,
+pretrained_model.model[-1] = torch.nn.Conv2d(
+    in_channels=pretrained_model.model[-1].conv.in_channels,
     out_channels=num_classes * (5 + num_classes),  # 5 is for the bounding box attributes
-    kernel_size=pretrained_model.model.model[-1].kernel_size,
-    stride=pretrained_model.model.model[-1].stride,
-    padding=pretrained_model.model.model[-1].padding
+    kernel_size=pretrained_model.model[-1].conv.kernel_size,
+    stride=pretrained_model.model[-1].conv.stride,
+    padding=pretrained_model.model[-1].conv.padding
 )
 
 # Load the custom weights into the modified pre-trained model
@@ -32,34 +35,116 @@ target_classes = ['person', 'squash_racket', 'squash_ball']
 # Confidence threshold
 conf_threshold = 0.25
 
+# Define augmentation pipeline
+transform = A.Compose([
+    A.HorizontalFlip(p=0.5),
+    A.RandomBrightnessContrast(p=0.5),
+    A.Rotate(limit=15, p=0.5),
+    A.MotionBlur(p=0.2),
+    A.CLAHE(p=0.2),
+    A.ColorJitter(p=0.2),
+    A.RandomScale(scale_limit=0.2, p=0.5),
+    ToTensorV2()
+])
+
+# Helper function: Apply augmentations to a single frame
+def apply_augmentation(frame):
+    augmented_frame = transform(image=frame)["image"].numpy().transpose(1, 2, 0)
+    return augmented_frame
+
+# Helper function: Apply augmentations to images in a folder
+def apply_augmentation_to_folder(input_folder, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    for image_file in os.listdir(input_folder):
+        if image_file.endswith(('.jpg', '.jpeg', '.png')):
+            image_path = os.path.join(input_folder, image_file)
+            image = cv2.imread(image_path)
+            augmented_image = transform(image=image)["image"].numpy().transpose(1, 2, 0)
+            output_path = os.path.join(output_folder, image_file)
+            cv2.imwrite(output_path, augmented_image)
+
+# Apply augmentations to the squash_ball and squash_racket images
+apply_augmentation_to_folder('dataset/images/train/squash_ball', 'dataset/images/train/squash_ball_augmented')
+apply_augmentation_to_folder('dataset/images/train/squash_racket', 'dataset/images/train/squash_racket_augmented')
+
+# Helper function: Detect players using pre-trained model
+def detect_person(frame):
+    person_results = person_model(frame)
+    person_boxes = []
+    for *box, conf, cls in person_results.xyxy[0]:
+        if person_model.names[int(cls)] == 'person' and conf > conf_threshold:
+            person_boxes.append(box)
+            cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255, 0, 0), 2)  # Draw person bbox
+    return frame, person_boxes
+
+# Helper function: Detect objects within the player ROI
+def detect_within_roi(frame, player_box, model):
+    roi = frame[int(player_box[1]):int(player_box[3]), int(player_box[0]):int(player_box[2])]
+    results = model(roi)
+    for *box, conf, cls in results.xyxy[0]:
+        box[0] += player_box[0]
+        box[1] += player_box[1]
+        box[2] += player_box[0]
+        box[3] += player_box[1]
+        label = model.names[int(cls)]
+        if label in target_classes and conf > conf_threshold:
+            cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
+            cv2.putText(frame, f'{label} {conf:.2f}', (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    return frame
+
+# Helper function: Filter small detections
+def filter_small_detections(results, min_size=20):
+    filtered_results = []
+    for *box, conf, cls in results.xyxy[0]:
+        width = box[2] - box[0]
+        height = box[3] - box[1]
+        if width > min_size and height > min_size:
+            filtered_results.append((*box, conf, cls))
+    return filtered_results
+
+# Temporal smoothing buffer
+detection_buffer = deque(maxlen=10)
+
+# Helper function: Apply temporal smoothing to detections
+def temporal_smoothing(detections):
+    detection_buffer.append(detections)
+    averaged_detections = []
+    for detection in zip(*detection_buffer):
+        averaged_box = [sum(x) / len(x) for x in zip(*detection)]
+        averaged_detections.append(averaged_box)
+    return averaged_detections
+
 # Process each video in the folder
 for video_file in os.listdir(video_folder):
     if video_file.endswith(".mp4"):
         cap = cv2.VideoCapture(os.path.join(video_folder, video_file))
         out = None
+
+        # Get the video resolution and frame rate
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        # Initialize video writer once
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(f'annotated_{video_file}', fourcc, fps, (frame_width, frame_height))
+
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            # Inference
-            results = pretrained_model(frame)
+            # Apply data augmentation
+            frame = apply_augmentation(frame)
 
-            # Process results
-            for *box, conf, cls in results.xyxy[0]:  # xyxy format
-                if conf < conf_threshold:
-                    continue
-                label = pretrained_model.names[int(cls)]
-                if label in target_classes:
-                    # Draw bounding box
-                    cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
-                    # Put label near bounding box
-                    cv2.putText(frame, f'{label} {conf:.2f}', (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+            # Detect players first using the person detection model
+            frame, person_boxes = detect_person(frame)
 
-            # Initialize video writer if not already initialized
-            if out is None:
-                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-                out = cv2.VideoWriter(f'annotated_{video_file}', fourcc, 20.0, (frame.shape[1], frame.shape[0]))
+            # Loop over detected persons and detect squash-related objects (balls, rackets) within ROIs
+            for person_box in person_boxes:
+                frame = detect_within_roi(frame, person_box, custom_model)
 
             # Write the annotated frame to the output video
             out.write(frame)
@@ -70,7 +155,50 @@ for video_file in os.listdir(video_folder):
                 break
 
         cap.release()
-        if out is not None:
-            out.release()
+        out.release()
 
+cv2.destroyAllWindows()
+'''
+
+
+import torch
+import cv2
+import os
+
+# Load YOLOv5 model
+model = torch.hub.load("ultralytics/yolov5", "yolov5s")  # or yolov5n - yolov5x6, custom
+
+# Define the folder containing the videos
+video_folder = 'videos'
+
+# Define the classes you are interested in
+target_classes = ['person', 'sports ball', 'tennis racket', 'squash racket', 'squash ball']
+
+# Process each video in the folder
+for video_file in os.listdir(video_folder):
+    if video_file.endswith(".mp4"):
+        cap = cv2.VideoCapture(os.path.join(video_folder, video_file))
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Inference
+            results = model(frame)
+
+            # Extract bounding boxes and labels
+            for *box, conf, cls in results.xyxy[0]:
+                label = model.names[int(cls)]
+                if label in target_classes:
+                    # Draw bounding box
+                    cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (0, 255, 0), 2)
+                    # Put label text
+                    cv2.putText(frame, label, (int(box[0]), int(box[1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+            # Optionally, display the frame with detections
+            cv2.imshow("Frame", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        cap.release()
 cv2.destroyAllWindows()
