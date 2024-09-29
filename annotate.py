@@ -4,6 +4,7 @@ import cv2
 import os
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from collections import deque
 
 # Load pre-trained YOLOv5 model (e.g., yolov5s)
 pretrained_model = torch.hub.load("ultralytics/yolov5", "yolov5s")
@@ -15,12 +16,12 @@ custom_model = torch.hub.load("ultralytics/yolov5", "custom", path="yolov5/runs/
 num_classes = len(custom_model.names)
 
 # Modify the final layer of the pre-trained model to match the number of classes in the custom model
-pretrained_model.model[-1] = torch.nn.Conv2d(
-    in_channels=pretrained_model.model[-1].conv.in_channels,
+pretrained_model.model.model[-1] = torch.nn.Conv2d(
+    in_channels=pretrained_model.model.model[-1].conv.in_channels,
     out_channels=num_classes * (5 + num_classes),  # 5 is for the bounding box attributes
-    kernel_size=pretrained_model.model[-1].conv.kernel_size,
-    stride=pretrained_model.model[-1].conv.stride,
-    padding=pretrained_model.model[-1].conv.padding
+    kernel_size=pretrained_model.model.model[-1].conv.kernel_size,
+    stride=pretrained_model.model.model[-1].conv.stride,
+    padding=pretrained_model.model.model[-1].conv.padding
 )
 
 # Load the custom weights into the modified pre-trained model
@@ -30,7 +31,7 @@ pretrained_model.model.load_state_dict(custom_model.model.state_dict(), strict=F
 video_folder = 'videos'
 
 # Define the classes you are interested in
-target_classes = ['person', 'squash_racket', 'squash_ball']
+target_classes = ['squash_racket', 'squash_ball', 'person']  # Replace with your actual class names
 
 # Confidence threshold
 conf_threshold = 0.25
@@ -65,16 +66,16 @@ def apply_augmentation_to_folder(input_folder, output_folder):
             output_path = os.path.join(output_folder, image_file)
             cv2.imwrite(output_path, augmented_image)
 
-# Apply augmentations to the squash_ball and squash_racket images
-apply_augmentation_to_folder('dataset/images/train/squash_ball', 'dataset/images/train/squash_ball_augmented')
+# Apply augmentations to the images in the specified folders
 apply_augmentation_to_folder('dataset/images/train/squash_racket', 'dataset/images/train/squash_racket_augmented')
+apply_augmentation_to_folder('dataset/images/train/squash_ball', 'dataset/images/train/squash_ball_augmented')
 
 # Helper function: Detect players using pre-trained model
 def detect_person(frame):
-    person_results = person_model(frame)
+    person_results = pretrained_model(frame)
     person_boxes = []
     for *box, conf, cls in person_results.xyxy[0]:
-        if person_model.names[int(cls)] == 'person' and conf > conf_threshold:
+        if pretrained_model.names[int(cls)] == 'person' and conf > conf_threshold:
             person_boxes.append(box)
             cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255, 0, 0), 2)  # Draw person bbox
     return frame, person_boxes
@@ -159,8 +160,7 @@ for video_file in os.listdir(video_folder):
 
 cv2.destroyAllWindows()
 '''
-
-
+'''
 import torch
 import cv2
 import os
@@ -202,3 +202,8 @@ for video_file in os.listdir(video_folder):
 
         cap.release()
 cv2.destroyAllWindows()
+'''
+
+from ultralytics import YOLO
+model=YOLO('yolov8s-pose.pt')
+results=model(source='videos/Greatest Squash Trickshots.mp4', show=True, conf=0.3, save=True)

@@ -1,4 +1,6 @@
-/dataset
+/datasets
 /videos
 /yolov5
 yolov5s.pt
+yolov8s-obb.pt
+yolov8s-pose.pt
