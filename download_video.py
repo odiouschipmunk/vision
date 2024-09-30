@@ -8,7 +8,7 @@ _default_clients["ANDROID_EMBED"]["context"]["client"]["clientVersion"] = "19.08
 _default_clients["IOS_EMBED"]["context"]["client"]["clientVersion"] = "19.08.35"
 _default_clients["IOS_MUSIC"]["context"]["client"]["clientVersion"] = "6.41"
 _default_clients["ANDROID_MUSIC"] = _default_clients["ANDROID_CREATOR"]
-
+from tqdm import tqdm
 
 
 def get_throttling_function_name(js: str) -> str:
@@ -62,7 +62,7 @@ def download_videos(file_path, download_path):
         urls = file.readlines()
 
     # Download each video
-    for url in urls:
+    for url in tqdm(urls):
         url = url.strip()
         if url:
             try:
@@ -74,6 +74,6 @@ def download_videos(file_path, download_path):
                 print(f"Failed to download {url}: {e}")
 
 if __name__ == "__main__":
-    file_path = 'youtube_links.txt'
-    download_path = 'videos'
+    file_path = 'full-games.txt'
+    download_path = 'full-games'
     download_videos(file_path, download_path)
