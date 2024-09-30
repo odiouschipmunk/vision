@@ -159,8 +159,11 @@ for video_file in os.listdir(video_folder):
         out.release()
 
 cv2.destroyAllWindows()
-'''
-'''
+
+
+
+
+
 import torch
 import cv2
 import os
@@ -202,8 +205,43 @@ for video_file in os.listdir(video_folder):
 
         cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+
+
+import torch
+import os
+from ultralytics import YOLO
+model=YOLO('yolov8m-pose.pt')
+video_folder = 'videos'
+
+
+# Process each video in the folder
+for video_file in os.listdir(video_folder):
+    if video_file.endswith(".mp4"):
+        results=model(source=video_folder+"/"+video_file, show=True, conf=0.5, save=True)
+
+
 '''
 
+
+
+
+
+import os
 from ultralytics import YOLO
-model=YOLO('yolov8s-pose.pt')
-results=model(source='videos/Greatest Squash Trickshots.mp4', show=True, conf=0.3, save=True)
+
+# Define paths
+video_folder = "C:/Users/default.DESKTOP-7FKFEEG/vision/videos"
+model_path = "C:/Users/default.DESKTOP-7FKFEEG/vision/final-train/train/weights/best.pt"
+
+# Load the trained model
+model = YOLO(model_path)
+
+# Process each video file in the folder
+for video_file in os.listdir(video_folder):
+    if video_file.endswith(".mp4"):
+        video_path = os.path.join(video_folder, video_file)
+        results = model(source=video_path, show=True, conf=0.05, save=True)

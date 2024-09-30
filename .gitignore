@@ -4,3 +4,14 @@
 yolov5s.pt
 yolov8s-obb.pt
 yolov8s-pose.pt
+yolov5
+runs
+yolov8l-pose.pt
+yolov8l-seg.pt
+yolov8n.pt
+yolov8s.pt
+distill
+d3
+final-train
+models
+train
