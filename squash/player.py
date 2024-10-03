@@ -1,3 +1,5 @@
+import numpy as np
+
 class player:
     def __init__(self, player_id, initial_position, initial_pose):
         self.player_id = player_id  # A unique identifier for each player
@@ -20,3 +22,4 @@ class player:
     def get_movement_history(self):
         # Return all stored movements (positions) over time
         return self.positions
+

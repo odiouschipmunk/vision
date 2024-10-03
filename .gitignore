@@ -1,3 +1,20 @@
 frames
 full-games
 models
+datasets
+playertrack-madamachi
+squash
+runs
+squashball-recog-grad
+output.mp4
+court-seg-nikhil
+gg-precise-ball
+precise-ball
+ns-precise-ball
+general-ball
+roboflowmodels
+general-8000
+main-video (1).mp4
+__pycache__
+/trained-models
+trained-models

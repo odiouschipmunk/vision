@@ -265,16 +265,19 @@ for video_file in os.listdir(video_folder):
 
         
 
-    
-'''
+        
 
+
+to get squash ball
+
+    
 import cv2
 from ultralytics import YOLO
 import os
-
+from squash import player
 #segmodel = YOLO('yolov8s-seg.pt')
 video_folder = 'full-games'
-posemodel=YOLO('models/yolo11s-pose.pt')
+posemodel=YOLO('models/yolo11m-pose.pt')
 conf=0.9
 for video_file in os.listdir(video_folder):
     if video_file.endswith(".mp4"):
@@ -304,3 +307,14 @@ for video_file in os.listdir(video_folder):
                 break
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+'''
+
+
+from ultralytics import YOLO
+# Load the trained model
+model = YOLO('datasets\\squash_ball\\train7\\weights\\best.pt')
+results = model(source='main-video.mp4', show=True, conf=0.3, save=True, stream=True)
