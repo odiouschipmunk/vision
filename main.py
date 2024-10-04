@@ -3,7 +3,7 @@ from ultralytics import YOLO
 import numpy as np
 import math
 # Load models
-pose_model = YOLO('models/yolo11s-pose.pt')
+pose_model = YOLO('models/yolo11m-pose.pt')
 ballmodel = YOLO('trained-models/g-ball2.pt')
 racketmodel=YOLO('trained-models/squash-racket.pt')
 courtmodel=YOLO('trained-models/court-key!.pt')
@@ -15,10 +15,14 @@ path = 'main-video (1).mp4'
 cap = cv2.VideoCapture(path)
 frame_width = 1920
 frame_height = 1080
-
+players={}
 from Ball import Ball
 # Get video dimensions
 import logging
+from Player import Player
+max_players = 2
+player_last_positions = {}
+occluded_players = set()    # To keep track of occluded players
 
 logging.getLogger('ultralytics').setLevel(logging.ERROR)
 # Create a blank canvas for heatmap based on video resolution
@@ -113,9 +117,63 @@ while cap.isOpened():
     ball_normalized = cv2.normalize(ballmap, None, 100, 255, cv2.NORM_MINMAX)
     ballmap_colorized = cv2.applyColorMap(ball_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
 
+    track_results=pose_model.track(frame, persist=True)
+    if track_results and hasattr(track_results[0], 'keypoints') and track_results[0].keypoints is not None:
+        # Extract boxes, track IDs, and keypoints from pose results
+        boxes = track_results[0].boxes.xywh.cpu()
+        track_ids = track_results[0].boxes.id.int().cpu().tolist()
+        keypoints = track_results[0].keypoints.cpu().numpy()
 
+        current_ids = set(track_ids)
 
+        # Update or add players for currently visible track IDs
+        for box, track_id, kp in zip(boxes, track_ids, keypoints):
+            x, y, w, h = box
 
+            # If player is already tracked, update their info
+            if track_id in players:
+                players[track_id].add_pose(kp)
+                player_last_positions[track_id] = (x, y)  # Update position
+                if track_id in occluded_players:
+                    occluded_players.remove(track_id)  # Player is no longer occluded
+
+            # If the player is new and fewer than MAX_PLAYERS are being tracked
+            elif len(players) < max_players:
+                players[track_id] = Player(player_id=track_id)
+                player_last_positions[track_id] = (x, y)
+                print(f"Player {track_id} added.")
+
+        # Handle occluded players
+        for player_id in list(player_last_positions.keys()):
+            if player_id not in current_ids:
+                # The player is temporarily occluded
+                occluded_players.add(player_id)
+                print(f"Player {player_id} is occluded, keeping track.")
+
+        # Reassign occluded players if they reappear
+        for player_id in occluded_players.copy():  # Use copy to modify set inside loop
+            # Only reassign if there are fewer than MAX_PLAYERS
+            if len(players) <= max_players:
+                # Find the closest detected box to the occluded player's last known position
+                distances = [np.linalg.norm(np.array(player_last_positions[player_id]) - np.array([box[0], box[1]])) for box in boxes]
+                min_distance_index = np.argmin(distances)
+                closest_box = boxes[min_distance_index]
+
+                # Ensure the distance is within a reasonable threshold to reassign the ID
+                if distances[min_distance_index] < frame_width/3:  # Adjust threshold if needed
+                    reassigned_id = track_ids[min_distance_index]
+
+                    # Only reassign the ID if the new ID (reassigned_id) is not already tracked
+                    if reassigned_id not in players:
+                        # Reassign the closest box to the occluded player
+                        players[player_id] = players.pop(reassigned_id)  # Transfer player data
+                        track_ids[min_distance_index] = player_id  # Reassign the ID to the occluded player
+                        print(f"Player {player_id} reappeared and reassigned from ID {reassigned_id}.")
+
+                        occluded_players.remove(player_id)  # Remove from occluded list
+
+            else:
+                print(f"Player {player_id} reappeared, but too many players are tracked.")
     highestconf=0
     x1c=x2c=y1c=y2c=0
 

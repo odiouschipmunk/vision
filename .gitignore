@@ -18,3 +18,4 @@ main-video (1).mp4
 __pycache__
 /trained-models
 trained-models
+yolo11n.pt
