@@ -13,9 +13,13 @@ video_folder = 'full-games'
 path = 'main-video (1).mp4'
 
 cap = cv2.VideoCapture(path)
-frame_width = 1920
-frame_height = 1080
+frame_width = 640  
+frame_height = 360
 players={}
+occlusion_times={} 
+last_frame=[]
+for i in range(1, 3):
+    occlusion_times[i] = 0
 from Ball import Ball
 # Get video dimensions
 import logging
@@ -23,12 +27,93 @@ from Player import Player
 max_players = 2
 player_last_positions = {}
 occluded_players = set()    # To keep track of occluded players
+frame_count=0
+logging.getLogger('ultralytics').setLevel(logging.ERROR) 
+output_path = 'annotated_video.mp4'
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 file
+fps = 10  # Frames per second
+out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
-logging.getLogger('ultralytics').setLevel(logging.ERROR)
 # Create a blank canvas for heatmap based on video resolution
 heatmap = np.zeros((frame_height, frame_width), dtype=np.float32)
+p1heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
+p2heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
 mainball=Ball(0,0,0,0)
 ballmap=np.zeros((frame_height, frame_width), dtype=np.float32)
+updated_track={1:1, 2:2}
+def framepose(frame, model):
+    track_results = model.track(frame, persist=True)
+    if track_results and hasattr(track_results[0], 'keypoints') and track_results[0].keypoints is not None:
+        # Extract boxes, track IDs, and keypoints from pose results
+        boxes = track_results[0].boxes.xywh.cpu()
+        track_ids = track_results[0].boxes.id.int().cpu().tolist()
+        keypoints = track_results[0].keypoints.cpu().numpy()
+        
+        current_ids = set(track_ids)
+
+        # Update or add players for currently visible track IDs
+        #note that this only works with occluded players < 2, still working on it :(
+        try:
+            for box, track_id, kp in zip(boxes, track_ids, keypoints):
+                x, y, w, h = box
+                if track_id>2:
+                    print(f'track id is greater than 2: {track_id}')
+                    if track_id not in occluded_players:
+                        occ_id=occluded_players.pop()
+
+                        print(' occ id part 153 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                    if len(occluded_players)==1:
+                        players[occluded_players.pop()]=players[track_id]
+                        print(' line 156 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                # If player is already tracked, update their info
+                if track_id in players:
+                    players[track_id].add_pose(kp)
+                    player_last_positions[track_id] = (x, y)  # Update position
+                    if track_id in occluded_players:
+                        occluded_players.remove(track_id)  # Player is no longer occluded
+                    print(f"Player {track_id} updated.")
+
+                # If the player is new and fewer than MAX_PLAYERS are being tracked
+                elif len(players) < max_players:
+                    players[track_id] = Player(player_id=track_id)
+                    player_last_positions[track_id] = (x, y)
+                    print(f"Player {track_id} added.")
+
+            # Handle occluded players
+            for player_id in list(player_last_positions.keys()):
+                if player_id not in current_ids:
+                    # The player is temporarily occluded
+                    occluded_players.add(player_id)
+                    print(f"Player {player_id} is occluded, keeping track.")
+                    occlusion_times[player_id] +=1  # Initialize occlusion time
+
+            # Reassign occluded players if they reappear
+            for player_id in occluded_players.copy():  # Use copy to modify set inside loop
+                # Check if the occluded player reappears
+                distances = [np.linalg.norm(np.array(player_last_positions[player_id]) - np.array([box[0], box[1]])) for box in boxes]
+                min_distance_index = np.argmin(distances)
+                closest_box = boxes[min_distance_index]
+
+                # Ensure the reappearing player is close to their last known position
+                if distances[min_distance_index] < frame_width / 1:  # Adjust threshold as needed
+                    reassigned_id = track_ids[min_distance_index]
+
+                    # Reassign only if the reappeared player matches their original track ID
+                    if reassigned_id not in players:
+                        # Reassign the occluded player back to their original player ID
+                        try:
+                            players[player_id] = players.pop(reassigned_id)  # Transfer player data
+                            track_ids[min_distance_index] = player_id  # Reassign the ID to the occluded player
+                            print(f"Player {player_id} reappeared and reassigned from ID {reassigned_id}.")
+                            
+                            occluded_players.remove(player_id)  # Remove from occluded list
+                        except KeyError:
+
+                            print(f"Player {player_id} reappeared but reassigned ID {reassigned_id} is not tracked.")
+                    else:
+                        print(f"Player {player_id} reappeared but reassigned ID is already tracked.")
+        except Exception as e:
+            print(f'Error: {e}')
 def drawmap(lx,ly,rx,ry, map):
 
     # Update heatmap at the ankle positions
@@ -38,12 +123,17 @@ def drawmap(lx,ly,rx,ry, map):
     ry = min(max(ry, 0), map.shape[0] - 1)
     map[ly, lx] += 1
     map[ry, rx] += 1
+player_move=[[]]
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
         break
     frame = cv2.resize(frame, (frame_width, frame_height))
-
+    frame_count+=1
+    #frame count for debugging
+    #frame 240-300 is good for occlusion player tracking testing
+    if frame_count<1:
+        continue
     # Pose and ball detection
     ball = ballmodel(frame)
     pose_results = pose_model(frame)
@@ -51,10 +141,10 @@ while cap.isOpened():
     annotated_frame=pose_results[0].plot()
     court_results=courtmodel(frame)
     # Check if keypoints exist and are not empty
+    #print(pose_results)
     if pose_results[0].keypoints.xyn is not None and len(pose_results[0].keypoints.xyn[0]) > 0:
         for person in pose_results[0].keypoints.xyn:
-            #print(f'Length of person keypoints: {len(person)}')
-            #print(f'Person keypoints: {person}')
+            
         
             if len(person) >= 17:  # Ensure at least 17 keypoints are present
 
@@ -71,6 +161,7 @@ while cap.isOpened():
     x1=x2=y1=y2=0
     # Ball detection
     #make it so that if it detects the ball in the same place multiple times it takes that out
+    label=""
     for box in ball[0].boxes:
         coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
         x1temp, y1temp, x2temp, y2temp = coords
@@ -91,6 +182,7 @@ while cap.isOpened():
     cv2.rectangle(annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
     cv2.putText(annotated_frame, f'{label} {highestconf:.2f}', (int(x1), int(y1) - 10), 
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    cv2.putText(annotated_frame, f'Frame: {frame_count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     avg_x=int((x1+x2)/2)
     avg_y=int((y1+y2)/2)
     distance=0
@@ -116,67 +208,86 @@ while cap.isOpened():
     heatmap_colored = cv2.applyColorMap(heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
     ball_normalized = cv2.normalize(ballmap, None, 100, 255, cv2.NORM_MINMAX)
     ballmap_colorized = cv2.applyColorMap(ball_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
-
-    track_results=pose_model.track(frame, persist=True)
+    framepose(frame, pose_model)
+    '''
+    track_results = pose_model.track(frame, persist=True)
     if track_results and hasattr(track_results[0], 'keypoints') and track_results[0].keypoints is not None:
         # Extract boxes, track IDs, and keypoints from pose results
         boxes = track_results[0].boxes.xywh.cpu()
         track_ids = track_results[0].boxes.id.int().cpu().tolist()
         keypoints = track_results[0].keypoints.cpu().numpy()
-
+        
         current_ids = set(track_ids)
 
         # Update or add players for currently visible track IDs
-        for box, track_id, kp in zip(boxes, track_ids, keypoints):
-            x, y, w, h = box
+        #note that this only works with occluded players < 2, still working on it :(
+        try:
+            for box, track_id, kp in zip(boxes, track_ids, keypoints):
+                x, y, w, h = box
+                if track_id>2:
+                    print(f'track id is greater than 2: {track_id}')
+                    if track_id not in occluded_players:
+                        occ_id=occluded_players.pop()
 
-            # If player is already tracked, update their info
-            if track_id in players:
-                players[track_id].add_pose(kp)
-                player_last_positions[track_id] = (x, y)  # Update position
-                if track_id in occluded_players:
-                    occluded_players.remove(track_id)  # Player is no longer occluded
+                        print(' occ id part 153 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                    if len(occluded_players)==1:
+                        players[occluded_players.pop()]=players[track_id]
+                        print(' line 156 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                # If player is already tracked, update their info
+                if track_id in players:
+                    players[track_id].add_pose(kp)
+                    player_last_positions[track_id] = (x, y)  # Update position
+                    if track_id in occluded_players:
+                        occluded_players.remove(track_id)  # Player is no longer occluded
+                    print(f"Player {track_id} updated.")
 
-            # If the player is new and fewer than MAX_PLAYERS are being tracked
-            elif len(players) < max_players:
-                players[track_id] = Player(player_id=track_id)
-                player_last_positions[track_id] = (x, y)
-                print(f"Player {track_id} added.")
+                # If the player is new and fewer than MAX_PLAYERS are being tracked
+                elif len(players) < max_players:
+                    players[track_id] = Player(player_id=track_id)
+                    player_last_positions[track_id] = (x, y)
+                    print(f"Player {track_id} added.")
 
-        # Handle occluded players
-        for player_id in list(player_last_positions.keys()):
-            if player_id not in current_ids:
-                # The player is temporarily occluded
-                occluded_players.add(player_id)
-                print(f"Player {player_id} is occluded, keeping track.")
+            # Handle occluded players
+            for player_id in list(player_last_positions.keys()):
+                if player_id not in current_ids:
+                    # The player is temporarily occluded
+                    occluded_players.add(player_id)
+                    print(f"Player {player_id} is occluded, keeping track.")
+                    occlusion_times[player_id] +=1  # Initialize occlusion time
 
-        # Reassign occluded players if they reappear
-        for player_id in occluded_players.copy():  # Use copy to modify set inside loop
-            # Only reassign if there are fewer than MAX_PLAYERS
-            if len(players) <= max_players:
-                # Find the closest detected box to the occluded player's last known position
+            # Reassign occluded players if they reappear
+            for player_id in occluded_players.copy():  # Use copy to modify set inside loop
+                # Check if the occluded player reappears
                 distances = [np.linalg.norm(np.array(player_last_positions[player_id]) - np.array([box[0], box[1]])) for box in boxes]
                 min_distance_index = np.argmin(distances)
                 closest_box = boxes[min_distance_index]
 
-                # Ensure the distance is within a reasonable threshold to reassign the ID
-                if distances[min_distance_index] < frame_width/3:  # Adjust threshold if needed
+                # Ensure the reappearing player is close to their last known position
+                if distances[min_distance_index] < frame_width / 1:  # Adjust threshold as needed
                     reassigned_id = track_ids[min_distance_index]
 
-                    # Only reassign the ID if the new ID (reassigned_id) is not already tracked
+                    # Reassign only if the reappeared player matches their original track ID
                     if reassigned_id not in players:
-                        # Reassign the closest box to the occluded player
-                        players[player_id] = players.pop(reassigned_id)  # Transfer player data
-                        track_ids[min_distance_index] = player_id  # Reassign the ID to the occluded player
-                        print(f"Player {player_id} reappeared and reassigned from ID {reassigned_id}.")
+                        # Reassign the occluded player back to their original player ID
+                        try:
+                            players[player_id] = players.pop(reassigned_id)  # Transfer player data
+                            track_ids[min_distance_index] = player_id  # Reassign the ID to the occluded player
+                            print(f"Player {player_id} reappeared and reassigned from ID {reassigned_id}.")
+                            
+                            occluded_players.remove(player_id)  # Remove from occluded list
+                        except KeyError:
 
-                        occluded_players.remove(player_id)  # Remove from occluded list
-
-            else:
-                print(f"Player {player_id} reappeared, but too many players are tracked.")
+                            print(f"Player {player_id} reappeared but reassigned ID {reassigned_id} is not tracked.")
+                    else:
+                        print(f"Player {player_id} reappeared but reassigned ID is already tracked.")
+        except Exception as e:
+            print(f'Error: {e}')
     highestconf=0
     x1c=x2c=y1c=y2c=0
 
+    #court detection
+    '''
+    
     for box in court_results[0].boxes:
         coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
         x1temp, y1temp, x2temp, y2temp = coords
@@ -186,7 +297,48 @@ while cap.isOpened():
         cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), 
         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         #print(f'{label} {confidence:.2f} GOT COURT')
+  
+    
     # Save the heatmap
+    #print(players)
+    #print(players.get(1).get_latest_pose())
+    #print(players.get(2).get_latest_pose())
+
+    #print(len(players))
+    if players.get(1) and players.get(2) is not None:
+        if players.get(1).get_latest_pose() and players.get(2).get_latest_pose() is not None:
+            p1x=((players.get(1).get_latest_pose().xyn[0][16][0]+players.get(1).get_latest_pose().xyn[0][15][0])/2)*frame_width
+            p1y=((players.get(1).get_latest_pose().xyn[0][16][1]+players.get(1).get_latest_pose().xyn[0][15][1])/2)*frame_height
+            p2x=((players.get(2).get_latest_pose().xyn[0][16][0]+players.get(2).get_latest_pose().xyn[0][15][0])/2)*frame_width
+            p2y=((players.get(2).get_latest_pose().xyn[0][16][1]+players.get(2).get_latest_pose().xyn[0][15][1])/2)*frame_height
+            p1heatmap[int(p1y), int(p1x)] += 1
+            p2heatmap[int(p2y), int(p2x)] += 1
+            p1heatmap_normalized = cv2.normalize(p1heatmap, None, 100, 255, cv2.NORM_MINMAX)
+            p1heatmap_colored = cv2.applyColorMap(p1heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
+            p2heatmap_normalized = cv2.normalize(p2heatmap, None, 100, 255, cv2.NORM_MINMAX)
+            p2heatmap_colored = cv2.applyColorMap(p2heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
+            cv2.imwrite('player1_heatmap.png', p1heatmap_colored)
+            cv2.imwrite('player2_heatmap.png', p2heatmap_colored)
+
+    # Display ankle positions of both players
+    if players.get(1) and players.get(2) is not None:
+        if players.get(1).get_latest_pose() and players.get(2).get_latest_pose() is not None:
+            p1_left_ankle_x = int(players.get(1).get_latest_pose().xyn[0][16][0] * frame_width)
+            p1_left_ankle_y = int(players.get(1).get_latest_pose().xyn[0][16][1] * frame_height)
+            p1_right_ankle_x = int(players.get(1).get_latest_pose().xyn[0][15][0] * frame_width)
+            p1_right_ankle_y = int(players.get(1).get_latest_pose().xyn[0][15][1] * frame_height)
+
+            p2_left_ankle_x = int(players.get(2).get_latest_pose().xyn[0][16][0] * frame_width)
+            p2_left_ankle_y = int(players.get(2).get_latest_pose().xyn[0][16][1] * frame_height)
+            p2_right_ankle_x = int(players.get(2).get_latest_pose().xyn[0][15][0] * frame_width)
+            p2_right_ankle_y = int(players.get(2).get_latest_pose().xyn[0][15][1] * frame_height)
+
+            # Display the ankle positions on the bottom left of the frame
+            text_p1 = f'P1 ankle positions L:({p1_left_ankle_x},{p1_left_ankle_y}) R:({p1_right_ankle_x},{p1_right_ankle_y})'
+            text_p2 = f'P2 ankle positions L:({p2_left_ankle_x},{p2_left_ankle_y}) R:({p2_right_ankle_x},{p2_right_ankle_y})'
+            cv2.putText(annotated_frame, text_p1, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            cv2.putText(annotated_frame, text_p2, (10, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+
     cv2.imwrite('foot_placement_heatmap2.png', heatmap_colored)
     cv2.imwrite('ball_heatmap.png', ballmap_colorized)
     # Display the annotated frame
@@ -202,6 +354,8 @@ while cap.isOpened():
         cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
 '''
+    out.write(annotated_frame)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 

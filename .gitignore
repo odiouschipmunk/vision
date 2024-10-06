@@ -19,3 +19,9 @@ __pycache__
 /trained-models
 trained-models
 yolo11n.pt
+readings
+annotated_video.mp4
+player1_heatmap.png
+player2_heatmap.png
+foot_placement_heatmap2.png
+ball_heatmap.png
