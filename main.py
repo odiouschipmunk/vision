@@ -40,7 +40,15 @@ p1heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
 p2heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
 mainball=Ball(0,0,0,0)
 ballmap=np.zeros((frame_height, frame_width), dtype=np.float32)
-updated_track={1:1, 2:2}
+#other track ids necessary as since players get occluded, im just going to assign that track id to the previous id(1 or 2) to the last occluded player
+#really need to fix this as if there are 2 occluded players, it will not work
+otherTrackIds=[[1,1],[2,2]]
+updated=[False, False]
+def find_match_2d_array(array, x):
+    for i in range(len(array)):
+        if array[i][0] == x:
+            return True
+    return False
 def framepose(frame, model):
     track_results = model.track(frame, persist=True)
     if track_results and hasattr(track_results[0], 'keypoints') and track_results[0].keypoints is not None:
@@ -56,41 +64,60 @@ def framepose(frame, model):
         try:
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
-                if track_id>2:
-                    print(f'track id is greater than 2: {track_id}')
-                    if track_id not in occluded_players:
+                if find_match_2d_array(otherTrackIds, track_id):
+                    print(track_id)
+                    print(f'player {otherTrackIds[i][0]} not in track id, adding')
+                    if updated[0]:
+                        otherTrackIds.append([track_id, 1])
+                    else:
+                        otherTrackIds.append([track_id, 2])
+                '''
+                not updated with otherTrackIds
+                if track_ids[track_id]>2:
+                    print(f'track id is greater than 2: {track_ids[track_id]}')
+                    if track_ids[track_id] not in occluded_players:
                         occ_id=occluded_players.pop()
 
                         print(' occ id part 153 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
                     if len(occluded_players)==1:
-                        players[occluded_players.pop()]=players[track_id]
+                        players[occluded_players.pop()]=players[track_id.get(track_id)]
                         print(' line 156 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                '''
                 # If player is already tracked, update their info
-                if track_id in players:
-                    players[track_id].add_pose(kp)
-                    player_last_positions[track_id] = (x, y)  # Update position
-                    if track_id in occluded_players:
-                        occluded_players.remove(track_id)  # Player is no longer occluded
-                    print(f"Player {track_id} updated.")
-
+                if otherTrackIds[track_id][0] in players:
+                    players[otherTrackIds[track_id][0]].add_pose(kp)
+                    player_last_positions[otherTrackIds[track_id][0]] = (x, y)  # Update position
+                    if otherTrackIds[track_id][0] in occluded_players:
+                        occluded_players.remove(otherTrackIds[track_id][0])  # Player is no longer occluded
+                    if otherTrackIds[track_id][0] == 1:
+                        updated[0]=True
+                    else:
+                        updated[1]=True
+                    print(f"Player {otherTrackIds[track_id][0]} updated.")
+                
                 # If the player is new and fewer than MAX_PLAYERS are being tracked
-                elif len(players) < max_players:
-                    players[track_id] = Player(player_id=track_id)
-                    player_last_positions[track_id] = (x, y)
-                    print(f"Player {track_id} added.")
+                if len(players) < max_players:
+                    players[otherTrackIds[track_id][0]] = Player(player_id=otherTrackIds[track_id][0])
+                    player_last_positions[otherTrackIds[track_id][0]] = (x, y)
+                    if otherTrackIds[track_id][0] == 1:
+                        updated[0]=True
+                    else:
+                        updated[1]=True
+                    print(f"Player {otherTrackIds[track_id][0]} added.")
 
             # Handle occluded players
             for player_id in list(player_last_positions.keys()):
                 if player_id not in current_ids:
                     # The player is temporarily occluded
-                    occluded_players.add(player_id)
-                    print(f"Player {player_id} is occluded, keeping track.")
-                    occlusion_times[player_id] +=1  # Initialize occlusion time
+                    occluded_players.add(otherTrackIds[track_id][0])
+                    print(f"Player {otherTrackIds[track_id][0]} is occluded, keeping track.")
+                    occlusion_times[otherTrackIds[track_id][0]] +=1  # Initialize occlusion time
+            '''
 
             # Reassign occluded players if they reappear
             for player_id in occluded_players.copy():  # Use copy to modify set inside loop
                 # Check if the occluded player reappears
-                distances = [np.linalg.norm(np.array(player_last_positions[player_id]) - np.array([box[0], box[1]])) for box in boxes]
+                distances = [np.linalg.norm(np.array(player_last_positions[otherTrackIds[track_id][0]]) - np.array([box[0], box[1]])) for box in boxes]
                 min_distance_index = np.argmin(distances)
                 closest_box = boxes[min_distance_index]
 
@@ -112,8 +139,11 @@ def framepose(frame, model):
                             print(f"Player {player_id} reappeared but reassigned ID {reassigned_id} is not tracked.")
                     else:
                         print(f"Player {player_id} reappeared but reassigned ID is already tracked.")
+
+                '''
         except Exception as e:
             print(f'Error: {e}')
+
 def drawmap(lx,ly,rx,ry, map):
 
     # Update heatmap at the ankle positions
