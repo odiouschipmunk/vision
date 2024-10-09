@@ -11914,3 +11914,1191 @@ Position(in pixels): [515, 329]
 Distance: 5.0
 Position(in pixels): [515, 329]
 Distance: 0.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [162, 275]
+Distance: 239.2655428598109
+Position(in pixels): [95, 285]
+Distance: 67.7421582177598
+Position(in pixels): [74, 297]
+Distance: 24.186773244895647
+Position(in pixels): [74, 297]
+Distance: 0.0
+Position(in pixels): [81, 301]
+Distance: 8.06225774829855
+Position(in pixels): [85, 304]
+Distance: 5.0
+Position(in pixels): [93, 315]
+Distance: 13.601470508735444
+Position(in pixels): [93, 315]
+Distance: 0.0
+Position(in pixels): [189, 121]
+Distance: 216.453228204155
+Position(in pixels): [198, 104]
+Distance: 19.235384061671343
+Position(in pixels): [203, 95]
+Distance: 10.295630140987
+Position(in pixels): [203, 95]
+Distance: 0.0
+Position(in pixels): [198, 105]
+Distance: 11.180339887498949
+Position(in pixels): [195, 112]
+Distance: 7.615773105863909
+Position(in pixels): [190, 127]
+Distance: 15.811388300841896
+Position(in pixels): [190, 127]
+Distance: 0.0
+Position(in pixels): [161, 273]
+Distance: 148.85227576359054
+Position(in pixels): [161, 272]
+Distance: 1.0
+Position(in pixels): [188, 107]
+Distance: 167.1944975171133
+Position(in pixels): [190, 98]
+Distance: 9.219544457292887
+Position(in pixels): [181, 107]
+Distance: 12.727922061357855
+Position(in pixels): [181, 107]
+Distance: 0.0
+Position(in pixels): [172, 120]
+Distance: 15.811388300841896
+Position(in pixels): [167, 128]
+Distance: 9.433981132056603
+Position(in pixels): [145, 172]
+Distance: 49.193495504995376
+Position(in pixels): [139, 187]
+Distance: 16.15549442140351
+Position(in pixels): [126, 221]
+Distance: 36.40054944640259
+Position(in pixels): [126, 221]
+Distance: 0.0
+Position(in pixels): [109, 280]
+Distance: 61.40032573203501
+Position(in pixels): [108, 280]
+Distance: 1.0
+Position(in pixels): [106, 278]
+Distance: 2.8284271247461903
+Position(in pixels): [105, 278]
+Distance: 1.0
+Position(in pixels): [103, 283]
+Distance: 5.385164807134504
+Position(in pixels): [103, 283]
+Distance: 0.0
+Position(in pixels): [393, 98]
+Distance: 343.98401125633734
+Position(in pixels): [393, 98]
+Distance: 0.0
+Position(in pixels): [419, 116]
+Distance: 31.622776601683793
+Position(in pixels): [515, 199]
+Distance: 126.90547663517127
+Position(in pixels): [442, 334]
+Distance: 153.47312468311839
+Position(in pixels): [423, 343]
+Distance: 21.02379604162864
+Position(in pixels): [423, 343]
+Distance: 0.0
+Position(in pixels): [314, 202]
+Distance: 178.21896644296868
+Position(in pixels): [316, 203]
+Distance: 2.23606797749979
+Position(in pixels): [319, 210]
+Distance: 7.615773105863909
+Position(in pixels): [319, 210]
+Distance: 0.0
+Position(in pixels): [349, 274]
+Distance: 70.68238818828917
+Position(in pixels): [324, 223]
+Distance: 56.79788728465171
+Position(in pixels): [325, 229]
+Distance: 6.082762530298219
+Position(in pixels): [325, 229]
+Distance: 0.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [162, 275]
+Distance: 239.2655428598109
+Position(in pixels): [95, 285]
+Distance: 67.7421582177598
+Position(in pixels): [74, 297]
+Distance: 24.186773244895647
+Position(in pixels): [74, 297]
+Distance: 0.0
+Position(in pixels): [81, 301]
+Distance: 8.06225774829855
+Position(in pixels): [85, 304]
+Distance: 5.0
+Position(in pixels): [93, 315]
+Distance: 13.601470508735444
+Position(in pixels): [93, 315]
+Distance: 0.0
+Position(in pixels): [189, 121]
+Distance: 216.453228204155
+Position(in pixels): [198, 104]
+Distance: 19.235384061671343
+Position(in pixels): [203, 95]
+Distance: 10.295630140987
+Position(in pixels): [203, 95]
+Distance: 0.0
+Position(in pixels): [198, 105]
+Distance: 11.180339887498949
+Position(in pixels): [195, 112]
+Distance: 7.615773105863909
+Position(in pixels): [190, 127]
+Distance: 15.811388300841896
+Position(in pixels): [190, 127]
+Distance: 0.0
+Position(in pixels): [161, 273]
+Distance: 148.85227576359054
+Position(in pixels): [161, 272]
+Distance: 1.0
+Position(in pixels): [188, 107]
+Distance: 167.1944975171133
+Position(in pixels): [190, 98]
+Distance: 9.219544457292887
+Position(in pixels): [181, 107]
+Distance: 12.727922061357855
+Position(in pixels): [181, 107]
+Distance: 0.0
+Position(in pixels): [172, 120]
+Distance: 15.811388300841896
+Position(in pixels): [167, 128]
+Distance: 9.433981132056603
+Position(in pixels): [145, 172]
+Distance: 49.193495504995376
+Position(in pixels): [139, 187]
+Distance: 16.15549442140351
+Position(in pixels): [126, 221]
+Distance: 36.40054944640259
+Position(in pixels): [126, 221]
+Distance: 0.0
+Position(in pixels): [109, 280]
+Distance: 61.40032573203501
+Position(in pixels): [108, 280]
+Distance: 1.0
+Position(in pixels): [106, 278]
+Distance: 2.8284271247461903
+Position(in pixels): [105, 278]
+Distance: 1.0
+Position(in pixels): [103, 283]
+Distance: 5.385164807134504
+Position(in pixels): [103, 283]
+Distance: 0.0
+Position(in pixels): [393, 98]
+Distance: 343.98401125633734
+Position(in pixels): [393, 98]
+Distance: 0.0
+Position(in pixels): [419, 116]
+Distance: 31.622776601683793
+Position(in pixels): [515, 199]
+Distance: 126.90547663517127
+Position(in pixels): [442, 334]
+Distance: 153.47312468311839
+Position(in pixels): [423, 343]
+Distance: 21.02379604162864
+Position(in pixels): [423, 343]
+Distance: 0.0
+Position(in pixels): [314, 202]
+Distance: 178.21896644296868
+Position(in pixels): [316, 203]
+Distance: 2.23606797749979
+Position(in pixels): [319, 210]
+Distance: 7.615773105863909
+Position(in pixels): [319, 210]
+Distance: 0.0
+Position(in pixels): [349, 274]
+Distance: 70.68238818828917
+Position(in pixels): [324, 223]
+Distance: 56.79788728465171
+Position(in pixels): [325, 229]
+Distance: 6.082762530298219
+Position(in pixels): [325, 229]
+Distance: 0.0
+Position(in pixels): [325, 230]
+Distance: 1.0
+Position(in pixels): [321, 182]
+Distance: 48.16637831516918
+Position(in pixels): [239, 214]
+Distance: 88.02272433866155
+Position(in pixels): [301, 129]
+Distance: 105.20931517693668
+Position(in pixels): [300, 129]
+Distance: 1.0
+Position(in pixels): [315, 114]
+Distance: 21.213203435596427
+Position(in pixels): [322, 114]
+Distance: 7.0
+Position(in pixels): [336, 116]
+Distance: 14.142135623730951
+Position(in pixels): [336, 116]
+Distance: 0.0
+Position(in pixels): [352, 122]
+Distance: 17.08800749063506
+Position(in pixels): [360, 126]
+Distance: 8.94427190999916
+Position(in pixels): [431, 191]
+Distance: 96.26006440887103
+Position(in pixels): [431, 191]
+Distance: 0.0
+Position(in pixels): [456, 221]
+Distance: 39.05124837953327
+Position(in pixels): [443, 106]
+Distance: 115.73245007343446
+Position(in pixels): [448, 112]
+Distance: 7.810249675906654
+Position(in pixels): [460, 125]
+Distance: 17.69180601295413
+Position(in pixels): [460, 125]
+Distance: 0.0
+Position(in pixels): [492, 180]
+Distance: 63.631753079732135
+Position(in pixels): [492, 180]
+Distance: 0.0
+Position(in pixels): [544, 272]
+Distance: 105.67875850898325
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [162, 275]
+Distance: 239.2655428598109
+Position(in pixels): [95, 285]
+Distance: 67.7421582177598
+Position(in pixels): [74, 297]
+Distance: 24.186773244895647
+Position(in pixels): [74, 297]
+Distance: 0.0
+Position(in pixels): [81, 301]
+Distance: 8.06225774829855
+Position(in pixels): [85, 304]
+Distance: 5.0
+Position(in pixels): [93, 315]
+Distance: 13.601470508735444
+Position(in pixels): [93, 315]
+Distance: 0.0
+Position(in pixels): [189, 121]
+Distance: 216.453228204155
+Position(in pixels): [198, 104]
+Distance: 19.235384061671343
+Position(in pixels): [203, 95]
+Distance: 10.295630140987
+Position(in pixels): [203, 95]
+Distance: 0.0
+Position(in pixels): [198, 105]
+Distance: 11.180339887498949
+Position(in pixels): [195, 112]
+Distance: 7.615773105863909
+Position(in pixels): [190, 127]
+Distance: 15.811388300841896
+Position(in pixels): [190, 127]
+Distance: 0.0
+Position(in pixels): [161, 273]
+Distance: 148.85227576359054
+Position(in pixels): [161, 272]
+Distance: 1.0
+Position(in pixels): [188, 107]
+Distance: 167.1944975171133
+Position(in pixels): [190, 98]
+Distance: 9.219544457292887
+Position(in pixels): [181, 107]
+Distance: 12.727922061357855
+Position(in pixels): [181, 107]
+Distance: 0.0
+Position(in pixels): [172, 120]
+Distance: 15.811388300841896
+Position(in pixels): [167, 128]
+Distance: 9.433981132056603
+Position(in pixels): [145, 172]
+Distance: 49.193495504995376
+Position(in pixels): [139, 187]
+Distance: 16.15549442140351
+Position(in pixels): [126, 221]
+Distance: 36.40054944640259
+Position(in pixels): [126, 221]
+Distance: 0.0
+Position(in pixels): [109, 280]
+Distance: 61.40032573203501
+Position(in pixels): [108, 280]
+Distance: 1.0
+Position(in pixels): [106, 278]
+Distance: 2.8284271247461903
+Position(in pixels): [105, 278]
+Distance: 1.0
+Position(in pixels): [103, 283]
+Distance: 5.385164807134504
+Position(in pixels): [103, 283]
+Distance: 0.0
+Position(in pixels): [393, 98]
+Distance: 343.98401125633734
+Position(in pixels): [393, 98]
+Distance: 0.0
+Position(in pixels): [419, 116]
+Distance: 31.622776601683793
+Position(in pixels): [515, 199]
+Distance: 126.90547663517127
+Position(in pixels): [442, 334]
+Distance: 153.47312468311839
+Position(in pixels): [423, 343]
+Distance: 21.02379604162864
+Position(in pixels): [423, 343]
+Distance: 0.0
+Position(in pixels): [314, 202]
+Distance: 178.21896644296868
+Position(in pixels): [316, 203]
+Distance: 2.23606797749979
+Position(in pixels): [319, 210]
+Distance: 7.615773105863909
+Position(in pixels): [319, 210]
+Distance: 0.0
+Position(in pixels): [349, 274]
+Distance: 70.68238818828917
+Position(in pixels): [324, 223]
+Distance: 56.79788728465171
+Position(in pixels): [325, 229]
+Distance: 6.082762530298219
+Position(in pixels): [325, 229]
+Distance: 0.0
+Position(in pixels): [325, 230]
+Distance: 1.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [162, 275]
+Distance: 239.2655428598109
+Position(in pixels): [95, 285]
+Distance: 67.7421582177598
+Position(in pixels): [74, 297]
+Distance: 24.186773244895647
+Position(in pixels): [74, 297]
+Distance: 0.0
+Position(in pixels): [81, 301]
+Distance: 8.06225774829855
+Position(in pixels): [85, 304]
+Distance: 5.0
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [95, 305]
+Distance: 319.4526568992658
+Position(in pixels): [91, 311]
+Distance: 7.211102550927978
+Position(in pixels): [82, 327]
+Distance: 18.35755975068582
+Position(in pixels): [82, 327]
+Distance: 0.0
+Position(in pixels): [85, 337]
+Distance: 10.44030650891055
+Position(in pixels): [97, 335]
+Distance: 12.165525060596439
+Position(in pixels): [97, 335]
+Distance: 0.0
+Position(in pixels): [319, 129]
+Distance: 302.8530997034701
+Position(in pixels): [547, 284]
+Distance: 275.6972977742074
+Position(in pixels): [559, 289]
+Distance: 13.0
+Position(in pixels): [568, 297]
+Distance: 12.041594578792296
+Position(in pixels): [568, 297]
+Distance: 0.0
+Position(in pixels): [561, 302]
+Distance: 8.602325267042627
+Position(in pixels): [558, 306]
+Distance: 5.0
+Position(in pixels): [551, 320]
+Distance: 15.652475842498529
+Position(in pixels): [551, 320]
+Distance: 0.0
+Position(in pixels): [454, 95]
+Distance: 245.01836665850175
+Position(in pixels): [456, 97]
+Distance: 2.8284271247461903
+Position(in pixels): [464, 105]
+Distance: 11.313708498984761
+Position(in pixels): [464, 105]
+Distance: 0.0
+Position(in pixels): [472, 118]
+Distance: 15.264337522473747
+Position(in pixels): [476, 125]
+Distance: 8.06225774829855
+Position(in pixels): [494, 170]
+Distance: 48.46648326421054
+Position(in pixels): [499, 186]
+Distance: 16.76305461424021
+Position(in pixels): [510, 221]
+Distance: 36.68787265568828
+Position(in pixels): [510, 221]
+Distance: 0.0
+Position(in pixels): [539, 314]
+Distance: 97.41663102366043
+Position(in pixels): [539, 314]
+Distance: 0.0
+Position(in pixels): [550, 308]
+Distance: 12.529964086141668
+Position(in pixels): [556, 308]
+Distance: 6.0
+Position(in pixels): [568, 310]
+Distance: 12.165525060596439
+Position(in pixels): [568, 310]
+Distance: 0.0
+Position(in pixels): [581, 318]
+Distance: 15.264337522473747
+Position(in pixels): [599, 335]
+Distance: 24.758836806279895
+Position(in pixels): [599, 335]
+Distance: 0.0
+Position(in pixels): [593, 317]
+Distance: 18.973665961010276
+Position(in pixels): [590, 311]
+Distance: 6.708203932499369
+Position(in pixels): [583, 302]
+Distance: 11.40175425099138
+Position(in pixels): [583, 302]
+Distance: 0.0
+Position(in pixels): [546, 244]
+Distance: 68.79680225126747
+Position(in pixels): [574, 298]
+Distance: 60.8276253029822
+Position(in pixels): [568, 301]
+Distance: 6.708203932499369
+Position(in pixels): [568, 301]
+Distance: 0.0
+Position(in pixels): [562, 309]
+Distance: 10.0
+Position(in pixels): [377, 208]
+Distance: 210.77476129745705
+Position(in pixels): [350, 127]
+Distance: 85.38149682454625
+Position(in pixels): [162, 275]
+Distance: 239.2655428598109
+Position(in pixels): [95, 285]
+Distance: 67.7421582177598
+Position(in pixels): [74, 297]
+Distance: 24.186773244895647
+Position(in pixels): [74, 297]
+Distance: 0.0
+Position(in pixels): [81, 301]
+Distance: 8.06225774829855
+Position(in pixels): [85, 304]
+Distance: 5.0
+Position(in pixels): [93, 315]
+Distance: 13.601470508735444
+Position(in pixels): [93, 315]
+Distance: 0.0
+Position(in pixels): [189, 121]
+Distance: 216.453228204155
+Position(in pixels): [198, 104]
+Distance: 19.235384061671343
+Position(in pixels): [203, 95]
+Distance: 10.295630140987
+Position(in pixels): [203, 95]
+Distance: 0.0
+Position(in pixels): [198, 105]
+Distance: 11.180339887498949
+Position(in pixels): [195, 112]
+Distance: 7.615773105863909
+Position(in pixels): [190, 127]
+Distance: 15.811388300841896
+Position(in pixels): [190, 127]
+Distance: 0.0
+Position(in pixels): [161, 273]
+Distance: 148.85227576359054
+Position(in pixels): [161, 272]
+Distance: 1.0
+Position(in pixels): [188, 107]
+Distance: 167.1944975171133
+Position(in pixels): [190, 98]
+Distance: 9.219544457292887
+Position(in pixels): [181, 107]
+Distance: 12.727922061357855
+Position(in pixels): [181, 107]
+Distance: 0.0
+Position(in pixels): [172, 120]
+Distance: 15.811388300841896
+Position(in pixels): [167, 128]
+Distance: 9.433981132056603
+Position(in pixels): [145, 172]
+Distance: 49.193495504995376
+Position(in pixels): [139, 187]
+Distance: 16.15549442140351
+Position(in pixels): [126, 221]
+Distance: 36.40054944640259
+Position(in pixels): [126, 221]
+Distance: 0.0
+Position(in pixels): [109, 280]
+Distance: 61.40032573203501
+Position(in pixels): [108, 280]
+Distance: 1.0
+Position(in pixels): [106, 278]
+Distance: 2.8284271247461903
+Position(in pixels): [105, 278]
+Distance: 1.0
+Position(in pixels): [103, 283]
+Distance: 5.385164807134504
+Position(in pixels): [103, 283]
+Distance: 0.0
+Position(in pixels): [393, 98]
+Distance: 343.98401125633734
+Position(in pixels): [393, 98]
+Distance: 0.0
+Position(in pixels): [419, 116]
+Distance: 31.622776601683793
+Position(in pixels): [515, 199]
+Distance: 126.90547663517127
+Position(in pixels): [442, 334]
+Distance: 153.47312468311839
