@@ -2,3 +2,6 @@ racket detection
 pixel 2d coords to 3d meter coords by using court as refrence point, working with angles and all
 player detection even through occlusion(using dictionaries to map bad track ids to 1 or 2)
 finding false positives with the ball(where it goes too often)
+as of oct 9th:
+okay so we have some basic form of occlusion detection, but im messing up on putting each track_id to the real player id because of the way that poses come in, but i can probably fix that using framecount as f-count wil probably only have 2
+additionally, might need some sort of simplified system in which it just throws away any frames that doesn't have 2 poses(if one got occluded)
