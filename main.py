@@ -4,8 +4,8 @@ import numpy as np
 import math
 # Load models
 pose_model = YOLO('models/yolo11m-pose.pt')
-ballmodel = YOLO('trained-models/beefy-gball.pt')
-racketmodel=YOLO('trained-models/squash-racket.pt')
+ballmodel = YOLO('trained-models/g-ball2.pt')
+#racketmodel=YOLO('trained-models/squash-racket.pt')
 #courtmodel=YOLO('trained-models/court-key!.pt')
 # Video file path
 video_file = 'Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4'
@@ -16,6 +16,7 @@ cap = cv2.VideoCapture(path)
 frame_width = 640  
 frame_height = 360
 players={}
+courtref=0
 occlusion_times={} 
 last_frame=[]
 for i in range(1, 3):
@@ -32,13 +33,18 @@ output_path = 'annotated.mp4'
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 file
 fps = 25  # Frames per second
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-
+def sum_pixels_in_bbox(frame, bbox):
+    x, y, w, h = bbox
+    roi = frame[int(y):int(y+h), int(x):int(x+w)]
+    return np.sum(roi)
 # Create a blank canvas for heatmap based on video resolution
 heatmap = np.zeros((frame_height, frame_width), dtype=np.float32)
 p1heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
 p2heatmap=np.zeros((frame_height, frame_width), dtype=np.float32)
 mainball=Ball(0,0,0,0)
 ballmap=np.zeros((frame_height, frame_width), dtype=np.float32)
+playerRefrence1=0
+playerRefrence2=0
 #other track ids necessary as since players get occluded, im just going to assign that track id to the previous id(1 or 2) to the last occluded player
 #really need to fix this as if there are 2 occluded players, it will not work
 otherTrackIds=[[0,0],[1,1],[2,2]]
@@ -73,9 +79,10 @@ def findLast(i):
         if otherTrackIds[it][1]==i:
             possibleits.append(it)
     return possibleits[-1]
-p1ref=0
-p2ref=0
-
+refrences1=[]
+refrences2=[]
+diff=[]
+diffTrack=False
 '''
 def findRef(img):
     return cv2.
@@ -84,6 +91,7 @@ def framepose(frame, model):
     track_results = model.track(frame, persist=True)
     try:
         if track_results and hasattr(track_results[0], 'keypoints') and track_results[0].keypoints is not None:
+            global refrences1, refrences2
             # Extract boxes, track IDs, and keypoints from pose results
             boxes = track_results[0].boxes.xywh.cpu()
             track_ids = track_results[0].boxes.id.int().cpu().tolist()
@@ -98,17 +106,14 @@ def framepose(frame, model):
                 x, y, w, h = box
                 
                 if not find_match_2d_array(otherTrackIds, track_id):
-                    if updated[0]:
+                    #player 1 has been updated last
+                    if updated[0][1]>updated[1][1]:
                         otherTrackIds.append([track_id, 2])
-                        print(track_id)
-                        print(len(otherTrackIds))
-                        print(f'player {otherTrackIds[track_id][0]} not in track id, adding as player {otherTrackIds[track_id][1]}')
-
+                        print(f'added track id {track_id} to player 2')
                     else:
                         otherTrackIds.append([track_id, 1])
-                        print(track_id)
-                        print(len(otherTrackIds))
-                        print(f'player {otherTrackIds[track_id][0]} not in track id, adding as player {otherTrackIds[track_id][1]}')
+                        print(f'added track id {track_id} to player 1')
+                    
                     
                 '''
                 not updated with otherTrackIds
@@ -124,43 +129,75 @@ def framepose(frame, model):
                 '''
                 #if updated[0], then that means that player 1 was updated last
                 #bc of this, we can assume that the next player is player 2
-                if updated[0]:
-                    playerid=2
-                elif updated[1]:
+                if track_id==1:
                     playerid=1
-                elif track_id==1:
-                    playerid=1
+                    refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                 elif track_id==2:
                     playerid=2
+                    refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
+                #updated [0] is player 1, updated [1] is player 2
+                #if player1 was updated last, then player 2 is next
+                #if player 2 was updated last, then player 1 is next
+                #if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
+                elif updated[0][1]>updated[1][1]:
+                    playerid=2
+                    #player 1 was updated last
+                elif updated[0][1]<updated[1][1]:
+                    playerid=1
+                    #player 2 was updated last
+                elif updated[0][1]==updated[1][1]:
+                    playerid=1
+                    #both players were updated at the same time, so we are assuming that player 1 is the next player
+                else:
+                    #print(f'could not find player id for track id {track_id}')
+                    continue
+
+
+
+
+            #player refrence appending for maybe other stuff
+                if playerid==1:
+                    refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    temp1=refrences1[-1]
+                    #print(f'player 1 refrence: {temp1}')
+                elif playerid==2:
+                    refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    temp2=refrences2[-1]
+                    #print(f'player 2 refrence: {temp2}')
                 
-                print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
+
+
+
+                #print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
                 print(otherTrackIds)
                 # If player is already tracked, update their info
                 if playerid in players:
                     players[playerid].add_pose(kp)
                     player_last_positions[playerid] = (x, y)  # Update position
                     players[playerid].add_pose(kp)
-                    print(f'track id: {track_id}')
-                    print(f'playerid: {playerid}')
+                    #print(f'track id: {track_id}')
+                    #print(f'playerid: {playerid}')
                     if playerid==1:
                         updated[0][0]=True
                         updated[0][1]=frame_count
                     if playerid ==2:
                         updated[1][0]=True
-                        updated[0][1]=frame_count
-                    print(updated)
+                        updated[1][1]=frame_count
+                    #print(updated)
                     # Player is no longer occluded
                     
-                    print(f"Player {playerid} updated.")
+                    #print(f"Player {playerid} updated.")
                 
                 # If the player is new and fewer than MAX_PLAYERS are being tracked
                 if len(players) < max_players:
                     players[otherTrackIds[track_id][0]] = Player(player_id=otherTrackIds[track_id][1])
                     player_last_positions[playerid] = (x, y)
                     if playerid == 1:
-                        updated[0]=True
+                        updated[0][0]=True
+                        updated[0][1]=frame_count
                     else:
-                        updated[1]=True
+                        updated[1][0]=True
+                        updated[1][1]=frame_count
                     print(f"Player {playerid} added.")
     except Exception as e:
         print('GOT ERROR: ', e)
@@ -176,15 +213,43 @@ def drawmap(lx,ly,rx,ry, map):
     map[ly, lx] += 1
     map[ry, rx] += 1
 player_move=[[]]
+courtref=np.int64(courtref)
+refrenceimage=None
+from skimage.metrics import structural_similarity as ssim_metric
+def is_camera_angle_switched(frame, reference_image, threshold=0.5):
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
+    score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
+    return score < threshold
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
         break
     frame = cv2.resize(frame, (frame_width, frame_height))
+    
     frame_count+=1
+    if frame_count==1:
+        print('frame 1')
+        courtref=np.int64(sum_pixels_in_bbox(frame, [0,0,frame_width, frame_height]))
+        print(courtref)
+        refrenceimage=frame
+    
     #frame count for debugging
     #frame 240-300 is good for occlusion player tracking testing
     if frame_count<=200 and frame_count %1 != 0:
+        continue
+    if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
+        print('camera angle switched')
+        continue
+    print(len(players))
+    currentref=int(sum_pixels_in_bbox(frame, [0,0,frame_width, frame_height]))
+    #general court refrence to only get the first camera angle throughout the video
+    if abs(courtref - currentref) > courtref * 0.6:
+        print('most likely not original camera frame')
+        print('current ref: ', currentref)
+        print('court ref: ', courtref)
+        print(f'frame count: {frame_count}')
+        print(f'difference between current ref and court ref: {abs(courtref - currentref)}')
         continue
     # Pose and ball detection
     ball = ballmodel(frame)
@@ -236,6 +301,7 @@ while cap.isOpened():
     cv2.rectangle(annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
     cv2.putText(annotated_frame, f'{label} {highestconf:.2f}', (int(x1), int(y1) - 10), 
     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    #print(label)
     cv2.putText(annotated_frame, f'Frame: {frame_count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     avg_x=int((x1+x2)/2)
     avg_y=int((y1+y2)/2)
@@ -306,7 +372,7 @@ while cap.isOpened():
         #print(f'players 1 latest pose: {players.get(1).get_latest_pose()}')
         #print(f'players 2 latest pose: {players.get(2).get_latest_pose()}')
         if players.get(1).get_latest_pose() or players.get(2).get_latest_pose() is not None:
-            print('line 265')
+            #print('line 265')
             try:
                 p1_left_ankle_x = int(players.get(1).get_latest_pose().xyn[0][16][0] * frame_width)
                 p1_left_ankle_y = int(players.get(1).get_latest_pose().xyn[0][16][1] * frame_height)
@@ -322,8 +388,10 @@ while cap.isOpened():
             except Exception as e:
                 p2_left_ankle_x = p2_left_ankle_y = p2_right_ankle_x = p2_right_ankle_y = 0
             # Display the ankle positions on the bottom left of the frame
-            text_p1 = f'P{findLast(1)} ankle positions L:({p1_left_ankle_x},{p1_left_ankle_y}) R:({p1_right_ankle_x},{p1_right_ankle_y})'
-            text_p2 = f'P{findLast(2)} ankle positions L:({p2_left_ankle_x},{p2_left_ankle_y}) R:({p2_right_ankle_x},{p2_right_ankle_y})'
+            text_p1 = f'P1 ankle positions L:({p1_left_ankle_x},{p1_left_ankle_y}) R:({p1_right_ankle_x},{p1_right_ankle_y})'
+            cv2.putText(annotated_frame, f'{otherTrackIds[findLast(1)][1]}', (p1_left_ankle_x, p1_left_ankle_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            cv2.putText(annotated_frame, f'{otherTrackIds[findLast(2)][1]}', (p2_left_ankle_x, p2_left_ankle_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            text_p2 = f'P2 ankle positions L:({p2_left_ankle_x},{p2_left_ankle_y}) R:({p2_right_ankle_x},{p2_right_ankle_y})'
             cv2.putText(annotated_frame, text_p1, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
             cv2.putText(annotated_frame, text_p2, (10, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
 
@@ -343,7 +411,15 @@ while cap.isOpened():
 
 '''
     out.write(annotated_frame)
-
+    '''
+    print(f'frame count: {frame_count}')
+    print(f'refrences1: {refrences1}')
+    print(f'refrences2: {refrences2}')
+    print(f'avg refrences1: {sum(refrences1)/len(refrences1)}')
+    print(f'avg refrences2: {sum(refrences2)/len(refrences2)}')
+    if len(refrences1)>0 and len(refrences2)>0:
+        print(f'avg differences:{(sum(refrences1)/len(refrences1))-(sum(refrences2)/len(refrences2))}')
+    '''
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
