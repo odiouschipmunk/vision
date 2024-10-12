@@ -10,7 +10,7 @@ ballmodel = YOLO('trained-models/g-ball2.pt')
 # Video file path
 video_file = 'Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4'
 video_folder = 'full-games'
-path = 'main.mp4'
+path = 'full-games\🇪🇬 Mickawy v Nour El Tayeb 🇪🇬  Black Ball Squash Open 2024  FREE FULL MATCH!.mp4'
 
 cap = cv2.VideoCapture(path)
 frame_width = 640  
@@ -28,6 +28,8 @@ from Player import Player
 max_players = 2
 player_last_positions = {}
 frame_count=0
+trackid1=True
+trackid2=True
 logging.getLogger('ultralytics').setLevel(logging.ERROR) 
 output_path = 'annotated.mp4'
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 file
@@ -215,12 +217,111 @@ def drawmap(lx,ly,rx,ry, map):
 player_move=[[]]
 courtref=np.int64(courtref)
 refrenceimage=None
+refmap1=np.zeros((frame_height, frame_width), dtype=np.float32)
+refmap2=np.zeros((frame_height, frame_width), dtype=np.float32)
 from skimage.metrics import structural_similarity as ssim_metric
-def is_camera_angle_switched(frame, reference_image, threshold=0.5):
+def is_camera_angle_switched(frame, refrence_image, threshold=0.5):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
-    score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
+    refrence_image_gray = cv2.cvtColor(refrence_image, cv2.COLOR_BGR2GRAY)
+    score, _ = ssim_metric(refrence_image_gray, frame_gray, full=True)
     return score < threshold
+
+
+
+import json, os
+refrence_points=[]
+
+def get_refrence_points():
+    # Mouse callback function to capture click events
+    def click_event(event, x, y, flags, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            refrence_points.append((x, y))
+            print(f"Point captured: ({x}, {y})")
+            cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
+            cv2.imshow("Court", frame1)
+
+    # Function to save refrence points to a file
+    def save_refrence_points(file_path):
+        with open(file_path, 'w') as f:
+            json.dump(refrence_points, f)
+        print(f"refrence points saved to {file_path}")
+
+    # Function to load refrence points from a file
+    def load_refrence_points(file_path):
+        global refrence_points
+        with open(file_path, 'r') as f:
+            refrence_points = json.load(f)
+        print(f"refrence points loaded from {file_path}")
+
+    # Load the frame (replace 'path_to_frame' with the actual path)
+    if os.path.isfile('refrence_points.json'):
+        load_refrence_points('refrence_points.json')
+        print(f'Loaded refrence points: {refrence_points}')
+    else:
+        print('No refrence points file found. Please click on the court to set refrence points.')    
+        cap2=cv2.VideoCapture(path)
+        if not cap2.isOpened():
+            print('Error opening video file')
+            exit()
+        ret1, frame1=cap2.read()
+        if not ret1:
+            print('Error reading video file')
+            exit()
+        frame1=cv2.resize(frame1, (frame_width, frame_height))
+        cv2.imshow('Court', frame1)
+        cv2.setMouseCallback("Court", click_event)
+
+        print("Click on the key points of the court. Press 's' to save and 'q' to quit.\nMake sure to click in the following order shown by the example")
+        example_image = cv2.imread('annotated-squashcourt.png')
+        example_image_resized = cv2.resize(example_image, (frame_width, frame_height))
+        cv2.imshow('Court Example', example_image_resized)
+        while True:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('s'):
+                save_refrence_points('refrence_points.json')
+            elif key == ord('q'):
+                break
+
+        cv2.destroyAllWindows()
+
+
+get_refrence_points()
+
+#note for anyone else seeing this:
+#refrence points[10] is T, [0] is x val and [1] is y val
+#refrence[0] is bottom left, 
+#refrence[1] is bottom right
+#refrence[2] is top right
+#refrence[3] is top left
+#refrence[4] is bottom middle
+#refrence[5] is right bottom of square
+#refrence[6] is top middle
+#refrence[7] is left bottom of square
+#refrence[8] is right top of square
+#refrence[9] is left top of square
+#refrence[10] is T
+#refrence[11] is the middle of T and top middle court
+btmleft=0
+btmright=1
+topright=2
+topleft=3
+btmmiddle=4
+rbsq=5
+topmiddle=6
+lbsq=7
+rtsq=8
+ltsq=9
+t=10
+tmdl=11
+
+theatmap1=np.zeros((frame_height, frame_width), dtype=np.float32)
+theatmap2=np.zeros((frame_height, frame_width), dtype=np.float32)
+
+
+# Load the reference image
+reference_image = cv2.imread('court-topdown.png')
+reference_image_height, reference_image_width, _ = reference_image.shape
+p1xc=p1yc=p2xc=p2yc=0
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
@@ -228,6 +329,7 @@ while cap.isOpened():
     frame = cv2.resize(frame, (frame_width, frame_height))
     
     frame_count+=1
+    #find a better way to get a court
     if frame_count==1:
         print('frame 1')
         courtref=np.int64(sum_pixels_in_bbox(frame, [0,0,frame_width, frame_height]))
@@ -254,11 +356,15 @@ while cap.isOpened():
     # Pose and ball detection
     ball = ballmodel(frame)
     pose_results = pose_model(frame)
+    #racket_results=racketmodel(frame)
     #only plot the top 2 confs
     annotated_frame=pose_results[0].plot()
     #court_results=courtmodel(frame)
     # Check if keypoints exist and are not empty
     #print(pose_results)
+    for refrence in refrence_points:
+        cv2.circle(frame, refrence, 5, (0, 255, 0), -1)
+    
     if pose_results[0].keypoints.xyn is not None and len(pose_results[0].keypoints.xyn[0]) > 0:
         for person in pose_results[0].keypoints.xyn:
             
@@ -341,27 +447,55 @@ while cap.isOpened():
         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         #print(f'{label} {confidence:.2f} GOT COURT')
     '''
-    
+    '''
+    for box in racket_results[0].boxes:
+        coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
+        x1temp, y1temp, x2temp, y2temp = coords
+        label = racketmodel.names[int(box.cls)]
+        confidence = float(box.conf)
+        cv2.rectangle(annotated_frame, (int(x1temp), int(y1temp)), (int(x2temp), int(y2temp)), (255, 0, 0), 2)
+        cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        print(f'{label} {confidence:.2f} GOT RACKET')
+    '''
     # Save the heatmap
-    #print(players)
-    #print(players.get(1).get_latest_pose())
-    #print(players.get(2).get_latest_pose())
 
-    #print(len(players))
     if players.get(1) and players.get(2) is not None:
         if players.get(1).get_latest_pose() and players.get(2).get_latest_pose() is not None:
-            p1x=((players.get(1).get_latest_pose().xyn[0][16][0]+players.get(1).get_latest_pose().xyn[0][15][0])/2)*frame_width
-            p1y=((players.get(1).get_latest_pose().xyn[0][16][1]+players.get(1).get_latest_pose().xyn[0][15][1])/2)*frame_height
-            p2x=((players.get(2).get_latest_pose().xyn[0][16][0]+players.get(2).get_latest_pose().xyn[0][15][0])/2)*frame_width
-            p2y=((players.get(2).get_latest_pose().xyn[0][16][1]+players.get(2).get_latest_pose().xyn[0][15][1])/2)*frame_height
+            p1x = ((players.get(1).get_latest_pose().xyn[0][16][0] + players.get(1).get_latest_pose().xyn[0][15][0]) / 2) * frame_width
+            p1y = ((players.get(1).get_latest_pose().xyn[0][16][1] + players.get(1).get_latest_pose().xyn[0][15][1]) / 2) * frame_height
+            p2x = ((players.get(2).get_latest_pose().xyn[0][16][0] + players.get(2).get_latest_pose().xyn[0][15][0]) / 2) * frame_width
+            p2y = ((players.get(2).get_latest_pose().xyn[0][16][1] + players.get(2).get_latest_pose().xyn[0][15][1]) / 2) * frame_height
+            '''
+            generate heatmap!!!!
+
+            
             p1heatmap[int(p1y), int(p1x)] += 1
             p2heatmap[int(p2y), int(p2x)] += 1
-            p1heatmap_normalized = cv2.normalize(p1heatmap, None, 100, 255, cv2.NORM_MINMAX)
-            p1heatmap_colored = cv2.applyColorMap(p1heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
-            p2heatmap_normalized = cv2.normalize(p2heatmap, None, 100, 255, cv2.NORM_MINMAX)
-            p2heatmap_colored = cv2.applyColorMap(p2heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE)
-            cv2.imwrite('player1_heatmap.png', p1heatmap_colored)
-            cv2.imwrite('player2_heatmap.png', p2heatmap_colored)
+
+            # Check index bounds
+            if 0 <= p1yc < refmap1.shape[0] and 0 <= p1xc < refmap1.shape[1]:
+                refmap1[p1yc, p1xc] += 1
+                print(f'updated refmap, p1: {p1xc}, {p1yc}')
+            if 0 <= p2yc < refmap2.shape[0] and 0 <= p2xc < refmap2.shape[1]:
+                refmap2[p2yc, p2xc] += 1
+                print(f'updated refmpa, p2: {p2xc}, {p2yc}')
+
+            refmap1_normalized = cv2.normalize(refmap1, None, 100, 255, cv2.NORM_MINMAX)
+            refmap1_colored = cv2.applyColorMap(refmap1_normalized.astype(np.uint8), cv2.COLORMAP_DEEPGREEN)
+            refmap2_normalized = cv2.normalize(refmap2, None, 100, 255, cv2.NORM_MINMAX)
+            refmap2_colored = cv2.applyColorMap(refmap2_normalized.astype(np.uint8), cv2.COLORMAP_DEEPGREEN)
+            refmap1_resized = cv2.resize(refmap1_colored, (reference_image_width, reference_image_height))
+            refmap2_resized = cv2.resize(refmap2_colored, (reference_image_width, reference_image_height))
+
+            # Blend the heatmaps with the reference image
+            overlay1 = cv2.addWeighted(reference_image, 0.7, refmap1_resized, 0.3, 0)
+            overlay2 = cv2.addWeighted(reference_image, 0.7, refmap2_resized, 0.3, 0)
+
+            # Save the overlay images
+            cv2.imwrite('player1_overlay.png', overlay1)
+            cv2.imwrite('player2_overlay.png', overlay2)
+            '''
+            
 
     # Display ankle positions of both players
     if players.get(1) and players.get(2) is not None:
@@ -394,9 +528,25 @@ while cap.isOpened():
             text_p2 = f'P2 ankle positions L:({p2_left_ankle_x},{p2_left_ankle_y}) R:({p2_right_ankle_x},{p2_right_ankle_y})'
             cv2.putText(annotated_frame, text_p1, (10, frame_height - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
             cv2.putText(annotated_frame, text_p2, (10, frame_height - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
-
-    cv2.imwrite('foot_placement_heatmap2.png', heatmap_colored)
-    cv2.imwrite('ball_heatmap.png', ballmap_colorized)
+            avgpx1=int((p1_left_ankle_x+p1_right_ankle_x)/2)
+            avgpy1=int((p1_left_ankle_y+p1_right_ankle_y)/2)
+            avgpx2=int((p2_left_ankle_x+p2_right_ankle_x)/2)
+            avgpy2=int((p2_left_ankle_y+p2_right_ankle_y)/2)
+            #print(refrence_points)
+            text_p1t=f'P1 distance from T: {math.hypot(refrence_points[10][0]-avgpx1, refrence_points[10][1]-avgpy1)}'
+            text_p2t=f'P2 distance from T: {math.hypot(refrence_points[10][0]-avgpx2, refrence_points[10][1]-avgpy2)}'
+            cv2.putText(annotated_frame, text_p1t, (10, frame_height - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            cv2.putText(annotated_frame, text_p2t, (10, frame_height - 80), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            #text_p1c=f'P1 coords in refrence: {p1xc}, {p1yc}'
+            #text_p2c=f'P2 coords in refrence: {p2xc}, {p2yc}'
+            #cv2.putText(annotated_frame, text_p1c, (10, frame_height - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            #cv2.putText(annotated_frame, text_p2c, (10, frame_height - 120), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+    
+    for ref in refrence_points:
+        #cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
+        cv2.circle(annotated_frame, (ref[0], ref[1]), 5, (0,255,0), 2)
+    #cv2.imwrite('foot_placement_heatmap2.png', heatmap_colored)
+    #cv2.imwrite('ball_heatmap.png', ballmap_colorized)
     # Display the annotated frame
     cv2.imshow('Annotated Frame', annotated_frame)
     '''
