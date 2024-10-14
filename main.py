@@ -4,7 +4,7 @@ import numpy as np
 import math
 # Define the reference points in pixel coordinates (image)
 # These should be the coordinates of the reference points in the image
-
+#TODO: use embeddings to correctly find the different players
 
 
 '''
@@ -96,8 +96,8 @@ output_path = "annotated.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 file
 fps = 25  # Frames per second
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-
-
+avgp1ref=avgp2ref=0
+allp1refs=allp2refs=[]
 def sum_pixels_in_bbox(frame, bbox):
     x, y, w, h = bbox
     roi = frame[int(y) : int(y + h), int(x) : int(x + w)]
@@ -159,11 +159,12 @@ refrences1 = []
 refrences2 = []
 diff = []
 diffTrack = False
+updateref=True
 """
 def findRef(img):
     return cv2.
 """
-
+p1ref=p2ref=0
 
 def framepose(frame, model):
     track_results = model.track(frame, persist=True)
@@ -173,7 +174,6 @@ def framepose(frame, model):
             and hasattr(track_results[0], "keypoints")
             and track_results[0].keypoints is not None
         ):
-            global refrences1, refrences2
             # Extract boxes, track IDs, and keypoints from pose results
             boxes = track_results[0].boxes.xywh.cpu()
             track_ids = track_results[0].boxes.id.int().cpu().tolist()
@@ -186,7 +186,7 @@ def framepose(frame, model):
 
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
-
+                
                 if not find_match_2d_array(otherTrackIds, track_id):
                     # player 1 has been updated last
                     if updated[0][1] > updated[1][1]:
@@ -212,10 +212,8 @@ def framepose(frame, model):
                 # bc of this, we can assume that the next player is player 2
                 if track_id == 1:
                     playerid = 1
-                    refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                 elif track_id == 2:
                     playerid = 2
-                    refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                 # updated [0] is player 1, updated [1] is player 2
                 # if player1 was updated last, then player 2 is next
                 # if player 2 was updated last, then player 1 is next
@@ -233,18 +231,22 @@ def framepose(frame, model):
                     # print(f'could not find player id for track id {track_id}')
                     continue
 
+
                 # player refrence appending for maybe other stuff
                 if playerid == 1:
                     refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     temp1 = refrences1[-1]
-                    # print(f'player 1 refrence: {temp1}')
+                    p1ref=sum_pixels_in_bbox(frame, [x, y, w, h])
+                    print(f'p1ref: {p1ref}')
                 elif playerid == 2:
                     refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     temp2 = refrences2[-1]
-                    # print(f'player 2 refrence: {temp2}')
+                    p2ref=sum_pixels_in_bbox(frame, [x, y, w, h])
+                    print(f'p2ref: {p2ref}')
+
 
                 # print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
-                print(otherTrackIds)
+                #print(otherTrackIds)
                 # If player is already tracked, update their info
                 if playerid in players:
                     players[playerid].add_pose(kp)
@@ -391,7 +393,7 @@ get_refrence_points()
 theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
 theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
 
-
+running_frame=0
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
@@ -414,6 +416,14 @@ while cap.isOpened():
     # frame 240-300 is good for occlusion player tracking testing
     if frame_count <= 200 and frame_count % 1 != 0:
         continue
+    running_frame+=1
+    if running_frame>=500:
+        updatedref=False
+    if len(refrences1) !=0 and len(refrences2)!=0:
+        avgp1ref=sum(refrences1)/len(refrences1)
+        avgp2ref=sum(refrences2)/len(refrences2)
+
+    
     if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
         print("camera angle switched")
         continue
@@ -793,15 +803,7 @@ while cap.isOpened():
 
 """
     out.write(annotated_frame)
-    """
-    print(f'frame count: {frame_count}')
-    print(f'refrences1: {refrences1}')
-    print(f'refrences2: {refrences2}')
-    print(f'avg refrences1: {sum(refrences1)/len(refrences1)}')
-    print(f'avg refrences2: {sum(refrences2)/len(refrences2)}')
-    if len(refrences1)>0 and len(refrences2)>0:
-        print(f'avg differences:{(sum(refrences1)/len(refrences1))-(sum(refrences2)/len(refrences2))}')
-    """
+
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
