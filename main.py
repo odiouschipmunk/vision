@@ -7,6 +7,7 @@ import math
 
 
 
+'''
 
 pixel_points = np.array([
     [x0, y0],  # Bottom left
@@ -22,23 +23,21 @@ pixel_points = np.array([
     [x10, y10],  # T
     [x11, y11]   # Middle of T and top middle court
 ], dtype=np.float32)
-
+# [0] is x val and [1] is y val
+# refrence[0] is top left,
+# refrence[1] is top right
+# refrence[2] is bottom right
+# refrence[3] is bottom left
+# refrence[4] is left bottom of service box
+# refrence[5] is right bottom of service box
+# refrence[6] is T
+# refrence[7] is left of service line
+# refrence[8] is right of service line
+# refrence[9] is left of the top line of the front court
+# refrence[10] is right of the top line of the front court
 # Define the reference points in real-world coordinates (court)
 # These should be the actual coordinates of the reference points on the court
-real_world_points = np.array([
-    [X0, Y0, Z0],  # Bottom left
-    [X1, Y1, Z1],  # Bottom right
-    [X2, Y2, Z2],  # Top right
-    [X3, Y3, Z3],  # Top left
-    [X4, Y4, Z4],  # Bottom middle
-    [X5, Y5, Z5],  # Right bottom of square
-    [X6, Y6, Z6],  # Top middle
-    [X7, Y7, Z7],  # Left bottom of square
-    [X8, Y8, Z8],  # Right top of square
-    [X9, Y9, Z9],  # Left top of square
-    [X10, Y10, Z10],  # T
-    [X11, Y11, Z11]   # Middle of T and top middle court
-], dtype=np.float32)
+
 
 pixel_points_2d = pixel_points[:, :2]
 real_world_points_2d = real_world_points[:, :2]
@@ -57,7 +56,7 @@ pixel_point = np.array([x, y])
 real_world_point = transform_point(pixel_point, H)
 print(f"Real-world coordinates: {real_world_point}")
 
-
+'''
 
 
 
@@ -345,7 +344,7 @@ def get_refrence_points():
         print(
             "No refrence points file found. Please click on the court to set refrence points."
         )
-        cap2 = cv2.VideoCapture("main.mp4")
+        cap2 = cv2.VideoCapture(path)
         if not cap2.isOpened():
             print("Error opening video file")
             exit()
@@ -360,7 +359,7 @@ def get_refrence_points():
         print(
             "Click on the key points of the court. Press 's' to save and 'q' to quit.\nMake sure to click in the following order shown by the example"
         )
-        example_image = cv2.imread("annotated-squashcourt.png")
+        example_image = cv2.imread("annotated-squash-court.png")
         example_image_resized = cv2.resize(example_image, (frame_width, frame_height))
         cv2.imshow("Court Example", example_image_resized)
         while True:
@@ -376,31 +375,18 @@ def get_refrence_points():
 get_refrence_points()
 
 # note for anyone else seeing this:
-# refrence points[10] is T, [0] is x val and [1] is y val
-# refrence[0] is bottom left,
-# refrence[1] is bottom right
-# refrence[2] is top right
-# refrence[3] is top left
-# refrence[4] is bottom middle
-# refrence[5] is right bottom of square
-# refrence[6] is top middle
-# refrence[7] is left bottom of square
-# refrence[8] is right top of square
-# refrence[9] is left top of square
-# refrence[10] is T
-# refrence[11] is the middle of T and top middle court
-btmleft = 0
-btmright = 1
-topright = 2
-topleft = 3
-btmmiddle = 4
-rbsq = 5
-topmiddle = 6
-lbsq = 7
-rtsq = 8
-ltsq = 9
-t = 10
-tmdl = 11
+# [0] is x val and [1] is y val
+# refrence[0] is top left,
+# refrence[1] is top right
+# refrence[2] is bottom right
+# refrence[3] is bottom left
+# refrence[4] is left bottom of service box
+# refrence[5] is right bottom of service box
+# refrence[6] is T
+# refrence[7] is left of service line
+# refrence[8] is right of service line
+# refrence[9] is left of the top line of the front court
+# refrence[10] is right of the top line of the front court
 
 theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
 theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
@@ -746,10 +732,10 @@ while cap.isOpened():
             avgpy2 = int((p2_left_ankle_y + p2_right_ankle_y) / 2)
             # print(refrence_points)
             p1distancefromT = math.hypot(
-                refrence_points[10][0] - avgpx1, refrence_points[10][1] - avgpy1
+                refrence_points[6][0] - avgpx1, refrence_points[6][1] - avgpy1
             )
             p2distancefromT = math.hypot(
-                refrence_points[10][0] - avgpx2, refrence_points[10][1] - avgpy2
+                refrence_points[6][0] - avgpx2, refrence_points[6][1] - avgpy2
             )
             p1distancesfromT.append(p1distancefromT)
             p2distancesfromT.append(p2distancefromT)
