@@ -101,13 +101,11 @@ allp1refs=allp2refs=[]
 def sum_pixels_in_bbox(frame, bbox):
     x, y, w, h = bbox
     roi = frame[int(y) : int(y + h), int(x) : int(x + w)]
-    return np.sum(roi)
+    return np.sum(roi, dtype=np.int64)
 
 
 # Create a blank canvas for heatmap based on video resolution
-heatmap = np.zeros((frame_height, frame_width), dtype=np.float32)
-p1heatmap = np.zeros((frame_height, frame_width), dtype=np.float32)
-p2heatmap = np.zeros((frame_height, frame_width), dtype=np.float32)
+
 mainball = Ball(0, 0, 0, 0)
 ballmap = np.zeros((frame_height, frame_width), dtype=np.float32)
 playerRefrence1 = 0
@@ -168,13 +166,23 @@ p1ref=p2ref=0
 
 p1embeddings = [[]]
 p2embeddings = [[]]
-import clip
+pixdiffs=[]
+pixdiff1percentage=pixdiff2percentage=[]
+avgcosinediff=0
+cosinediffs=[]
 from PIL import Image
-imagemodel, preprocess = clip.load("ViT-B/32", device="cuda")
+'''
+import clip
+
+imagemodel, preprocess = clip.load("ViT-B/32", device="cpu")
+'''
 import torch
+player1imagerefrence=player2imagerefrence=None
+player1refrenceembeddings=player2refrenceembeddings=None
 # Function to get image embeddings
+'''
 def get_image_embeddings(image):
-    image = preprocess(image).unsqueeze(0).to("cuda")
+    image = preprocess(image).unsqueeze(0).to("cpu")
     with torch.no_grad():
         embeddings = imagemodel.encode_image(image)
     return embeddings.cpu().numpy()
@@ -194,138 +202,9 @@ def cosine_similarity(embedding1, embedding2):
         return 0  # Return a similarity of 0 if one of the embeddings is invalid
 
     return dot_product / (norm1 * norm2)
+'''
 
 
-
-
-def framepose(frame, model):
-    track_results = model.track(frame, persist=True)
-    try:
-        if (
-            track_results
-            and hasattr(track_results[0], "keypoints")
-            and track_results[0].keypoints is not None
-        ):
-            # Extract boxes, track IDs, and keypoints from pose results
-            boxes = track_results[0].boxes.xywh.cpu()
-            track_ids = track_results[0].boxes.id.int().cpu().tolist()
-            keypoints = track_results[0].keypoints.cpu().numpy()
-
-            current_ids = set(track_ids)
-
-            # Update or add players for currently visible track IDs
-            # note that this only works with occluded players < 2, still working on it :(
-
-            for box, track_id, kp in zip(boxes, track_ids, keypoints):
-                x, y, w, h = box
-                player_crop = frame[int(y):int(y+h), int(x):int(x+w)]
-                player_image = Image.fromarray(player_crop)
-                embeddings=get_image_embeddings(player_image)
-
-                if not find_match_2d_array(otherTrackIds, track_id):
-                    # player 1 has been updated last
-                    if updated[0][1] > updated[1][1]:
-                        otherTrackIds.append([track_id, 2])
-                        print(f"added track id {track_id} to player 2")
-                    else:
-                        otherTrackIds.append([track_id, 1])
-                        print(f"added track id {track_id} to player 1")
-
-                """
-                not updated with otherTrackIds
-                if track_ids[track_id]>2:
-                    print(f'track id is greater than 2: {track_ids[track_id]}')
-                    if track_ids[track_id] not in occluded_players:
-                        occ_id=occluded_players.pop()
-
-                        print(' occ id part 153 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
-                    if len(occluded_players)==1:
-                        players[occluded_players.pop()]=players[track_id.get(track_id)]
-                        print(' line 156 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
-                """
-                # if updated[0], then that means that player 1 was updated last
-                # bc of this, we can assume that the next player is player 2
-                if track_id == 1:
-                    playerid = 1
-                elif track_id == 2:
-                    playerid = 2
-                # updated [0] is player 1, updated [1] is player 2
-                # if player1 was updated last, then player 2 is next
-                # if player 2 was updated last, then player 1 is next
-                # if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
-                elif updated[0][1] > updated[1][1]:
-                    playerid = 2
-                    # player 1 was updated last
-                elif updated[0][1] < updated[1][1]:
-                    playerid = 1
-                    # player 2 was updated last
-                elif updated[0][1] == updated[1][1]:
-                    playerid = 1
-                    # both players were updated at the same time, so we are assuming that player 1 is the next player
-                else:
-                    # print(f'could not find player id for track id {track_id}')
-                    continue
-
-
-                # player refrence appending for maybe other stuff
-                if playerid == 1:
-                    refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
-                    temp1 = refrences1[-1]
-                    p1ref=sum_pixels_in_bbox(frame, [x, y, w, h])
-                    #print(f'p1ref: {p1ref}')
-                    #print(embeddings.shape)
-                    p1embeddings.append(embeddings)
-                    if len(p2embeddings) > 1:
-                        print(f'this is player 1, with a cosine similarity of {cosine_similarity(p1embeddings[-1], p2embeddings[-1])}')
-                    #print(p1embeddings)
-                elif playerid == 2:
-                    refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
-                    temp2 = refrences2[-1]
-                    p2ref=sum_pixels_in_bbox(frame, [x, y, w, h])
-                    #print(f'p2ref: {p2ref}')
-                    #print(embeddings.shape)
-                    p2embeddings.append(embeddings)
-                    if len(p1embeddings) > 1:
-                        print(f'this is player 2, with a cosine similarity of {cosine_similarity(p2embeddings[-1], p1embeddings[-1])}')
-                    #print(p2embeddings)
-
-
-                # print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
-                #print(otherTrackIds)
-                # If player is already tracked, update their info
-                if playerid in players:
-                    players[playerid].add_pose(kp)
-                    player_last_positions[playerid] = (x, y)  # Update position
-                    players[playerid].add_pose(kp)
-                    # print(f'track id: {track_id}')
-                    # print(f'playerid: {playerid}')
-                    if playerid == 1:
-                        updated[0][0] = True
-                        updated[0][1] = frame_count
-                    if playerid == 2:
-                        updated[1][0] = True
-                        updated[1][1] = frame_count
-                    # print(updated)
-                    # Player is no longer occluded
-
-                    # print(f"Player {playerid} updated.")
-
-                # If the player is new and fewer than MAX_PLAYERS are being tracked
-                if len(players) < max_players:
-                    players[otherTrackIds[track_id][0]] = Player(
-                        player_id=otherTrackIds[track_id][1]
-                    )
-                    player_last_positions[playerid] = (x, y)
-                    if playerid == 1:
-                        updated[0][0] = True
-                        updated[0][1] = frame_count
-                    else:
-                        updated[1][0] = True
-                        updated[1][1] = frame_count
-                    print(f"Player {playerid} added.")
-    except Exception as e:
-        print("GOT ERROR: ", e)
-        pass
 
 
 p1distancesfromT = []
@@ -438,6 +317,13 @@ get_refrence_points()
 theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
 theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
 
+heatmap_overlay_path='white.png'
+heatmap_image=cv2.imread(heatmap_overlay_path)
+if heatmap_image is None:
+    raise FileNotFoundError(f'Could not find heatmap overlay image at {heatmap_overlay_path}')
+heatmap_ankle=np.zeros_like(heatmap_image, dtype=np.float32)
+
+
 running_frame=0
 while cap.isOpened():
     success, frame = cap.read()
@@ -475,7 +361,7 @@ while cap.isOpened():
         avgp2ref=sum(refrences2)/len(refrences2)
 
 
-
+    '''
     if len(p1embeddings) != 0 and len(p2embeddings) != 0 and len(p1embeddings) > 1 and len(p2embeddings) > 1:
         #print(len(p1embeddings[-1]))
         #print(p1embeddings)
@@ -483,7 +369,7 @@ while cap.isOpened():
         similarity_p2 = cosine_similarity(p2embeddings[-1], p1embeddings[-1])
         print(f"Cosine Similarity p1: {similarity_p1}")
         print(f"Cosine Similarity p2: {similarity_p2}")
-
+    '''
 
 
     if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
@@ -505,8 +391,6 @@ while cap.isOpened():
             f"difference between current ref and court ref: {abs(courtref - currentref)}"
         )
         continue
-
-
 
     # Pose and ball detection
     ball = ballmodel(frame)
@@ -540,19 +424,7 @@ while cap.isOpened():
                 right_ankle_y = int(
                     person[15][1] * frame_height
                 )  # Scale the Y coordinate
-                if (
-                    left_ankle_x > 0
-                    or left_ankle_y > 0
-                    or right_ankle_x > 0
-                    or right_ankle_y > 0
-                ):
-                    drawmap(
-                        left_ankle_x,
-                        left_ankle_y,
-                        right_ankle_x,
-                        right_ankle_y,
-                        heatmap,
-                    )
+                
     else:
         # print("No keypoints detected in this frame.")
         continue
@@ -630,17 +502,212 @@ while cap.isOpened():
                     ballmap,
                 )
 
-    # Blur and normalize the heatmap for display
-    # heatmap_blurred = cv2.GaussianBlur(heatmap, (15, 15), 0)
-    heatmap_normalized = cv2.normalize(heatmap, None, 100, 255, cv2.NORM_MINMAX)
-    heatmap_colored = cv2.applyColorMap(
-        heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE
-    )
-    ball_normalized = cv2.normalize(ballmap, None, 100, 255, cv2.NORM_MINMAX)
-    ballmap_colorized = cv2.applyColorMap(
-        ball_normalized.astype(np.uint8), cv2.COLORMAP_BONE
-    )
-    framepose(frame, pose_model)
+    '''
+    FRAMEPOSE
+    '''
+    track_results = pose_model.track(frame, persist=True)
+    try:
+        if (
+            track_results
+            and hasattr(track_results[0], "keypoints")
+            and track_results[0].keypoints is not None
+        ):
+            # Extract boxes, track IDs, and keypoints from pose results
+            boxes = track_results[0].boxes.xywh.cpu()
+            track_ids = track_results[0].boxes.id.int().cpu().tolist()
+            keypoints = track_results[0].keypoints.cpu().numpy()
+
+            current_ids = set(track_ids)
+
+            # Update or add players for currently visible track IDs
+            # note that this only works with occluded players < 2, still working on it :(
+
+            for box, track_id, kp in zip(boxes, track_ids, keypoints):
+                x, y, w, h = box
+                player_crop = frame[int(y):int(y+h), int(x):int(x+w)]
+                player_image = Image.fromarray(player_crop)
+                #embeddings=get_image_embeddings(player_image)
+
+                if not find_match_2d_array(otherTrackIds, track_id):
+                    # player 1 has been updated last
+                    if updated[0][1] > updated[1][1]:
+                        otherTrackIds.append([track_id, 2])
+                        print(f"added track id {track_id} to player 2")
+                    else:
+                        otherTrackIds.append([track_id, 1])
+                        print(f"added track id {track_id} to player 1")
+
+                """
+                not updated with otherTrackIds
+                if track_ids[track_id]>2:
+                    print(f'track id is greater than 2: {track_ids[track_id]}')
+                    if track_ids[track_id] not in occluded_players:
+                        occ_id=occluded_players.pop()
+
+                        print(' occ id part 153 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                    if len(occluded_players)==1:
+                        players[occluded_players.pop()]=players[track_id.get(track_id)]
+                        print(' line 156 occluded player reassigned to another player that was occluded previously. this only works with <2 occluded players, fix this soon!!!!!')
+                """
+                # if updated[0], then that means that player 1 was updated last
+                # bc of this, we can assume that the next player is player 2
+                if track_id == 1:
+                    playerid = 1
+                elif track_id == 2:
+                    playerid = 2
+                # updated [0] is player 1, updated [1] is player 2
+                # if player1 was updated last, then player 2 is next
+                # if player 2 was updated last, then player 1 is next
+                # if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
+                elif updated[0][1] > updated[1][1]:
+                    playerid = 2
+                    # player 1 was updated last
+                elif updated[0][1] < updated[1][1]:
+                    playerid = 1
+                    # player 2 was updated last
+                elif updated[0][1] == updated[1][1]:
+                    playerid = 1
+                    # both players were updated at the same time, so we are assuming that player 1 is the next player
+                else:
+                    # print(f'could not find player id for track id {track_id}')
+                    continue
+
+
+                # player refrence appending for maybe other stuff
+                #using track_id and not playerid so that it is definitely the correct player
+                #maybe use playerid instead of track_id later on, but for right now its fine tbh
+                if track_id == 1:
+                    refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    temp1 = refrences1[-1]
+                    p1ref=sum_pixels_in_bbox(frame, [x, y, w, h])
+                    
+                    #p1embeddings.append(embeddings)
+
+
+
+                    if (len(refrences1) >1 and len(refrences2)>1):
+                        if len(pixdiffs)<5:
+                            pixdiffs.append(abs(refrences1[-1]-refrences2[-1]))
+                        else:
+                            if abs(refrences1[-1]-refrences2[-1])>2*sum(pixdiffs)/len(pixdiffs):
+                                print(f'probably too big of a difference between the two players')
+                            else:
+                                print(f'pix diff: {abs(refrences1[-1]-refrences2[-1])}')
+                                print(f'average pixel diff: {sum(pixdiffs)/(len(pixdiffs))}')
+                                pixdiff1percentage.append(100*abs(refrences1[-1]-refrences2[-1])/refrences1[-1])
+                                print(f'pixel diff in percentage for p1: {pixdiff1percentage[-1]}')
+                                print(f'largest percentage pixel diff: {max(pixdiff1percentage)}')
+                                print(f'smallest percentage pixel diff: {min(pixdiff1percentage)}')
+
+
+                                
+                    if player1imagerefrence is None:
+                        player1imagerefrence=player_image
+                        #player1refrenceembeddings=embeddings
+                    #bookmark for pixel differences and cosine similarity
+                    '''
+                    if len(p2embeddings) > 1:
+                        p1refrence=cosine_similarity(p1embeddings[-1], player1refrenceembeddings)
+                        p1top2=cosine_similarity(p1embeddings[-1], p2embeddings[-1])
+                        cosinediffs.append(abs(p1refrence-p1top2))
+                        avgcosinediff=sum(cosinediffs)/len(cosinediffs)
+                        
+                        print(f'average cosine difference: {avgcosinediff}')       
+                        print(f'highest cosine diff: {max(cosinediffs)}') 
+                        print(f'lowest cosine diff: {min(cosinediffs)}')
+                        print(f'this is player 1, with a cosine similarity of {p1refrence} to its refrence image')
+                        print(f'this is player 1, with a cosine similarity of {p1top2} to player 2 right now')
+                        print(f'difference between p1 refrence and p2 right now: {abs(p1refrence-p1top2)}')
+                        '''
+
+
+                elif track_id == 2:
+                    refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    temp2 = refrences2[-1]
+                    p2ref=sum_pixels_in_bbox(frame, [x, y, w, h])
+                    #print(f'p2ref: {p2ref}')
+                    #print(embeddings.shape)
+                    #p2embeddings.append(embeddings)
+
+                    if (len(refrences1) >1 and len(refrences2)>1):
+                        if len(pixdiffs)<5:
+                            pixdiffs.append(abs(refrences1[-1]-refrences2[-1]))
+                        else:
+                            if abs(refrences1[-1]-refrences2[-1])>2*sum(pixdiffs)/len(pixdiffs):
+                                print(f'probably too big of a difference between the two players')
+                            else:
+                                print(f'pix diff: {abs(refrences1[-1]-refrences2[-1])}')
+                                print(f'average pixel diff: {sum(pixdiffs)/(len(pixdiffs))}')
+                                pixdiff1percentage.append(100*abs(refrences2[-1]-refrences1[-1])/refrences2[-1])
+                                print(f'pixel diff in percentage for p2: {pixdiff2percentage[-1]}')
+                                print(f'largest percentage pixel diff: {max(pixdiff2percentage)}')
+                                print(f'smallest percentage pixel diff: {min(pixdiff2percentage)}')
+
+
+
+                    #print(p2embeddings)
+                    '''
+                    if player2imagerefrence is None:
+                        player2imagerefrence=player_image
+                        player2refrenceembeddings=embeddings
+                    
+
+
+                    if len(p1embeddings) > 1:
+                        p2refrence=cosine_similarity(p2embeddings[-1], player2refrenceembeddings)
+                        p2top1=cosine_similarity(p2embeddings[-1], p1embeddings[-1])
+                        
+                        cosinediffs.append(abs(p2refrence-p2top1))
+                        avgcosinediff=sum(cosinediffs)/len(cosinediffs)
+                        
+                        print(f'this is player 2, with a cosine similarity of {p2refrence} to its refrence image')
+                        print(f'this is player 2, with a cosine similarity of {p2top1} to player 1 right now')
+                        print(f'difference between p2 refrence and p1 right now: {abs(p2refrence-p2top1)}')
+                        print(f'average cosine difference: {avgcosinediff}')   
+                        print(f'highest cosine diff: {max(cosinediffs)}')
+                        print(f'lowest cosine diff: {min(cosinediffs)}')   
+                        '''  
+
+
+
+                # print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
+                #print(otherTrackIds)
+                # If player is already tracked, update their info
+                if playerid in players:
+                    players[playerid].add_pose(kp)
+                    player_last_positions[playerid] = (x, y)  # Update position
+                    players[playerid].add_pose(kp)
+                    # print(f'track id: {track_id}')
+                    # print(f'playerid: {playerid}')
+                    if playerid == 1:
+                        updated[0][0] = True
+                        updated[0][1] = frame_count
+                    if playerid == 2:
+                        updated[1][0] = True
+                        updated[1][1] = frame_count
+                    # print(updated)
+                    # Player is no longer occluded
+
+                    # print(f"Player {playerid} updated.")
+
+                # If the player is new and fewer than MAX_PLAYERS are being tracked
+                if len(players) < max_players:
+                    players[otherTrackIds[track_id][0]] = Player(
+                        player_id=otherTrackIds[track_id][1]
+                    )
+                    player_last_positions[playerid] = (x, y)
+                    if playerid == 1:
+                        updated[0][0] = True
+                        updated[0][1] = frame_count
+                    else:
+                        updated[1][0] = True
+                        updated[1][1] = frame_count
+                    print(f"Player {playerid} added.")
+    except Exception as e:
+        print("GOT ERROR: ", e)
+        pass
+
+
 
     """
     for box in court_results[0].boxes:
@@ -702,22 +769,7 @@ while cap.isOpened():
                 )
                 / 2
             ) * frame_height
-            p1heatmap[int(p1y), int(p1x)] += 1
-            p2heatmap[int(p2y), int(p2x)] += 1
-            p1heatmap_normalized = cv2.normalize(
-                p1heatmap, None, 100, 255, cv2.NORM_MINMAX
-            )
-            p1heatmap_colored = cv2.applyColorMap(
-                p1heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE
-            )
-            p2heatmap_normalized = cv2.normalize(
-                p2heatmap, None, 100, 255, cv2.NORM_MINMAX
-            )
-            p2heatmap_colored = cv2.applyColorMap(
-                p2heatmap_normalized.astype(np.uint8), cv2.COLORMAP_BONE
-            )
-            cv2.imwrite("player1_heatmap.png", p1heatmap_colored)
-            cv2.imwrite("player2_heatmap.png", p2heatmap_colored)
+
 
     # Display ankle positions of both players
     if players.get(1) and players.get(2) is not None:
@@ -860,8 +912,7 @@ while cap.isOpened():
     for ref in refrence_points:
         # cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
         cv2.circle(annotated_frame, (ref[0], ref[1]), 5, (0, 255, 0), 2)
-    cv2.imwrite("foot_placement_heatmap2.png", heatmap_colored)
-    cv2.imwrite("ball_heatmap.png", ballmap_colorized)
+
     # Display the annotated frame
     cv2.imshow("Annotated Frame", annotated_frame)
     """
@@ -873,8 +924,44 @@ while cap.isOpened():
         confidence = float(box.conf)
         cv2.rectangle(annotated_frame, (int(x1temp), int(y1temp)), (int(x2temp), int(y2temp)), (0, 255, 0), 2)
         cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
+    
 """
+
+
+    if players.get(1).get_latest_pose() is not None and players.get(2).get_latest_pose() is not None:
+        player1anklex = players.get(1).get_latest_pose().xyn[0][16][0] * frame_width
+        player1ankley = players.get(1).get_latest_pose().xyn[0][16][1] * frame_height
+        player2anklex = players.get(2).get_latest_pose().xyn[0][16][0] * frame_width
+        player2ankley = players.get(2).get_latest_pose().xyn[0][16][1] * frame_height
+
+        # Draw points for player 1 (blue) and player 2 (red)
+        cv2.circle(heatmap_image, (int(player1anklex), int(player1ankley)), 5, (255, 0, 0), -1)  # Blue points for player 1
+        cv2.circle(heatmap_image, (int(player2anklex), int(player2ankley)), 5, (0, 0, 255), -1)  # Red points for player 2
+
+        # Apply Gaussian blur to the heatmap to make it blurrier
+        blurred_heatmap_ankle = cv2.GaussianBlur(heatmap_image, (51, 51), 0)
+
+        # Normalize the heatmap to the range [0, 255]
+        blurred_heatmap = cv2.normalize(blurred_heatmap_ankle, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+        # Convert the heatmap to uint8
+        blurred_heatmap = blurred_heatmap.astype(np.uint8)
+
+        # Apply color map to the heatmap
+        heatmap_overlay = cv2.applyColorMap(blurred_heatmap, cv2.COLORMAP_JET)
+
+        # Create a white image with the same dimensions as the heatmap
+        white_image = np.ones_like(heatmap_overlay) * 255
+
+        # Combine the images
+        combined_image = cv2.addWeighted(white_image, 0.5, heatmap_overlay, 0.5, 0)
+
+        # Save the combined image
+        cv2.imwrite('heatmap_ankle.png', combined_image)
+
+
+
+
     out.write(annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
