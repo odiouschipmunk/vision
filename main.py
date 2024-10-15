@@ -166,6 +166,38 @@ def findRef(img):
 """
 p1ref=p2ref=0
 
+p1embeddings = [[]]
+p2embeddings = [[]]
+import clip
+from PIL import Image
+imagemodel, preprocess = clip.load("ViT-B/32", device="cuda")
+import torch
+# Function to get image embeddings
+def get_image_embeddings(image):
+    image = preprocess(image).unsqueeze(0).to("cuda")
+    with torch.no_grad():
+        embeddings = imagemodel.encode_image(image)
+    return embeddings.cpu().numpy()
+
+# Function to calculate cosine similarity between two embeddings
+def cosine_similarity(embedding1, embedding2):
+    # Flatten the embeddings to 1D if they are 2D (like (1, 512))
+    embedding1 = np.squeeze(embedding1)  # Shape becomes (512,)
+    embedding2 = np.squeeze(embedding2)  # Shape becomes (512,)
+
+    dot_product = np.dot(embedding1, embedding2)
+    norm1 = np.linalg.norm(embedding1)
+    norm2 = np.linalg.norm(embedding2)
+    
+    # Check if any norm is zero to avoid division by zero
+    if norm1 == 0 or norm2 == 0:
+        return 0  # Return a similarity of 0 if one of the embeddings is invalid
+
+    return dot_product / (norm1 * norm2)
+
+
+
+
 def framepose(frame, model):
     track_results = model.track(frame, persist=True)
     try:
@@ -186,7 +218,10 @@ def framepose(frame, model):
 
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
-                
+                player_crop = frame[int(y):int(y+h), int(x):int(x+w)]
+                player_image = Image.fromarray(player_crop)
+                embeddings=get_image_embeddings(player_image)
+
                 if not find_match_2d_array(otherTrackIds, track_id):
                     # player 1 has been updated last
                     if updated[0][1] > updated[1][1]:
@@ -237,12 +272,22 @@ def framepose(frame, model):
                     refrences1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     temp1 = refrences1[-1]
                     p1ref=sum_pixels_in_bbox(frame, [x, y, w, h])
-                    print(f'p1ref: {p1ref}')
+                    #print(f'p1ref: {p1ref}')
+                    #print(embeddings.shape)
+                    p1embeddings.append(embeddings)
+                    if len(p2embeddings) > 1:
+                        print(f'this is player 1, with a cosine similarity of {cosine_similarity(p1embeddings[-1], p2embeddings[-1])}')
+                    #print(p1embeddings)
                 elif playerid == 2:
                     refrences2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     temp2 = refrences2[-1]
                     p2ref=sum_pixels_in_bbox(frame, [x, y, w, h])
-                    print(f'p2ref: {p2ref}')
+                    #print(f'p2ref: {p2ref}')
+                    #print(embeddings.shape)
+                    p2embeddings.append(embeddings)
+                    if len(p1embeddings) > 1:
+                        print(f'this is player 2, with a cosine similarity of {cosine_similarity(p2embeddings[-1], p1embeddings[-1])}')
+                    #print(p2embeddings)
 
 
                 # print(f'even though we are working with {otherTrackIds[track_id][0]}, the player id is {playerid}')
@@ -396,11 +441,15 @@ theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
 running_frame=0
 while cap.isOpened():
     success, frame = cap.read()
+
     if not success:
         break
+
     frame = cv2.resize(frame, (frame_width, frame_height))
 
     frame_count += 1
+
+
     if frame_count == 1:
         print("frame 1")
         courtref = np.int64(
@@ -419,16 +468,33 @@ while cap.isOpened():
     running_frame+=1
     if running_frame>=500:
         updatedref=False
+
+
     if len(refrences1) !=0 and len(refrences2)!=0:
         avgp1ref=sum(refrences1)/len(refrences1)
         avgp2ref=sum(refrences2)/len(refrences2)
 
-    
+
+
+    if len(p1embeddings) != 0 and len(p2embeddings) != 0 and len(p1embeddings) > 1 and len(p2embeddings) > 1:
+        #print(len(p1embeddings[-1]))
+        #print(p1embeddings)
+        similarity_p1 = cosine_similarity(p1embeddings[-1], p2embeddings[-1])
+        similarity_p2 = cosine_similarity(p2embeddings[-1], p1embeddings[-1])
+        print(f"Cosine Similarity p1: {similarity_p1}")
+        print(f"Cosine Similarity p2: {similarity_p2}")
+
+
+
     if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
         print("camera angle switched")
         continue
+
+
     print(len(players))
+
     currentref = int(sum_pixels_in_bbox(frame, [0, 0, frame_width, frame_height]))
+
     # general court refrence to only get the first camera angle throughout the video
     if abs(courtref - currentref) > courtref * 0.6:
         print("most likely not original camera frame")
@@ -439,6 +505,9 @@ while cap.isOpened():
             f"difference between current ref and court ref: {abs(courtref - currentref)}"
         )
         continue
+
+
+
     # Pose and ball detection
     ball = ballmodel(frame)
     pose_results = pose_model(frame)
@@ -698,7 +767,11 @@ while cap.isOpened():
                     p2_left_ankle_y
                 ) = p2_right_ankle_x = p2_right_ankle_y = 0
             # Display the ankle positions on the bottom left of the frame
-            text_p1 = f"P1 ankle positions L:({p1_left_ankle_x},{p1_left_ankle_y}) R:({p1_right_ankle_x},{p1_right_ankle_y})"
+            avgxank1=int((p1_left_ankle_x+p1_right_ankle_x)/2)
+            avgyank1=int((p1_left_ankle_y+p1_right_ankle_y)/2)
+            avgxank2=int((p2_left_ankle_x+p2_right_ankle_x)/2)
+            avgyank2=int((p2_left_ankle_y+p2_right_ankle_y)/2)
+            text_p1 = f"P1 position(ankle): {avgxank1},{avgyank1}"
             cv2.putText(
                 annotated_frame,
                 f"{otherTrackIds[findLast(1)][1]}",
@@ -717,7 +790,7 @@ while cap.isOpened():
                 (255, 255, 255),
                 1,
             )
-            text_p2 = f"P2 ankle positions L:({p2_left_ankle_x},{p2_left_ankle_y}) R:({p2_right_ankle_x},{p2_right_ankle_y})"
+            text_p2 = f"P2 position(ankle): {avgxank2},{avgyank2}"
             cv2.putText(
                 annotated_frame,
                 text_p1,
