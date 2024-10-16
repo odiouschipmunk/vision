@@ -70,7 +70,7 @@ video_file = "Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4"
 video_folder = "full-games"
 path = "main.mp4"
 import matplotlib.pyplot as plt
-
+ballvideopath='balltracking.mp4'
 cap = cv2.VideoCapture(path)
 frame_width = 640
 frame_height = 360
@@ -96,6 +96,8 @@ output_path = "annotated.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 file
 fps = 25  # Frames per second
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
+ball_out = cv2.VideoWriter(ballvideopath, fourcc, fps, (frame_width, frame_height))
+
 avgp1ref=avgp2ref=0
 allp1refs=allp2refs=[]
 def sum_pixels_in_bbox(frame, bbox):
@@ -316,12 +318,14 @@ get_refrence_points()
 
 theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
 theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
-
+outlierdiffs=[]
 heatmap_overlay_path='white.png'
 heatmap_image=cv2.imread(heatmap_overlay_path)
 if heatmap_image is None:
     raise FileNotFoundError(f'Could not find heatmap overlay image at {heatmap_overlay_path}')
 heatmap_ankle=np.zeros_like(heatmap_image, dtype=np.float32)
+
+ballxy=[]
 
 
 running_frame=0
@@ -349,7 +353,7 @@ while cap.isOpened():
 
     # frame count for debugging
     # frame 240-300 is good for occlusion player tracking testing
-    if frame_count <= 200 and frame_count % 1 != 0:
+    if frame_count <= 200 and frame_count % 2 != 0:
         continue
     running_frame+=1
     if running_frame>=500:
@@ -377,7 +381,7 @@ while cap.isOpened():
         continue
 
 
-    print(len(players))
+    #print(len(players))
 
     currentref = int(sum_pixels_in_bbox(frame, [0, 0, frame_width, frame_height]))
 
@@ -401,6 +405,7 @@ while cap.isOpened():
     # court_results=courtmodel(frame)
     # Check if keypoints exist and are not empty
     # print(pose_results)
+    ballframe = frame.copy()
     for refrence in refrence_points:
         cv2.circle(frame, refrence, 5, (0, 255, 0), -1)
 
@@ -452,6 +457,7 @@ while cap.isOpened():
             y1 = y1temp
             x2 = x2temp
             y2 = y2temp
+        
     cv2.rectangle(
         annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2
     )
@@ -474,6 +480,7 @@ while cap.isOpened():
         (0, 255, 0),
         2,
     )
+    cv2.circle(ballframe, (int((x1 + x2) / 2), int((y1 + y2) / 2)), 5, (0, 255, 0), -1)
     avg_x = int((x1 + x2) / 2)
     avg_y = int((y1 + y2) / 2)
     distance = 0
@@ -527,15 +534,25 @@ while cap.isOpened():
                 player_crop = frame[int(y):int(y+h), int(x):int(x+w)]
                 player_image = Image.fromarray(player_crop)
                 #embeddings=get_image_embeddings(player_image)
-
+                psum=sum_pixels_in_bbox(frame, [x, y, w, h])
                 if not find_match_2d_array(otherTrackIds, track_id):
                     # player 1 has been updated last
                     if updated[0][1] > updated[1][1]:
-                        otherTrackIds.append([track_id, 2])
-                        print(f"added track id {track_id} to player 2")
+                        if len(refrences2)>1:
+                            #comparing it to itself, if percentage is greater than 75, then its probably a different player
+                            if (100*abs(psum-refrences2[-1])/psum)>75:
+                                otherTrackIds.append([track_id, 1])
+                                print(f"added track id {track_id} to player 1 using image refrences, as image similarity was {100*abs(psum-refrences2[-1])/psum}")
+                            else: 
+                                otherTrackIds.append([track_id, 2])
+                                print(f"added track id {track_id} to player 2")
                     else:
-                        otherTrackIds.append([track_id, 1])
-                        print(f"added track id {track_id} to player 1")
+                            if (100*abs(psum-refrences1[-1])/psum)>75:
+                                otherTrackIds.append([track_id, 2])
+                                print(f"added track id {track_id} to player 2 using image refrences, as image similarity was {100*abs(psum-refrences1[-1])/psum}")
+                            else:
+                                otherTrackIds.append([track_id, 1])
+                                print(f"added track id {track_id} to player 1")
 
                 """
                 not updated with otherTrackIds
@@ -560,16 +577,36 @@ while cap.isOpened():
                 # if player 2 was updated last, then player 1 is next
                 # if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
                 elif updated[0][1] > updated[1][1]:
-                    playerid = 2
+                    if len(refrences2)>1:
+                            #comparing it to itself, if percentage is greater than 75, then its probably a different player
+                            if (100*abs(psum-refrences2[-1])/psum)>75:
+                                playerid = 1
+                            else:
+                                playerid = 2
+                    else:
+                        playerid=2
                     # player 1 was updated last
                 elif updated[0][1] < updated[1][1]:
-                    playerid = 1
+                    if len(refrences1)>1:
+                            #comparing it to itself, if percentage is greater than 75, then its probably a different player
+                            if (100*abs(psum-refrences1[-1])/psum)>75:
+                                playerid = 2
+                            else:
+                                playerid = 1
+                    else:
+                        playerid=1
                     # player 2 was updated last
                 elif updated[0][1] == updated[1][1]:
-                    playerid = 1
+                    if len(refrences1)>1 and len(refrences2)>1:
+                        if (100*abs(psum-refrences1[-1])/psum) > (100*abs(psum-refrences2[-1])/psum):
+                            playerid = 2
+                        else:
+                            playerid=1
+                    else:
+                        playerid = 1
                     # both players were updated at the same time, so we are assuming that player 1 is the next player
                 else:
-                    # print(f'could not find player id for track id {track_id}')
+                    print(f'could not find player id for track id {track_id}')
                     continue
 
 
@@ -588,9 +625,11 @@ while cap.isOpened():
                     if (len(refrences1) >1 and len(refrences2)>1):
                         if len(pixdiffs)<5:
                             pixdiffs.append(abs(refrences1[-1]-refrences2[-1]))
+                        '''
+                        USE FOR COSINE SIMILARITY BOOKMARK
                         else:
                             if abs(refrences1[-1]-refrences2[-1])>2*sum(pixdiffs)/len(pixdiffs):
-                                print(f'probably too big of a difference between the two players')
+                                print(f'probably too big of a difference between the two players, pix diff: {abs(refrences1[-1]-refrences2[-1])} with percentage as {100*abs(refrences1[-1]-refrences2[-1])/refrences1[-1]}')
                             else:
                                 print(f'pix diff: {abs(refrences1[-1]-refrences2[-1])}')
                                 print(f'average pixel diff: {sum(pixdiffs)/(len(pixdiffs))}')
@@ -598,7 +637,7 @@ while cap.isOpened():
                                 print(f'pixel diff in percentage for p1: {pixdiff1percentage[-1]}')
                                 print(f'largest percentage pixel diff: {max(pixdiff1percentage)}')
                                 print(f'smallest percentage pixel diff: {min(pixdiff1percentage)}')
-
+                        '''
 
                                 
                     if player1imagerefrence is None:
@@ -632,9 +671,11 @@ while cap.isOpened():
                     if (len(refrences1) >1 and len(refrences2)>1):
                         if len(pixdiffs)<5:
                             pixdiffs.append(abs(refrences1[-1]-refrences2[-1]))
+                        '''
+                        USE FOR COSINE SIMILARITY BOOKMARK
                         else:
                             if abs(refrences1[-1]-refrences2[-1])>2*sum(pixdiffs)/len(pixdiffs):
-                                print(f'probably too big of a difference between the two players')
+                                print(f'probably too big of a difference between the two players with pix diff: {abs(refrences1[-1]-refrences2[-1])} with percentage as {100*abs(refrences2[-1]-refrences1[-1])/refrences2[-1]}')
                             else:
                                 print(f'pix diff: {abs(refrences1[-1]-refrences2[-1])}')
                                 print(f'average pixel diff: {sum(pixdiffs)/(len(pixdiffs))}')
@@ -642,7 +683,7 @@ while cap.isOpened():
                                 print(f'pixel diff in percentage for p2: {pixdiff2percentage[-1]}')
                                 print(f'largest percentage pixel diff: {max(pixdiff2percentage)}')
                                 print(f'smallest percentage pixel diff: {min(pixdiff2percentage)}')
-
+                        '''
 
 
                     #print(p2embeddings)
@@ -895,26 +936,32 @@ while cap.isOpened():
                 1,
             )
             plt.figure(figsize=(10, 6))
+            plt2=plt
             plt.plot(p1distancesfromT, color='blue', label='P1 Distance from T')
-            plt.plot(p2distancesfromT, color='red', label='P2 Distance from T')
+            plt2.plot(p2distancesfromT, color='red', label='P2 Distance from T')
 
             # Add labels and title
             plt.xlabel('Time (frames)')
+            plt2.xlabel('Time (frames)')
             plt.ylabel('Distance from T')
+            plt2.ylabel('Distance from T')
             plt.title('Distance from T over Time')
+            plt2.title('Distance from T over Time')
             plt.legend()
+            plt2.legend()
 
             # Save the plot to a file
-            plt.savefig('distance_from_t_over_time.png')
+            plt.savefig('distance_from_t_over_time1.png')
+            plt2.savefig('distance_from_t_over_time2.png')
 
             # Close the plot to free up memory
             plt.close()
+            plt2.close()
     for ref in refrence_points:
         # cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
         cv2.circle(annotated_frame, (ref[0], ref[1]), 5, (0, 255, 0), 2)
 
     # Display the annotated frame
-    cv2.imshow("Annotated Frame", annotated_frame)
     """
     COURT DETECTION
     for box in court[0].boxes:
@@ -959,10 +1006,33 @@ while cap.isOpened():
         # Save the combined image
         cv2.imwrite('heatmap_ankle.png', combined_image)
 
+    ballx=bally=0
+    #ball stuff
+    if mainball is not None and mainball.getlastpos() is not None and mainball.getlastpos() !=(0,0):
+        ballx=mainball.getlastpos()[0]
+        bally=mainball.getlastpos()[1]
+        if ballx!=0 and bally!=0:
+            if [ballx, bally] not in ballxy:
+                ballxy.append([ballx, bally])
+                #print(f'ballx: {ballx}, bally: {bally}, appended to ballxy with length {len(ballxy)}')
+    # Draw the ball trajectory
+    
+
+    #TODO: make this better because its drawing a circle for every past ball position every frame
+    if len(ballxy)>2:
+        for i in range(1,len(ballxy)):
+            if ballxy[i - 1] is None or ballxy[i] is None:
+                continue
+            #print(ballxy)
+            cv2.line(annotated_frame, (ballxy[i - 1][0], ballxy[i - 1][1]), (ballxy[i][0], ballxy[i][1]), (0, 255, 0), 2)
+    for ball_pos in ballxy:
+        #print(f'wrote to frame on line 1028 with coords: {ball_pos}')
+        cv2.circle(annotated_frame, (ball_pos[0], ball_pos[1]), 5, (0, 255, 0), -1)
 
 
-
+    ball_out.write(annotated_frame)
     out.write(annotated_frame)
+    cv2.imshow("Annotated Frame", annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
