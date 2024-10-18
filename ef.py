@@ -3,16 +3,8 @@ from ultralytics import YOLO
 import numpy as np
 import math
 from squash import Refrencepoints, Predict, Functions
-# Define the reference points in pixel coordinates (image)
-# These should be the coordinates of the reference points in the image
-#TODO: use embeddings to correctly find the different players
-
-# Load models
 pose_model = YOLO("models/yolo11m-pose.pt")
 ballmodel = YOLO("trained-models/g-ball2.pt")
-# racketmodel=YOLO('trained-models/squash-racket.pt')
-# courtmodel=YOLO('trained-models/court-key!.pt')
-# Video file path
 video_file = "Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4"
 video_folder = "full-games"
 path = "main.mp4"
@@ -28,51 +20,34 @@ last_frame = []
 for i in range(1, 3):
     occlusion_times[i] = 0
 from squash.Ball import Ball
-
-# Get video dimensions
 import logging
 from squash.Player import Player
-
 max_players = 2
 player_last_positions = {}
 frame_count = 0
 trackid1 = True
 trackid2 = True
 logging.getLogger("ultralytics").setLevel(logging.ERROR)
-output_path = "output/annotated.mp4"
+output_path = "annotated.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 file
 fps = 25  # Frames per second
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 ball_out = cv2.VideoWriter(ballvideopath, fourcc, fps, (frame_width, frame_height))
-
 avgp1ref=avgp2ref=0
 allp1refs=allp2refs=[]
-
-# Create a blank canvas for heatmap based on video resolution
-
 mainball = Ball(0, 0, 0, 0)
 ballmap = np.zeros((frame_height, frame_width), dtype=np.float32)
 playerRefrence1 = 0
 playerRefrence2 = 0
-# other track ids necessary as since players get occluded, im just going to assign that track id to the previous id(1 or 2) to the last occluded player
-# really need to fix this as if there are 2 occluded players, it will not work
 otherTrackIds = [[0, 0], [1, 1], [2, 2]]
 updated = [[False, 0], [False, 0]]
-
 refrence_points=Refrencepoints.get_refrence_points(path=path, frame_width=frame_width, frame_height=frame_height)
-
-
 refrences1 = []
 refrences2 = []
 diff = []
 diffTrack = False
 updateref=True
-"""
-def findRef(img):
-    return cv2.
-"""
 p1ref=p2ref=0
-
 p1embeddings = [[]]
 p2embeddings = [[]]
 pixdiffs=[]
@@ -80,50 +55,13 @@ pixdiff1percentage=pixdiff2percentage=[]
 avgcosinediff=0
 cosinediffs=[]
 from PIL import Image
-
-import torch
 player1imagerefrence=player2imagerefrence=None
 player1refrenceembeddings=player2refrenceembeddings=None
-
-
-
 p1distancesfromT = []
 p2distancesfromT = []
-
-
-
-
 player_move = [[]]
 courtref = np.int64(courtref)
 refrenceimage = None
-from skimage.metrics import structural_similarity as ssim_metric
-
-
-def is_camera_angle_switched(frame, refrence_image, threshold=0.5):
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    refrence_image_gray = cv2.cvtColor(refrence_image, cv2.COLOR_BGR2GRAY)
-    score, _ = ssim_metric(refrence_image_gray, frame_gray, full=True)
-    return score < threshold
-
-
-
-
-
-
-# note for anyone else seeing this:
-# [0] is x val and [1] is y val
-# refrence[0] is top left,
-# refrence[1] is top right
-# refrence[2] is bottom right
-# refrence[3] is bottom left
-# refrence[4] is left bottom of service box
-# refrence[5] is right bottom of service box
-# refrence[6] is T
-# refrence[7] is left of service line
-# refrence[8] is right of service line
-# refrence[9] is left of the top line of the front court
-# refrence[10] is right of the top line of the front court
-
 theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
 theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
 outlierdiffs=[]
@@ -132,22 +70,14 @@ heatmap_image=cv2.imread(heatmap_overlay_path)
 if heatmap_image is None:
     raise FileNotFoundError(f'Could not find heatmap overlay image at {heatmap_overlay_path}')
 heatmap_ankle=np.zeros_like(heatmap_image, dtype=np.float32)
-
 ballxy=[]
-
-
 running_frame=0
 while cap.isOpened():
     success, frame = cap.read()
-
     if not success:
         break
-
     frame = cv2.resize(frame, (frame_width, frame_height))
-
     frame_count += 1
-
-
     if frame_count == 1:
         print("frame 1")
         courtref = np.int64(
@@ -155,45 +85,18 @@ while cap.isOpened():
         )
         print(courtref)
         refrenceimage = frame
-    if frame_count>=450:
-        cap.release()
-        cv2.destroyAllWindows()
-
-    # frame count for debugging
-    # frame 240-300 is good for occlusion player tracking testing
-    if frame_count <= 200 and frame_count % 2 != 0:
-        continue
+    if frame_count>=250:
+        break
     running_frame+=1
     if running_frame>=500:
         updatedref=False
-
-
     if len(refrences1) !=0 and len(refrences2)!=0:
         avgp1ref=sum(refrences1)/len(refrences1)
         avgp2ref=sum(refrences2)/len(refrences2)
-
-
-    '''
-    if len(p1embeddings) != 0 and len(p2embeddings) != 0 and len(p1embeddings) > 1 and len(p2embeddings) > 1:
-        #print(len(p1embeddings[-1]))
-        #print(p1embeddings)
-        similarity_p1 = cosine_similarity(p1embeddings[-1], p2embeddings[-1])
-        similarity_p2 = cosine_similarity(p2embeddings[-1], p1embeddings[-1])
-        print(f"Cosine Similarity p1: {similarity_p1}")
-        print(f"Cosine Similarity p2: {similarity_p2}")
-    '''
-
-
-    if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
+    if Functions.is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
         print("camera angle switched")
         continue
-
-
-    #print(len(players))
-
     currentref = int(Functions.sum_pixels_in_bbox(frame, [0, 0, frame_width, frame_height]))
-
-    # general court refrence to only get the first camera angle throughout the video
     if abs(courtref - currentref) > courtref * 0.6:
         print("most likely not original camera frame")
         print("current ref: ", currentref)
@@ -203,27 +106,19 @@ while cap.isOpened():
             f"difference between current ref and court ref: {abs(courtref - currentref)}"
         )
         continue
-
-    # Pose and ball detection
     ball = ballmodel(frame)
     pose_results = pose_model(frame)
-    # racket_results=racketmodel(frame)
-    # only plot the top 2 confs
     annotated_frame = pose_results[0].plot()
-    # court_results=courtmodel(frame)
-    # Check if keypoints exist and are not empty
-    # print(pose_results)
     ballframe = frame.copy()
     for refrence in refrence_points:
         cv2.circle(frame, refrence, 5, (0, 255, 0), -1)
-
     if (
         pose_results[0].keypoints.xyn is not None
         and len(pose_results[0].keypoints.xyn[0]) > 0
     ):
         for person in pose_results[0].keypoints.xyn:
 
-            if len(person) >= 17:  # Ensure at least 17 keypoints are present
+            if len(person) >= 17: 
 
                 left_ankle_x = int(
                     person[16][0] * frame_width
@@ -539,15 +434,9 @@ while cap.isOpened():
                 / 2
             ) * frame_height
 
-
+    
     # Display ankle positions of both players
     if players.get(1) and players.get(2) is not None:
-        # print('line 263')
-        # print(f'players: {players}')
-        # print(f'players 1: {players.get(1)}')
-        # print(f'players 2: {players.get(2)}')
-        # print(f'players 1 latest pose: {players.get(1).get_latest_pose()}')
-        # print(f'players 2 latest pose: {players.get(2).get_latest_pose()}')
         if (
             players.get(1).get_latest_pose()
             or players.get(2).get_latest_pose() is not None
@@ -634,6 +523,7 @@ while cap.isOpened():
             avgpy1 = int((p1_left_ankle_y + p1_right_ankle_y) / 2)
             avgpx2 = int((p2_left_ankle_x + p2_right_ankle_x) / 2)
             avgpy2 = int((p2_left_ankle_y + p2_right_ankle_y) / 2)
+            '''
             # print(refrence_points)
             p1distancefromT = math.hypot(
                 refrence_points[6][0] - avgpx1, refrence_points[6][1] - avgpy1
@@ -685,22 +575,12 @@ while cap.isOpened():
             # Close the plot to free up memory
             plt.close()
             plt2.close()
+            '''
     for ref in refrence_points:
         # cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
         cv2.circle(annotated_frame, (ref[0], ref[1]), 5, (0, 255, 0), 2)
 
-    # Display the annotated frame
-    """
-    COURT DETECTION
-    for box in court[0].boxes:
-        coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
-        x1temp, y1temp, x2temp, y2temp = coords
-        label = courtmodel.names[int(box.cls)]
-        confidence = float(box.conf)
-        cv2.rectangle(annotated_frame, (int(x1temp), int(y1temp)), (int(x2temp), int(y2temp)), (0, 255, 0), 2)
-        cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-    
-"""
+
 
 
     if players.get(1).get_latest_pose() is not None and players.get(2).get_latest_pose() is not None:
@@ -734,6 +614,8 @@ while cap.isOpened():
         # Save the combined image
         cv2.imwrite('output/heatmap_ankle.png', combined_image)
 
+
+    
     ballx=bally=0
     #ball stuff
     if mainball is not None and mainball.getlastpos() is not None and mainball.getlastpos() != (0, 0):
