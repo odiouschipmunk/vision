@@ -30,3 +30,5 @@ main.mp4
 *.mp4
 *.dn
 squashvenv
+output
+positions(10k)
