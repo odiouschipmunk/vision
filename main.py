@@ -293,6 +293,7 @@ def main():
         cv2.rectangle(
             annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2
         )
+        
         cv2.putText(
             annotated_frame,
             f"{label} {highestconf:.2f}",
@@ -302,6 +303,7 @@ def main():
             (0, 255, 0),
             2,
         )
+
         # print(label)
         cv2.putText(
             annotated_frame,
