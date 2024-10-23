@@ -1,12 +1,17 @@
+
+
 def main():
+    """
+    The `main` function processes video frames to detect players, their poses, and the ball trajectory
+    in a squash game.
+    """
     import cv2
     from ultralytics import YOLO
     import numpy as np
     import math
-    from squash import Refrencepoints, Predict, Functions
+    from squash import Refrencepoints, Functions
     import tensorflow as tf
     import matplotlib
-
     matplotlib.use("Agg")
     from matplotlib import pyplot as plt
     from squash.Ball import Ball
@@ -62,6 +67,8 @@ def main():
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
+    with open("output/final.txt", "a") as f:
+        f.write(f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n")
     frame_width = 640
     frame_height = 360
     players = {}
@@ -171,6 +178,7 @@ def main():
 
     running_frame = 0
     print("started video input")
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     while cap.isOpened():
         success, frame = cap.read()
 
@@ -180,9 +188,6 @@ def main():
         frame = cv2.resize(frame, (frame_width, frame_height))
 
         frame_count += 1
-
-        # frame count for debugging
-        # frame 240-300 is good for occlusion player tracking testing
 
         if running_frame >= 500:
             updatedref = False
@@ -232,10 +237,10 @@ def main():
 
         # Pose and ball detection
         ball = ballmodel(frame)
-        pose_results = pose_model(frame)
+        #pose_results = pose_model(frame)
         # racket_results=racketmodel(frame)
         # only plot the top 2 confs
-        annotated_frame = pose_results[0].plot()
+        annotated_frame = frame.copy()#pose_results[0].plot()
         # court_results=courtmodel(frame)
         # Check if keypoints exist and are not empty
         # print(pose_results)
@@ -243,28 +248,6 @@ def main():
         for refrence in refrence_points:
             cv2.circle(frame, refrence, 5, (0, 255, 0), -1)
 
-        if (
-            pose_results[0].keypoints.xyn is not None
-            and len(pose_results[0].keypoints.xyn[0]) > 0
-        ):
-            for person in pose_results[0].keypoints.xyn:
-                if len(person) >= 17:  # Ensure at least 17 keypoints are present
-                    left_ankle_x = int(
-                        person[16][0] * frame_width
-                    )  # Scale the X coordinate
-                    left_ankle_y = int(
-                        person[16][1] * frame_height
-                    )  # Scale the Y coordinate
-                    right_ankle_x = int(
-                        person[15][0] * frame_width
-                    )  # Scale the X coordinate
-                    right_ankle_y = int(
-                        person[15][1] * frame_height
-                    )  # Scale the Y coordinate
-
-        else:
-            # print("No keypoints detected in this frame.")
-            continue
         highestconf = 0
         x1 = x2 = y1 = y2 = 0
         # Ball detection
@@ -314,9 +297,7 @@ def main():
             (0, 255, 0),
             2,
         )
-        cv2.circle(
-            ballframe, (int((x1 + x2) / 2), int((y1 + y2) / 2)), 5, (0, 255, 0), -1
-        )
+
         avg_x = int((x1 + x2) / 2)
         avg_y = int((y1 + y2) / 2)
         distance = 0
@@ -345,7 +326,7 @@ def main():
         FRAMEPOSE
         """
 
-        track_results = pose_model.track(frame, persist=True)
+        track_results = pose_model.track(frame, persist=True, show=False)
         try:
             if (
                 track_results
@@ -575,6 +556,29 @@ def main():
                             updated[1][0] = True
                             updated[1][1] = frame_count
                         print(f"Player {playerid} added.")
+                        
+                        
+                    #putting player keypoints on the frame
+                    for keypoint in kp:
+                        #print(keypoint.xyn[0])
+                        for k in keypoint.xyn[0]:
+                            x, y= k
+                            x=int(x*frame_width)
+                            y=int(y*frame_height)
+                            if playerid==1:
+                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), -1)
+                            else:
+                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), -1)
+                            cv2.putText(
+                                annotated_frame,
+                                f"{playerid}",
+                                (int(x), int(y)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.4,
+                                (255, 255, 255),
+                                1,
+                            )
+                        
         except Exception as e:
             print("GOT ERROR: ", e)
             pass
@@ -585,40 +589,7 @@ def main():
         # print(players.get(2).get_latest_pose())
 
         # print(len(players))
-        if players.get(1) and players.get(2) is not None:
-            if (
-                players.get(1).get_latest_pose()
-                and players.get(2).get_latest_pose() is not None
-            ):
-                p1x = (
-                    (
-                        players.get(1).get_latest_pose().xyn[0][16][0]
-                        + players.get(1).get_latest_pose().xyn[0][15][0]
-                    )
-                    / 2
-                ) * frame_width
-                p1y = (
-                    (
-                        players.get(1).get_latest_pose().xyn[0][16][1]
-                        + players.get(1).get_latest_pose().xyn[0][15][1]
-                    )
-                    / 2
-                ) * frame_height
-                p2x = (
-                    (
-                        players.get(2).get_latest_pose().xyn[0][16][0]
-                        + players.get(2).get_latest_pose().xyn[0][15][0]
-                    )
-                    / 2
-                ) * frame_width
-                p2y = (
-                    (
-                        players.get(2).get_latest_pose().xyn[0][16][1]
-                        + players.get(2).get_latest_pose().xyn[0][15][1]
-                    )
-                    / 2
-                ) * frame_height
-
+        
         # Display ankle positions of both players
         if players.get(1) and players.get(2) is not None:
             # print('line 263')
@@ -826,9 +797,9 @@ def main():
             if ballx != 0 and bally != 0:
                 if [ballx, bally] not in ballxy:
                     ballxy.append([ballx, bally, frame_count])
-                    print(
-                        f"ballx: {ballx}, bally: {bally}, appended to ballxy with length {len(ballxy)} and frame count as : {frame_count}"
-                    )
+                    # print(
+                    #     f"ballx: {ballx}, bally: {bally}, appended to ballxy with length {len(ballxy)} and frame count as : {frame_count}"
+                    # )
 
         # Draw the ball trajectory
         if len(ballxy) > 2:
@@ -858,12 +829,7 @@ def main():
                             (0, 255, 0),
                             -1,
                         )
-                        next_pos = Predict.predict_next_position(
-                            (ballxy[i - 1][0], ballxy[i - 1][1]),
-                            (ballxy[i][0], ballxy[i][1]),
-                            frame_width,
-                            frame_height,
-                        )
+
                         #cv2.circle(
                         #    annotated_frame,
                         #    (next_pos[0], next_pos[1]),
@@ -946,10 +912,12 @@ def main():
                 f.write(
                     f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
                 )
+            '''
             with open("output/final.txt", "a") as f:
-                text = f"Frame: {running_frame}\nPlayer 1: {p1postemp}\nPlayer 2: {p2postemp}\nBall: {mainball.getloc()}"
+                text = f"Frame: {running_frame}{{\nPlayer 1: {p1postemp}\n\nPlayer 2: {p2postemp}\n\nBall: {mainball.getloc()}}}\n\n"
                 f.write(f"{text}\n")
                 f.close()
+            '''
             # print(f'wrote!')
         if running_frame % 3 == 0:
             write()
