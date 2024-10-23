@@ -1,62 +1,61 @@
-import uuid
-import requests
-import cv2
-import torch
-from transformers import LlavaNextVideoProcessor, LlavaNextVideoForConditionalGeneration
+# pip install git+https://github.com/LLaVA-VL/LLaVA-NeXT.git
+from llava.model.builder import load_pretrained_model
+from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
+from llava.conversation import conv_templates, SeparatorStyle
 from PIL import Image
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model_id = "llava-hf/LLaVA-NeXT-Video-7B-hf"
-
-model = LlavaNextVideoForConditionalGeneration.from_pretrained(
-    model_id,
-    torch_dtype=torch.float16,
-    low_cpu_mem_usage=True,
-).to(device)
-
-processor = LlavaNextVideoProcessor.from_pretrained(model_id)
-
-def sample_frames(url, num_frames):
-    response = requests.get(url)
-    path_id = str(uuid.uuid4())
-
-    path = f"./{path_id}.mp4"
-
-    with open(path, "wb") as f:
-         f.write(response.content)
-
-    video = cv2.VideoCapture(path)
-    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    interval = total_frames // num_frames
-    frames = []
-    for i in range(total_frames):
-        ret, frame = video.read()
-        if not ret:
-            continue
-        if i % interval == 0:
-            pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            frames.append(pil_img)
-    video.release()
-    return frames
-
-conversation = [
-    {
-
-        "role": "user",
-        "content": [
-            {"type": "text", "text": "Why is this video funny?"},
-            {"type": "video"},
-            ],
-    },
-]
-
-prompt = processor.apply_chat_template(conversation, add_generation_prompt=True)
-
-video_url = "https://huggingface.co/spaces/merve/llava-interleave/resolve/main/cats_1.mp4"
-video = sample_frames(video_url, 8)
-
-inputs = processor(text=prompt, videos=video, padding=True, return_tensors="pt").to(model.device)
-
-output = model.generate(**inputs, max_new_tokens=100, do_sample=False)
-print(processor.decode(output[0][2:], skip_special_tokens=True))
-
-# Why is this video funny? ASSISTANT: The humor in this video comes from the cat's facial expression and body language. The cat appears to be making a funny face, with its eyes squinted and mouth open, which can be interpreted as a playful or mischievous expression. Cats often make such faces when they are in a good mood or are playful, and this can be amusing to people who are familiar with their behavior. The combination of the cat's expression and the close-
+import requests
+import copy
+import torch
+import sys
+import warnings
+from decord import VideoReader, cpu
+import numpy as np
+warnings.filterwarnings("ignore")
+def load_video(video_path, max_frames_num,fps=1,force_sample=False):
+    if max_frames_num == 0:
+        return np.zeros((1, 336, 336, 3))
+    vr = VideoReader(video_path, ctx=cpu(0),num_threads=1)
+    total_frame_num = len(vr)
+    video_time = total_frame_num / vr.get_avg_fps()
+    fps = round(vr.get_avg_fps()/fps)
+    frame_idx = [i for i in range(0, len(vr), fps)]
+    frame_time = [i/fps for i in frame_idx]
+    if len(frame_idx) > max_frames_num or force_sample:
+        sample_fps = max_frames_num
+        uniform_sampled_frames = np.linspace(0, total_frame_num - 1, sample_fps, dtype=int)
+        frame_idx = uniform_sampled_frames.tolist()
+        frame_time = [i/vr.get_avg_fps() for i in frame_idx]
+    frame_time = ",".join([f"{i:.2f}s" for i in frame_time])
+    spare_frames = vr.get_batch(frame_idx).asnumpy()
+    # import pdb;pdb.set_trace()
+    return spare_frames,frame_time,video_time
+pretrained = "lmms-lab/LLaVA-Video-7B-Qwen2"
+model_name = "llava_qwen"
+device = "cuda"
+device_map = "auto"
+tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, torch_dtype="bfloat16", device_map=device_map)  # Add any other thing you want to pass in llava_model_args
+model.eval()
+video_path = "output/annotated.mp4"
+max_frames_num = 64
+video,frame_time,video_time = load_video(video_path, max_frames_num, 1, force_sample=True)
+video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().half()
+video = [video]
+conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
+time_instruciton = f"The video lasts for {video_time:.2f} seconds, and {len(video[0])} frames are uniformly sampled from it. These frames are located at {frame_time}.Please answer the following questions related to this video."
+question = DEFAULT_IMAGE_TOKEN + f"{time_instruciton}\nAct as a coach for the player in the black(player 2). Tell me specific data about the player's performance in the video. For example, you should talk about the frame count, the positions, and ball positions and more."
+conv = copy.deepcopy(conv_templates[conv_template])
+conv.append_message(conv.roles[0], question)
+conv.append_message(conv.roles[1], None)
+prompt_question = conv.get_prompt()
+input_ids = tokenizer_image_token(prompt_question, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(device)
+cont = model.generate(
+    input_ids,
+    images=video,
+    modalities= ["video"],
+    do_sample=False,
+    temperature=0,
+    max_new_tokens=4096,
+)
+text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)[0].strip()
+print(text_outputs)
