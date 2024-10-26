@@ -79,7 +79,7 @@ def main():
         occlusion_times[i] = 0
     future_predict = None
     # Get video dimensions
-
+    biggestx=biggesty=smallestx=smallesty=0
     max_players = 2
     player_last_positions = {}
     frame_count = 0
@@ -110,7 +110,7 @@ def main():
     # really need to fix this as if there are 2 occluded players, it will not work
     otherTrackIds = [[0, 0], [1, 1], [2, 2]]
     updated = [[False, 0], [False, 0]]
-
+    refrence_points = []
     refrence_points = Refrencepoints.get_refrence_points(
         path=path, frame_width=frame_width, frame_height=frame_height
     )
@@ -150,19 +150,32 @@ def main():
         return score < threshold
 
     # note for anyone else seeing this:
-    # [0] is x val and [1] is y val
-    # refrence[0] is top left,
+    # refrence[0] is x val and [1] is y val
+    # refrence[0] is top left, 
     # refrence[1] is top right
     # refrence[2] is bottom right
     # refrence[3] is bottom left
-    # refrence[4] is left bottom of service box
-    # refrence[5] is right bottom of service box
-    # refrence[6] is T
+    # refrence[4] is T
+    # refrence[5] is left bottom of service box
+    # refrence[6] is right bottom of service box
     # refrence[7] is left of service line
     # refrence[8] is right of service line
     # refrence[9] is left of the top line of the front court
     # refrence[10] is right of the top line of the front court
-
+    reference_points_3d = [
+        [0, 0, 5.64],       # Top-left corner
+        [6.4, 0, 5.64],     # Top-right corner
+        [6.4, 9.75, 0],     # Bottom-right corner
+        [0, 9.75, 0],       # Bottom-left corner
+        [3.2, 5.44, 0],     # "T" point
+        [1.6, 5.44, 0],     # Left bottom of the service box
+        [4.8, 5.44, 0],     # Right bottom of the service box
+        [1.6, 0, 1.78],     # Left of the service line
+        [4.8, 0, 1.78],     # Right of the service line
+        [0, 0, 4.57],       # Left of the top line of the front court
+        [6.4, 0, 4.57]      # Right of the top line of the front court
+    ]    
+    
     theatmap1 = np.zeros((frame_height, frame_width), dtype=np.float32)
     theatmap2 = np.zeros((frame_height, frame_width), dtype=np.float32)
     outlierdiffs = []
@@ -208,6 +221,13 @@ def main():
             print(f"Cosine Similarity p1: {similarity_p1}")
             print(f"Cosine Similarity p2: {similarity_p2}")
         """
+        # if (biggestx == 0 or biggesty == 0 or smallestx == 0 or smallesty == 0) and len(refrence_points) == 11:
+        #     biggestx=refrence_points[2][0]
+        #     biggesty=refrence_points[9][1]
+        #     smallestx=refrence_points[0][0]
+        #     smallesty=refrence_points[3][1]
+        #     frame=frame[smallesty:biggesty, smallestx:biggestx]
+        
         if running_frame == 1:
             print("frame 1")
             courtref = np.int64(
@@ -216,7 +236,7 @@ def main():
             print(courtref)
             refrenceimage = frame
 
-        if is_camera_angle_switched(frame, refrenceimage, threshold=0.6):
+        if is_camera_angle_switched(frame, refrenceimage, threshold=0.5):
             print("camera angle switched")
             continue
 
@@ -245,8 +265,6 @@ def main():
         # Check if keypoints exist and are not empty
         # print(pose_results)
         ballframe = frame.copy()
-        for refrence in refrence_points:
-            cv2.circle(frame, refrence, 5, (0, 255, 0), -1)
 
         highestconf = 0
         x1 = x2 = y1 = y2 = 0
@@ -686,10 +704,10 @@ def main():
                 avgpy2 = int((p2_left_ankle_y + p2_right_ankle_y) / 2)
                 # print(refrence_points)
                 p1distancefromT = math.hypot(
-                    refrence_points[6][0] - avgpx1, refrence_points[6][1] - avgpy1
+                    refrence_points[4][0] - avgpx1, refrence_points[4][1] - avgpy1
                 )
                 p2distancefromT = math.hypot(
-                    refrence_points[6][0] - avgpx2, refrence_points[6][1] - avgpy2
+                    refrence_points[4][0] - avgpx2, refrence_points[4][1] - avgpy2
                 )
                 p1distancesfromT.append(p1distancefromT)
                 p2distancesfromT.append(p2distancefromT)
@@ -728,9 +746,6 @@ def main():
 
                 # Close the plot to free up memory
                 plt.close()
-        for ref in refrence_points:
-            # cv2.circle(frame1, (x, y), 5, (0, 255, 0), -1)
-            cv2.circle(annotated_frame, (ref[0], ref[1]), 5, (0, 255, 0), 2)
 
         # Display the annotated frame
         """
@@ -886,9 +901,35 @@ def main():
                 and players.get(2).get_last_x_poses(3) is not None
             )
         ):
-            p1postemp = players.get(1).get_last_x_poses(3).xyn[0]
-            p2postemp = players.get(2).get_last_x_poses(3).xyn[0]
-
+            p1postemp=players.get(1).get_last_x_poses(3).xyn[0]
+            p2postemp=players.get(2).get_last_x_poses(3).xyn[0]
+            rlp1postemp = [players.get(1).get_last_x_poses(3).xyn[0][16][0]*frame_width, players.get(1).get_last_x_poses(3).xyn[0][16][1]*frame_height]
+            rlp2postemp = [players.get(2).get_last_x_poses(3).xyn[0][16][0]*frame_width, players.get(2).get_last_x_poses(3).xyn[0][16][1]*frame_height]
+            print(f"Player 1: {rlp1postemp}")
+            rlworldp1=Functions.pixel_to_3d(rlp1postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d)
+            rlworldp2=Functions.pixel_to_3d(rlp2postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d)
+            text5=f"Player 1: {rlworldp1}"
+            text6=f"Player 2: {rlworldp2}"
+            cv2.putText(
+                annotated_frame,
+                text5,
+                (10, 50),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
+            )
+            cv2.putText(
+                annotated_frame,
+                text6,
+                (10, 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
+            )
+            Functions.transform_and_display(rlp1postemp, rlp2postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d, image=annotated_frame)
+            
         def write():
             with open("output/read_player1.txt", "a") as f:
                 f.write(f"{p1postemp}\n")

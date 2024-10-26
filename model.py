@@ -11,6 +11,9 @@ import sys
 import warnings
 from decord import VideoReader, cpu
 import numpy as np
+def read_text_file(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
 warnings.filterwarnings("ignore")
 def load_video(video_path, max_frames_num,fps=1,force_sample=False):
     if max_frames_num == 0:
@@ -41,9 +44,10 @@ max_frames_num = 64
 video,frame_time,video_time = load_video(video_path, max_frames_num, 1, force_sample=True)
 video = image_processor.preprocess(video, return_tensors="pt")["pixel_values"].cuda().half()
 video = [video]
+text_content=read_text_file("output/final.txt") 
 conv_template = "qwen_1_5"  # Make sure you use correct chat template for different models
 time_instruciton = f"The video lasts for {video_time:.2f} seconds, and {len(video[0])} frames are uniformly sampled from it. These frames are located at {frame_time}.Please answer the following questions related to this video."
-question = DEFAULT_IMAGE_TOKEN + f"{time_instruciton}\nAct as a coach for the player in the black(player 2). Tell me specific data about the player's performance in the video. For example, you should talk about the frame count, the positions, and ball positions and more."
+question = DEFAULT_IMAGE_TOKEN + f"{time_instruciton}\n{text_content}Act as a coach for the player in the black(player 2). Tell me specific data about the player's performance in the video. For example, you should talk about the frame count, the positions, and ball positions and more."
 conv = copy.deepcopy(conv_templates[conv_template])
 conv.append_message(conv.roles[0], question)
 conv.append_message(conv.roles[1], None)
@@ -59,3 +63,5 @@ cont = model.generate(
 )
 text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)[0].strip()
 print(text_outputs)
+with open("output/model_output.txt", "w") as f:
+    f.write(text_outputs)
