@@ -120,77 +120,87 @@ def pixel_to_3d(pixel_point, pixel_reference, reference_points_3d):
     return mapped_3d_point
 
 
+def ball_is_false_positive(past_ball_pos, threshold_frames=5):
+    if len(past_ball_pos) < threshold_frames:
+        return None
 
-def transform_and_display(player1_points, player2_points, pixel_reference, reference_points_3d, image):
+    # Get the last 10 frames
+    recent_positions = past_ball_pos[-threshold_frames:]
+
+    # Check for exact duplicates in the last 10 frames
+    for i in range(len(recent_positions)):
+        for j in range(i + 1, len(recent_positions)):
+            if recent_positions[i][:2] == recent_positions[j][:2]:
+                return recent_positions[i]
+
+    return None
+
+
+import cv2
+import numpy as np
+
+def calculate_homography(pixel_reference, reference_points_3d):
     """
-    Transforms and displays the positions of Player 1 and Player 2 using homography.
+    Calculate the homography matrix from pixel reference points to 2D real-world reference points.
 
     Parameters:
-        player1_points (list): List of [x, y] pixel points for Player 1.
-        player2_points (list): List of [x, y] pixel points for Player 2.
         pixel_reference (list): List of [x, y] reference points in pixels.
         reference_points_3d (list): List of [x, y, z] reference points in 3D space.
-        image (np.array): Original image with players to transform and display.
 
     Returns:
-        None: Displays the original and transformed images side-by-side.
+        np.array: Homography matrix.
     """
-    # Ensure player points are in 2D format
-    player1_points = np.array(player1_points, dtype=np.float32).reshape(-1, 2)
-    player2_points = np.array(player2_points, dtype=np.float32).reshape(-1, 2)
-
-    # Convert pixel_reference and reference_points_3d to numpy arrays for processing
+    # Convert 2D reference points and 3D points to NumPy arrays
     pixel_reference_np = np.array(pixel_reference, dtype=np.float32)
-    reference_points_2d = np.array([point[:2] for point in reference_points_3d], dtype=np.float32)  # Only x, y
+    reference_points_3d_np = np.array(reference_points_3d, dtype=np.float32)
 
-    # Verify that we have enough points for homography
-    if pixel_reference_np.shape[0] < 4 or reference_points_2d.shape[0] < 4:
-        print("Error: Not enough reference points for homography.")
-        return
+    # Extract only the x and y values from the 3D reference points for homography calculation
+    reference_points_2d = reference_points_3d_np[:, :2]
 
-    # Calculate the homography matrix to map the 2D pixel reference to real-world 2D reference
-    H, status = cv2.findHomography(pixel_reference_np, reference_points_2d)
-    
-    # Check if homography calculation was successful
-    if H is None:
-        print("Homography calculation failed.")
-        return
+    # Calculate the homography matrix
+    H, _ = cv2.findHomography(pixel_reference_np, reference_points_2d)
+    return H
 
-    # Apply homography to player points to get normalized view
-    player1_points_homogeneous = np.hstack([player1_points, np.ones((len(player1_points), 1))])
-    player2_points_homogeneous = np.hstack([player2_points, np.ones((len(player2_points), 1))])
+def transform_pixel_to_real_world(pixel_points, H):
+    """
+    Transform pixel points to real-world coordinates using the homography matrix.
 
-    # Transform the points for each player
-    transformed_player1 = (H @ player1_points_homogeneous.T).T
-    transformed_player2 = (H @ player2_points_homogeneous.T).T
+    Parameters:
+        pixel_points (list): List of [x, y] pixel coordinates to transform.
+        H (np.array): Homography matrix.
 
-    # Normalize by dividing by the third coordinate to get (x, y, 1)
-    transformed_player1 = transformed_player1[:, :2] / transformed_player1[:, 2][:, None]
-    transformed_player2 = transformed_player2[:, :2] / transformed_player2[:, 2][:, None]
+    Returns:
+        list: Transformed real-world coordinates in the form [x, y].
+    """
+    # Convert pixel points to homogeneous coordinates for matrix multiplication
+    pixel_points_homogeneous = np.append(pixel_points, 1)
 
-    # Draw original and transformed points on separate images for side-by-side comparison
-    image_original = image.copy()
-    
-    # Set destination image size explicitly to prevent black screen
-    h, w = image.shape[:2]
-    image_transformed = cv2.warpPerspective(image, H, (w, h))
+    # Apply the homography matrix to get a 2D point in real-world space
+    real_world_2d = np.dot(H, pixel_points_homogeneous)
+    real_world_2d /= real_world_2d[2]  # Normalize
 
-    # Draw original points on the original image
-    for (x, y) in player1_points:
-        cv2.circle(image_original, (int(x), int(y)), 5, (255, 0, 0), -1)  # Blue for Player 1
-    for (x, y) in player2_points:
-        cv2.circle(image_original, (int(x), int(y)), 5, (0, 255, 0), -1)  # Green for Player 2
+    return real_world_2d[:2]
 
-    # Draw transformed points on the transformed image
-    for (x, y) in transformed_player1:
-        cv2.circle(image_transformed, (int(x), int(y)), 5, (255, 0, 0), -1)  # Blue for Player 1
-    for (x, y) in transformed_player2:
-        cv2.circle(image_transformed, (int(x), int(y)), 5, (0, 255, 0), -1)  # Green for Player 2
+def display_player_positions(rlworldp1, rlworldp2):
+    """
+    Display the player positions on another screen using OpenCV.
 
-    # Combine images side-by-side for comparison
-    combined_image = np.hstack((image_original, image_transformed))
+    Parameters:
+        rlworldp1 (list): Real-world coordinates of player 1.
+        rlworldp2 (list): Real-world coordinates of player 2.
 
-    # Display the images
-    cv2.imshow("Original (Left) and Transformed (Right)", combined_image)
+    Returns:
+        None
+    """
+    # Create a blank image
+    display_image = np.ones((500, 500, 3), dtype=np.uint8) * 255
+
+    # Draw player positions
+    cv2.circle(display_image, (int(rlworldp1[0]), int(rlworldp1[1])), 5, (255, 0, 0), -1)  # Blue for player 1
+    cv2.circle(display_image, (int(rlworldp2[0]), int(rlworldp2[1])), 5, (0, 0, 255), -1)  # Red for player 2
+
+    # Display the image
+    cv2.imshow("Player Positions", display_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+

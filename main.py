@@ -63,14 +63,14 @@ def main():
     # Video file path
     video_file = "Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4"
     video_folder = "full-games"
-    path = "main.mp4"
+    path = "cropped_email_video.mp4"
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
     with open("output/final.txt", "a") as f:
         f.write(f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n")
-    frame_width = 640
-    frame_height = 360
+    frame_width = 1920
+    frame_height = 1080
     players = {}
     courtref = 0
     occlusion_times = {}
@@ -85,6 +85,8 @@ def main():
     frame_count = 0
     trackid1 = True
     trackid2 = True
+    ball_false_pos=[]
+    past_ball_pos=[]
     logging.getLogger("ultralytics").setLevel(logging.ERROR)
     output_path = "output/annotated.mp4"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for .mp4 file
@@ -189,6 +191,8 @@ def main():
 
     ballxy = []
 
+    homography=Functions.calculate_homography(refrence_points, reference_points_3d)
+    
     running_frame = 0
     print("started video input")
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -254,18 +258,29 @@ def main():
                 f"difference between current ref and court ref: {abs(courtref - currentref)}"
             )
             continue
-
+        if biggestx == 0 or biggesty == 0 or smallestx == 0 or smallesty == 0:
+            biggestx=refrence_points[2][0] or refrence_points[1][0] if refrence_points[2][0] < refrence_points[1][0] else refrence_points[2][0]
+            biggesty=refrence_points[3][1] or refrence_points[2][1] if refrence_points[3][1] < refrence_points[2][1] else refrence_points[2][1]
+            smallestx=refrence_points[0][0] or refrence_points[3][0] if refrence_points[0][0] > refrence_points[3][0] else refrence_points[3][0]
+            smallesty=refrence_points[9][1] or refrence_points[10][1] if refrence_points[9][1] > refrence_points[10][1] else refrence_points[10][1]
+            frame=cv2.resize(frame[smallesty:biggesty, smallestx:biggestx], (biggestx-smallestx, biggesty-smallesty))
+            print(f"biggest x: {biggestx}, biggest y: {biggesty}, smallest x: {smallestx}, smallest y: {smallesty}")
+            
         # Pose and ball detection
         ball = ballmodel(frame)
-        #pose_results = pose_model(frame)
+        pose_results = pose_model(frame)
         # racket_results=racketmodel(frame)
         # only plot the top 2 confs
-        annotated_frame = frame.copy()#pose_results[0].plot()
+        annotated_frame = pose_results[0].plot()
+        
         # court_results=courtmodel(frame)
         # Check if keypoints exist and are not empty
         # print(pose_results)
-        ballframe = frame.copy()
-
+        
+        #false_pos=Functions.ball_is_false_positive(past_ball_pos)
+        #if false_pos is not None:
+            #ball_false_pos.append(false_pos)
+            #print(f'ball false pos: {ball_false_pos}')
         highestconf = 0
         x1 = x2 = y1 = y2 = 0
         # Ball detection
@@ -325,6 +340,7 @@ def main():
                 # print(mainball.getlastpos())
                 # print(mainball.getloc())
                 mainball.update(avg_x, avg_y, size)
+                past_ball_pos.append([avg_x, avg_y, running_frame])
                 # print(mainball.getlastpos())
                 # print(mainball.getloc())
                 distance = math.hypot(
@@ -372,23 +388,23 @@ def main():
                         if updated[0][1] > updated[1][1]:
                             if len(refrences2) > 1:
                                 # comparing it to itself, if percentage is greater than 75, then its probably a different player
-                                if (100 * abs(psum - refrences2[-1]) / psum) > 75:
-                                    otherTrackIds.append([track_id, 1])
-                                    print(
-                                        f"added track id {track_id} to player 1 using image refrences, as image similarity was {100*abs(psum-refrences2[-1])/psum}"
-                                    )
-                                else:
-                                    otherTrackIds.append([track_id, 2])
-                                    print(f"added track id {track_id} to player 2")
-                        else:
-                            if (100 * abs(psum - refrences1[-1]) / psum) > 75:
+                                # if (100 * abs(psum - refrences2[-1]) / psum) > 75:
+                                #     otherTrackIds.append([track_id, 1])
+                                #     print(
+                                #         f"added track id {track_id} to player 1 using image refrences, as image similarity was {100*abs(psum-refrences2[-1])/psum}"
+                                #     )
+                                # else:
                                 otherTrackIds.append([track_id, 2])
-                                print(
-                                    f"added track id {track_id} to player 2 using image refrences, as image similarity was {100*abs(psum-refrences1[-1])/psum}"
-                                )
-                            else:
-                                otherTrackIds.append([track_id, 1])
-                                print(f"added track id {track_id} to player 1")
+                                print(f"added track id {track_id} to player 2")
+                        else:
+                            # if (100 * abs(psum - refrences1[-1]) / psum) > 75:
+                            #     otherTrackIds.append([track_id, 2])
+                            #     print(
+                            #         f"added track id {track_id} to player 2 using image refrences, as image similarity was {100*abs(psum-refrences1[-1])/psum}"
+                            #     )
+                            # else:
+                            otherTrackIds.append([track_id, 1])
+                            print(f"added track id {track_id} to player 1")
 
                     """
                     not updated with otherTrackIds
@@ -413,35 +429,35 @@ def main():
                     # if player 2 was updated last, then player 1 is next
                     # if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
                     elif updated[0][1] > updated[1][1]:
-                        if len(refrences2) > 1:
-                            # comparing it to itself, if percentage is greater than 75, then its probably a different player
-                            if (100 * abs(psum - refrences2[-1]) / psum) > 75:
-                                playerid = 1
-                            else:
-                                playerid = 2
-                        else:
-                            playerid = 2
+                        # if len(refrences2) > 1:
+                        #     # comparing it to itself, if percentage is greater than 75, then its probably a different player
+                        #     if (100 * abs(psum - refrences2[-1]) / psum) > 75:
+                        #         playerid = 1
+                        #     else:
+                        #         playerid = 2
+                        # else:
+                        playerid = 2
                         # player 1 was updated last
                     elif updated[0][1] < updated[1][1]:
-                        if len(refrences1) > 1:
-                            # comparing it to itself, if percentage is greater than 75, then its probably a different player
-                            if (100 * abs(psum - refrences1[-1]) / psum) > 75:
-                                playerid = 2
-                            else:
-                                playerid = 1
-                        else:
-                            playerid = 1
+                        # if len(refrences1) > 1:
+                        #     # comparing it to itself, if percentage is greater than 75, then its probably a different player
+                        #     if (100 * abs(psum - refrences1[-1]) / psum) > 75:
+                        #         playerid = 2
+                        #     else:
+                        #         playerid = 1
+                        # else:
+                        playerid = 1
                         # player 2 was updated last
                     elif updated[0][1] == updated[1][1]:
-                        if len(refrences1) > 1 and len(refrences2) > 1:
-                            if (100 * abs(psum - refrences1[-1]) / psum) > (
-                                100 * abs(psum - refrences2[-1]) / psum
-                            ):
-                                playerid = 2
-                            else:
-                                playerid = 1
-                        else:
-                            playerid = 1
+                        # if len(refrences1) > 1 and len(refrences2) > 1:
+                        #     if (100 * abs(psum - refrences1[-1]) / psum) > (
+                        #         100 * abs(psum - refrences2[-1]) / psum
+                        #     ):
+                        #         playerid = 2
+                        #     else:
+                        #         playerid = 1
+                        # else:
+                        playerid = 1
                         # both players were updated at the same time, so we are assuming that player 1 is the next player
                     else:
                         print(f"could not find player id for track id {track_id}")
@@ -579,6 +595,7 @@ def main():
                     #putting player keypoints on the frame
                     for keypoint in kp:
                         #print(keypoint.xyn[0])
+                        i=0
                         for k in keypoint.xyn[0]:
                             x, y= k
                             x=int(x*frame_width)
@@ -587,20 +604,25 @@ def main():
                                 cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), -1)
                             else:
                                 cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), -1)
-                            cv2.putText(
-                                annotated_frame,
-                                f"{playerid}",
-                                (int(x), int(y)),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.4,
-                                (255, 255, 255),
-                                1,
-                            )
+                            if i==16:
+                                cv2.putText(
+                                    annotated_frame,
+                                    f"{playerid}",
+                                    (int(x), int(y)),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.8,
+                                    (255, 255, 255),
+                                    3,
+                                )
+                            i+=1
                         
         except Exception as e:
             print("GOT ERROR: ", e)
             pass
-
+        
+        for refrence in refrence_points:
+            cv2.circle(annotated_frame, (int(refrence[0]), int(refrence[1])), 5, (0, 255, 0), 2)
+        
         # Save the heatmap
         # print(players)
         # print(players.get(1).get_latest_pose())
@@ -905,30 +927,54 @@ def main():
             p2postemp=players.get(2).get_last_x_poses(3).xyn[0]
             rlp1postemp = [players.get(1).get_last_x_poses(3).xyn[0][16][0]*frame_width, players.get(1).get_last_x_poses(3).xyn[0][16][1]*frame_height]
             rlp2postemp = [players.get(2).get_last_x_poses(3).xyn[0][16][0]*frame_width, players.get(2).get_last_x_poses(3).xyn[0][16][1]*frame_height]
-            print(f"Player 1: {rlp1postemp}")
+            #print(f"Player 1: {rlp1postemp}")
             rlworldp1=Functions.pixel_to_3d(rlp1postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d)
             rlworldp2=Functions.pixel_to_3d(rlp2postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d)
-            text5=f"Player 1: {rlworldp1}"
-            text6=f"Player 2: {rlworldp2}"
-            cv2.putText(
-                annotated_frame,
-                text5,
-                (10, 50),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (255, 255, 255),
-                1,
-            )
-            cv2.putText(
-                annotated_frame,
-                text6,
-                (10, 70),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (255, 255, 255),
-                1,
-            )
-            Functions.transform_and_display(rlp1postemp, rlp2postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d, image=annotated_frame)
+            homop1=Functions.transform_pixel_to_real_world(rlp1postemp, homography)
+            homop2=Functions.transform_pixel_to_real_world(rlp2postemp, homography)
+            
+            # text5=f"Player 1: {rlworldp1}"
+            # text6=f"Player 2: {rlworldp2}"
+            # text7=f"Player 1: {homop1}"
+            # text8=f"Player 2: {homop2}"
+            
+            # cv2.putText(
+            #     annotated_frame,
+            #     text5,
+            #     (10, 50),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.4,
+            #     (255, 255, 255),
+            #     1,
+            # )
+            # cv2.putText(
+            #     annotated_frame,
+            #     text6,
+            #     (10, 70),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.4,
+            #     (255, 255, 255),
+            #     1,
+            # )
+            # cv2.putText(
+            #     annotated_frame,
+            #     text7,
+            #     (10, 90),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.4,
+            #     (255, 255, 255),
+            #     1,
+            # )
+            # cv2.putText(
+            #     annotated_frame,
+            #     text8,
+            #     (10, 110),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.4,
+            #     (255, 255, 255),
+            #     1,
+            # )
+            # Functions.transform_and_display(rlp1postemp, rlp2postemp, pixel_reference=refrence_points, reference_points_3d=reference_points_3d, image=annotated_frame)
             
         def write():
             with open("output/read_player1.txt", "a") as f:

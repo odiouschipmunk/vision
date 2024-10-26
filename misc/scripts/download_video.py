@@ -15,12 +15,16 @@ with open(file_path, 'r') as file:
 # Strip any whitespace characters like `\n` at the end of each line
 youtube_links = [link.strip() for link in youtube_links]
 
-# Function to download a YouTube video
+# Function to download a YouTube video at 1080p
 def download_video(url):
     try:
         yt = YouTube(url)
-        stream = yt.streams.get_highest_resolution()
-        print(f"Downloading {yt.title}...")
+        # Filter streams to get the 1080p stream
+        stream = yt.streams.filter(res="720p", progressive=True).first()
+        if not stream:
+            print(f"1080p stream not available for {yt.title}. Downloading highest resolution available.")
+            stream = yt.streams.get_highest_resolution()
+        print(f"Downloading {yt.title} at {stream.resolution}...")
         stream.download()
         print(f"Downloaded {yt.title}")
     except Exception as e:

@@ -2,5 +2,6 @@
     "python.analysis.autoImportCompletions": false,
     "python.analysis.typeCheckingMode": "off",
     "docwriter.style": "Auto-detect",
-    "docwriter.progress.trackFunctions": false
+    "docwriter.progress.trackFunctions": false,
+    "wolf.disableHotModeWarning": true
 }

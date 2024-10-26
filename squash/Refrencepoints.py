@@ -1,4 +1,5 @@
 import cv2, json, os
+refrence_points = []
 def get_refrence_points(path, frame_width, frame_height):
     # Mouse callback function to capture click events
     def click_event(event, x, y, flags, params):
@@ -45,7 +46,7 @@ def get_refrence_points(path, frame_width, frame_height):
         print(
             "Click on the key points of the court. Press 's' to save and 'q' to quit.\nMake sure to click in the following order shown by the example"
         )
-        example_image = cv2.imread("output/annotated-squashcourt.png")
+        example_image = cv2.imread("output/annotated-squash-court.png")
         example_image_resized = cv2.resize(example_image, (frame_width, frame_height))
         cv2.imshow("Court Example", example_image_resized)
         while True:
