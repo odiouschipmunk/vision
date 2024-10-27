@@ -24,7 +24,7 @@ def main():
     # Define the reference points in pixel coordinates (image)
     # These should be the coordinates of the reference points in the image
     # TODO: use embeddings to correctly find the different players
-    ball_predict = tf.keras.models.load_model("ball_position_model(10000).keras")
+    ball_predict = tf.keras.models.load_model("ball_position_model(25k).keras")
 
     def load_data(file_path):
         """
@@ -69,8 +69,8 @@ def main():
     cap = cv2.VideoCapture(path)
     with open("output/final.txt", "a") as f:
         f.write(f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n")
-    frame_width = 640
-    frame_height = 360
+    frame_width = 1920
+    frame_height = 1080
     players = {}
     courtref = 0
     occlusion_times = {}
@@ -208,7 +208,7 @@ def main():
 
         if running_frame >= 500:
             updatedref = False
-        if frame_count >= 25000:
+        if frame_count >= 250:
             cap.release()
             cv2.destroyAllWindows()
         if len(refrences1) != 0 and len(refrences2) != 0:
@@ -281,10 +281,10 @@ def main():
 
         # Pose and ball detection
         ball = ballmodel(frame)
-        pose_results = pose_model(frame)
+        #pose_results = pose_model(frame)
         # racket_results=racketmodel(frame)
         # only plot the top 2 confs
-        annotated_frame = frame.copy()
+        annotated_frame = frame.copy()#pose_results[0].plot()
         
         # court_results=courtmodel(frame)
         # Check if keypoints exist and are not empty
@@ -614,9 +614,9 @@ def main():
                             x=int(x*frame_width)
                             y=int(y*frame_height)
                             if playerid==1:
-                                cv2.circle(annotated_frame, (int(x), int(y)), 5, (0, 0, 255), 5)
+                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5)
                             else:
-                                cv2.circle(annotated_frame, (int(x), int(y)), 5, (255, 0, 0), -5)
+                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5)
                             if i==16:
                                 cv2.putText(
                                     annotated_frame,
@@ -907,9 +907,9 @@ def main():
                     int(predicted_pos[0][0] * frame_width),
                     int(predicted_pos[0][1] * frame_height),
                 ),
-                10,
+                7,
                 (0, 0, 255),
-                10,
+                7,
             )
             cv2.putText(
                 annotated_frame,
@@ -933,9 +933,9 @@ def main():
                     int(future_predict[0][0] * frame_width),
                     int(future_predict[0][1] * frame_height),
                 ),
-                10,
+                7,
                 (255, 0, 0),
-                10,
+                7,
             )
             cv2.putText(
                 annotated_frame,

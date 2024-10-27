@@ -41,7 +41,8 @@ def prepare_dataset(positions, n_steps=10):
 
 
 def main():
-    
+    import time
+    starttime=time.time()
     # CNN model definition
     model = Sequential()
 
@@ -62,7 +63,7 @@ def main():
     model.compile(optimizer='adam', loss='mse')
 
     # Load ball positions from a file
-    positions = load_data('ball_predict(25k)\\output\\ball-xyn.txt')
+    positions = load_data('output(25k)\\output\\ball-xyn.txt')
     print(positions)
     
     # Prepare the dataset
@@ -72,7 +73,7 @@ def main():
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
     
     # Train the CNN model
-    history = model.fit(X_train, y_train, epochs=1000, validation_data=(X_val, y_val), batch_size=16)
+    history = model.fit(X_train, y_train, epochs=5000, validation_data=(X_val, y_val), batch_size=4)
     # Evaluate on validation set
     val_loss = model.evaluate(X_val, y_val)
     print(f'Validation Loss: {val_loss}')
@@ -85,6 +86,7 @@ def main():
 
     predicted_position = model.predict(input_sequence)
     print(f'Predicted next position: {predicted_position}')
+    print(f'took {time.time()-starttime} seconds')
     
 
 
