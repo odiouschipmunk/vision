@@ -63,14 +63,14 @@ def main():
     # Video file path
     video_file = "Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4"
     video_folder = "full-games"
-    path = "cropped_email_video.mp4"
+    path = "main.mp4"
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
     with open("output/final.txt", "a") as f:
         f.write(f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n")
-    frame_width = 1920
-    frame_height = 1080
+    frame_width = 640
+    frame_height = 360
     players = {}
     courtref = 0
     occlusion_times = {}
@@ -208,7 +208,7 @@ def main():
 
         if running_frame >= 500:
             updatedref = False
-        if frame_count >= 10000:
+        if frame_count >= 25000:
             cap.release()
             cv2.destroyAllWindows()
         if len(refrences1) != 0 and len(refrences2) != 0:
@@ -258,20 +258,33 @@ def main():
                 f"difference between current ref and court ref: {abs(courtref - currentref)}"
             )
             continue
-        if biggestx == 0 or biggesty == 0 or smallestx == 0 or smallesty == 0:
-            biggestx=refrence_points[2][0] or refrence_points[1][0] if refrence_points[2][0] < refrence_points[1][0] else refrence_points[2][0]
-            biggesty=refrence_points[3][1] or refrence_points[2][1] if refrence_points[3][1] < refrence_points[2][1] else refrence_points[2][1]
-            smallestx=refrence_points[0][0] or refrence_points[3][0] if refrence_points[0][0] > refrence_points[3][0] else refrence_points[3][0]
-            smallesty=refrence_points[9][1] or refrence_points[10][1] if refrence_points[9][1] > refrence_points[10][1] else refrence_points[10][1]
-            frame=cv2.resize(frame[smallesty:biggesty, smallestx:biggestx], (biggestx-smallestx, biggesty-smallesty))
-            print(f"biggest x: {biggestx}, biggest y: {biggesty}, smallest x: {smallestx}, smallest y: {smallesty}")
+        # if biggestx == 0 or biggesty == 0 or smallestx == 0 or smallesty == 0:
+        #     original_width, original_height = frame.shape[:2]
             
+        #     # Set largest and smallest x and y coordinates based on `reference_points`
+        #     biggestx = max(refrence_points[2][0], refrence_points[1][0])
+        #     biggesty = max(refrence_points[3][1], refrence_points[2][1])
+        #     smallestx = min(refrence_points[0][0], refrence_points[3][0])
+        #     smallesty = min(refrence_points[9][1], refrence_points[10][1])
+            
+        #     if smallestx < biggestx and smallesty < biggesty:
+        #         try:
+        #             cropped_frame = frame[smallesty:biggesty, smallestx:biggestx]
+        #             frame = cv2.resize(cropped_frame, (original_width, original_height))
+        #         except cv2.error:
+        #             print("Error during crop/resize operation - using original frame")
+        #     else:
+        #         print("Invalid crop dimensions - using original frame")
+
+        #     # Debug print
+        #     print(f"biggest x: {biggestx}, biggest y: {biggesty}, smallest x: {smallestx}, smallest y: {smallesty}")
+
         # Pose and ball detection
         ball = ballmodel(frame)
         pose_results = pose_model(frame)
         # racket_results=racketmodel(frame)
         # only plot the top 2 confs
-        annotated_frame = pose_results[0].plot()
+        annotated_frame = frame.copy()
         
         # court_results=courtmodel(frame)
         # Check if keypoints exist and are not empty
@@ -601,9 +614,9 @@ def main():
                             x=int(x*frame_width)
                             y=int(y*frame_height)
                             if playerid==1:
-                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), -1)
+                                cv2.circle(annotated_frame, (int(x), int(y)), 5, (0, 0, 255), 5)
                             else:
-                                cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), -1)
+                                cv2.circle(annotated_frame, (int(x), int(y)), 5, (255, 0, 0), -5)
                             if i==16:
                                 cv2.putText(
                                     annotated_frame,
@@ -894,9 +907,18 @@ def main():
                     int(predicted_pos[0][0] * frame_width),
                     int(predicted_pos[0][1] * frame_height),
                 ),
-                5,
+                10,
                 (0, 0, 255),
-                -1,
+                10,
+            )
+            cv2.putText(
+                annotated_frame,
+                f"predicted ball position in 1 frame: {int(predicted_pos[0][0]*frame_width)},{int(predicted_pos[0][1]*frame_height)}",
+                (int(predicted_pos[0][0]*frame_width), int(predicted_pos[0][1]*frame_height)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
             )
             last9 = positions[-9:]
             last9.append([predicted_pos[0][0], predicted_pos[0][1]])
@@ -911,9 +933,18 @@ def main():
                     int(future_predict[0][0] * frame_width),
                     int(future_predict[0][1] * frame_height),
                 ),
-                5,
+                10,
                 (255, 0, 0),
-                -1,
+                10,
+            )
+            cv2.putText(
+                annotated_frame,
+                f"predicted ball position in 3 frames: {int(future_predict[0][0]*frame_width)},{int(future_predict[0][1]*frame_height)}",
+                (int(future_predict[0][0]*frame_width), int(future_predict[0][1]*frame_height)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
             )
         if (
             players.get(1)
