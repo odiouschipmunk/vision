@@ -1,5 +1,6 @@
 import numpy as np
-import clip, torch
+import clip
+import torch
 import cv2
 def find_match_2d_array(array, x):
     for i in range(len(array)):
@@ -120,46 +121,7 @@ def pixel_to_3d(pixel_point, pixel_reference, reference_points_3d):
     return mapped_3d_point
 
 
-def ball_is_false_positive(past_ball_pos, threshold_frames=5):
-    if len(past_ball_pos) < threshold_frames:
-        return None
 
-    # Get the last 10 frames
-    recent_positions = past_ball_pos[-threshold_frames:]
-
-    # Check for exact duplicates in the last 10 frames
-    for i in range(len(recent_positions)):
-        for j in range(i + 1, len(recent_positions)):
-            if recent_positions[i][:2] == recent_positions[j][:2]:
-                return recent_positions[i]
-
-    return None
-
-
-import cv2
-import numpy as np
-
-def calculate_homography(pixel_reference, reference_points_3d):
-    """
-    Calculate the homography matrix from pixel reference points to 2D real-world reference points.
-
-    Parameters:
-        pixel_reference (list): List of [x, y] reference points in pixels.
-        reference_points_3d (list): List of [x, y, z] reference points in 3D space.
-
-    Returns:
-        np.array: Homography matrix.
-    """
-    # Convert 2D reference points and 3D points to NumPy arrays
-    pixel_reference_np = np.array(pixel_reference, dtype=np.float32)
-    reference_points_3d_np = np.array(reference_points_3d, dtype=np.float32)
-
-    # Extract only the x and y values from the 3D reference points for homography calculation
-    reference_points_2d = reference_points_3d_np[:, :2]
-
-    # Calculate the homography matrix
-    H, _ = cv2.findHomography(pixel_reference_np, reference_points_2d)
-    return H
 
 def transform_pixel_to_real_world(pixel_points, H):
     """
@@ -204,3 +166,142 @@ def display_player_positions(rlworldp1, rlworldp2):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+
+#function to determine if an array has a false positive in the last threshold frames
+def is_ball_false_pos(ball_pos, threshold=5):
+    if len(ball_pos) < threshold:
+        return False
+    #assuming the ball_pos array is formatted as [[x1,y1,frame1],[x2,y2,frame2],...]
+    #sort the array by frame number
+    ball_pos.sort(key=lambda x: x[2])
+    #get the last threshold positions
+    thresh_pos=ball_pos[-threshold:]
+    #go through each position and check if the x and y values are the same
+    for i in range(1,threshold):
+        for j in range(0, i):
+            if i==j:
+                continue
+            if thresh_pos[i][0] == thresh_pos[j][0] and thresh_pos[i][1] == thresh_pos[j][1]:
+                return True
+    return False
+
+def validate_reference_points(px_points, rl_points):
+
+    """
+    Validate reference points for homography calculation.
+    
+    Parameters:
+        px_points: List of pixel coordinates [[x, y], ...]
+        rl_points: List of real-world coordinates [[X, Y, Z], ...] or [[X, Y], ...]
+        
+    Returns:
+        Tuple[bool, str]: (is_valid, error_message)
+    """
+    if len(px_points) != len(rl_points):
+        return False, "Number of pixel and real-world points must match"
+        
+    if len(px_points) < 4:
+        return False, "At least 4 point pairs are required for homography calculation"
+        
+    # Check pixel points format
+    if not all(len(p) == 2 for p in px_points):
+        return False, "Pixel points must be 2D coordinates [x, y]"
+        
+    # Check real-world points format
+    if not all(len(p) in [2, 3] for p in rl_points):
+        return False, "Real-world points must be either 2D [X, Y] or 3D [X, Y, Z] coordinates"
+        
+    return True, ""
+
+#function to generate homography based on referencepoints in the video in pixel[x,y] format and also real world reference points in the form of [x,y,z] in meters
+def generate_homography(px_reference_points, rl_reference_points):
+    """
+    Generate a homography matrix from pixel to real-world coordinates.
+
+    Parameters:
+        px_reference_points (list): List of pixel reference points [[x, y], ...].
+        rl_reference_points (list): List of real-world reference points [[X, Y, Z], ...].
+
+    Returns:
+        np.array: Homography matrix that maps pixel points to real-world points.
+    """
+    # Convert reference points to NumPy arrays for processing
+    px_reference_points_np = np.array(px_reference_points, dtype=np.float32)
+    rl_reference_points_np = np.array(rl_reference_points, dtype=np.float32)
+
+    # Use only X and Y for homography as it’s a 2D transformation
+    rl_reference_points_2d = rl_reference_points_np[:, :2]
+
+    # Compute the homography matrix
+    H, _ = cv2.findHomography(px_reference_points_np, rl_reference_points_2d)
+
+    return H
+
+def pixel_to_3d(pixel_point, H, rl_reference_points):
+    """
+    Convert a pixel point to an interpolated 3D real-world point using the homography matrix.
+
+    Parameters:
+        pixel_point (list): Pixel coordinate [x, y] to transform.
+        H (np.array): Homography matrix from `generate_homography`.
+        rl_reference_points (list): List of real-world coordinates [[X, Y, Z], ...].
+
+    Returns:
+        list: Estimated interpolated 3D coordinate in the form [X, Y, Z].
+    """
+    # Convert pixel point to homogeneous coordinates
+    pixel_point_homogeneous = np.array([*pixel_point, 1])
+
+    # Map pixel point to real-world 2D using the homography matrix
+    real_world_2d = np.dot(H, pixel_point_homogeneous)
+    real_world_2d /= real_world_2d[2]  # Normalize to get actual coordinates
+
+    # Convert real-world reference points to NumPy array
+    rl_reference_points_np = np.array(rl_reference_points, dtype=np.float32)
+
+    # Calculate distances in the X-Y plane
+    distances = np.linalg.norm(rl_reference_points_np[:, :2] - real_world_2d[:2], axis=1)
+
+    # Calculate weights inversely proportional to distances for interpolation
+    weights = 1 / (distances + 1e-6)  # Avoid division by zero with epsilon
+    weights /= weights.sum()  # Normalize weights to sum to 1
+
+    # Perform weighted interpolation for the X, Y, and Z coordinates
+    interpolated_x = np.dot(weights, rl_reference_points_np[:, 0])
+    interpolated_y = np.dot(weights, rl_reference_points_np[:, 1])
+    interpolated_z = np.dot(weights, rl_reference_points_np[:, 2])
+
+    return [round(interpolated_x, 3), round(interpolated_y, 3), round(interpolated_z, 3)]
+
+
+def apply_homography(H, points, inverse=False):
+
+    """
+    Apply homography transformation to a set of points.
+    
+    Parameters:
+        H: 3x3 homography matrix
+        points: List of points to transform [[x, y], ...]
+        inverse: If True, applies inverse transformation
+        
+    Returns:
+        np.ndarray: Transformed points
+    """
+    try:
+        points = np.array(points, dtype=np.float32)
+        if points.ndim == 1:
+            points = points.reshape(1, 2)
+        
+        if inverse:
+            H = np.linalg.inv(H)
+        
+        # Reshape points to Nx1x2 format required by cv2.perspectiveTransform
+        points_reshaped = points.reshape(-1, 1, 2)
+        
+        # Apply transformation
+        transformed_points = cv2.perspectiveTransform(points_reshaped, H)
+        
+        return transformed_points.reshape(-1, 2)
+        
+    except Exception as e:
+        raise ValueError(f"Error in apply_homography: {str(e)}")

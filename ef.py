@@ -2,7 +2,7 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 import math
-from squash import Refrencepoints, Predict, Functions
+from squash import Referencepoints, Predict, Functions
 pose_model = YOLO("models/yolo11m-pose.pt")
 ballmodel = YOLO("trained-models/g-ball2.pt")
 video_file = "Squash Farag v Hesham - Houston Open 2022 - Final Highlights.mp4"
@@ -41,7 +41,7 @@ playerRefrence1 = 0
 playerRefrence2 = 0
 otherTrackIds = [[0, 0], [1, 1], [2, 2]]
 updated = [[False, 0], [False, 0]]
-refrence_points=Refrencepoints.get_refrence_points(path=path, frame_width=frame_width, frame_height=frame_height)
+refrence_points=Referencepoints.get_refrence_points(path=path, frame_width=frame_width, frame_height=frame_height)
 refrences1 = []
 refrences2 = []
 diff = []
