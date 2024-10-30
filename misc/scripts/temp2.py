@@ -1,8 +1,16 @@
-from PIL import Image
+from roboflow import Roboflow
+import os
+from tqdm import tqdm
+# Initialize the Roboflow object with your API key
+rf = Roboflow(api_key="H5poEcoPV7ZdfhbwdTAN")
 
-# Create a white image of size 640x360
-width, height = 640, 360
-white_image = Image.new('RGB', (width, height), color='white')
+# Retrieve your current workspace and project name
+print(rf.workspace())
 
-# Save the image as white.png
-white_image.save('white.png')
+# Specify the project for upload
+# let's you have a project at https://app.roboflow.com/my-workspace/my-project
+workspaceId = 'squash-vision'
+projectId = 'squash-black-ball'
+project = rf.workspace(workspaceId).project(projectId)
+for filename in tqdm(os.listdir('black_ball_frames')):
+    project.upload(f'black_ball_frames/{filename}')
