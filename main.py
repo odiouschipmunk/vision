@@ -180,18 +180,35 @@ def main():
     running_frame = 0
     print("started video input")
     int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    
+    slice_width = 150
+    slice_height = 150
+    overlap = 50  # Overlap between slices
+
     Functions.validate_reference_points(reference_points, reference_points_3d)
     while cap.isOpened():
         success, frame = cap.read()
 
         if not success:
             break
-
+        
         frame = cv2.resize(frame, (frame_width, frame_height))
-
+        #make it so that annotated frame goes from left to right and then goes back to left and repeats again
+        #annotated frame should be the size of sliced_x and sliced_y and shouldn't be just resizing the frame to that size
+        #instead, it should be taking the frame and then slicing it into the size of sliced_x and sliced_y
+        #then, it should be taking the sliced frame and then putting it into the annotated frame
+        #after that, it should be going left to right
+        #if it reaches the end of the frame, then it should go back to the left and then go down
         frame_count += 1
-
+        x_steps = range(0, frame_width, slice_width - overlap)
+        y_steps = range(0, frame_height, slice_height - overlap)
+        detections=[]
+        for y in y_steps:
+            for x in x_steps:
+                x_start=x
+                y_start=y
+                x_end=min(x_start+slice_width, frame_width)
+                y_end=min(y_start+slice_height, frame_height)
+                slice_frame=frame[y_start:y_end, x_start:x_end]
         if running_frame >= 500:
             pass
         if frame_count >= 250:

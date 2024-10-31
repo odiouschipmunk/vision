@@ -2,7 +2,7 @@ from roboflow import Roboflow
 import os
 from tqdm import tqdm
 # Initialize the Roboflow object with your API key
-rf = Roboflow(api_key="H5poEcoPV7ZdfhbwdTAN")
+rf = Roboflow(api_key=os.environ['ROBOFLOW_API_KEY'])
 
 # Retrieve your current workspace and project name
 print(rf.workspace())
