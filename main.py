@@ -58,11 +58,11 @@ def main():
         f.write("")
     # Load models
     pose_model = YOLO("models/yolo11m-pose.pt")
-    ballmodel = YOLO("trained-models/g-ball2.pt")
+    ballmodel = YOLO("black_ball_v1(640and15epoc).pt")
     # racketmodel=YOLO('trained-models/squash-racket.pt')
     # courtmodel=YOLO('trained-models/court-key!.pt')
     # Video file path
-    path = "main.mp4"
+    path = "black_ball_games\\3.mp4"
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
