@@ -33,14 +33,17 @@ def get_reference_points(path, frame_width, frame_height):
         print(
             "No reference points file found. Please click on the court to set reference points."
         )
+        frame_count=1
         cap2 = cv2.VideoCapture(path)
-        if not cap2.isOpened():
-            print("Error opening video file")
-            exit()
-        ret1, frame1 = cap2.read()
-        if not ret1:
-            print("Error reading video file")
-            exit()
+        frame1=None
+        while cap2.isOpened():
+            success, frame=cap2.read()
+            if not success:
+                break
+            frame_count+=1
+            if frame_count==100:
+                frame1=frame
+                break
         frame1 = cv2.resize(frame1, (frame_width, frame_height))
         cv2.imshow("Court", frame1)
         cv2.setMouseCallback("Court", click_event)
