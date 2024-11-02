@@ -556,18 +556,18 @@ def framepose(
                     x = int(x * frame_width)
                     y = int(y * frame_height)
                     if playerid == 1:
-                        cv2.circle(annotated_frame, (int(x), int(y)), 2, (0, 0, 255), 3)
+                        cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5)
                     else:
-                        cv2.circle(annotated_frame, (int(x), int(y)), 2, (255, 0, 0), 3)
+                        cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5)
                     if i == 16:
                         cv2.putText(
                             annotated_frame,
                             f"{playerid}",
                             (int(x), int(y)),
                             cv2.FONT_HERSHEY_SIMPLEX,
-                            0.8,
+                            2.5,
                             (255, 255, 255),
-                            3,
+                            7,
                         )
                     i += 1
     return [
@@ -627,7 +627,7 @@ def sum_pixels_in_bbox(frame, bbox):
 
 import math
 
-
+from squash import inferenceslicing
 def ballplayer_detections(
     frame,
     frame_height,
@@ -650,10 +650,12 @@ def ballplayer_detections(
     players,
     player_last_positions,
 ):
+    ball_detection_results = []
     highestconf = 0
     x1 = x2 = y1 = y2 = 0
     # Ball detection
-    ball = ballmodel(frame)
+    ball=ballmodel(frame)
+
     if Functions.is_ball_false_pos(past_ball_pos, threshold=15):
         ball_false_pos.append(past_ball_pos[-1])
     label = ""
@@ -720,8 +722,7 @@ def ballplayer_detections(
                 mainball.getlastpos()[1],
                 ballmap,
             )
-
-        """
+    """
     FRAMEPOSE
     """
     # going to take frame, sum_pixels_in_bbox, otherTrackIds, updated, player1+2imagereference, pixdiffs, refrences1+2, players,

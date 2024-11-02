@@ -119,22 +119,20 @@ def print_pose_data(parsed_data):
     print(f"\nBall Position: {parsed_data['ball_position']}")
     print("\n" + "="*50 + "\n")
 
-# Example usage
 def main():
-    filename = "output(25k)/output/final.txt" 
+    filename = "30fps1920/output/final.txt" 
     frames_data = parse_file(filename)
     
     print(f"Processed {len(frames_data)} frames\n")
     for frame_data in frames_data:
         print_pose_data(frame_data)
     print(frames_data)
-    # Dump all parsed data into a JSON file
-    output_filename = "parsed_frames_data.json"
+    output_filename = "30fps1920.json"
     with open(output_filename, 'w') as json_file:
         json.dump(frames_data, json_file, indent=4)
 
     print(f"Data has been dumped into {output_filename}")
-    #return frames_data  # Return the data for further processing if needed
+
 
 
 if __name__ == "__main__":
