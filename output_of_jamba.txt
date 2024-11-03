@@ -1,0 +1,187 @@
+SystemMessage(content="You are a squash coach reading through big data. Tell me exactly what both players are doing based on the following json data."),
+        UserMessage(content=f"{squash_data}"),
+        UserMessage(content="How exactly do you know? Use specific data points from the data.")
+
+
+ Based on the data provided, here is an analysis of what both players are doing:
+
+### Player 1
+
+#### Movement and Body Position:
+
+1. **Frame 3:**
+
+
+  * **Nose:** (0.29395, 0.6581)
+  * **Left Hip:** (0.34573, 0.77875)
+  * **Right Hip:** (0.34083, 0.77424)
+  * **Left Ankle:** (0.33655, 0.92772)
+  * **Right Ankle:** (0.35004, 0.89734)
+        Player 1 is positioned with their hips and nose in the middle, with feet wide apart and slightly bent, indicating a stable stance.
+
+
+2. **Frame 6:**
+
+
+  * **Nose:** (0.28124, 0.66997)
+  * **Left Hip:** (0.33683, 0.77766)
+  * **Right Hip:** (0.32709, 0.77634)
+  * **Left Knee:** (0.3147, 0.85554)
+  * **Right Knee:** (0.30155, 0.84783)
+        Player 1 is still in a stable stance, with slight movement in the hips and knees, suggesting some slight shifting or preparation for movement.
+
+
+3. **Frame 9:**
+
+
+  * **Nose:** (0.26098, 0.68841)
+  * **Left Hip:** (0.3211, 0.78349)
+  * **Right Hip:** (0.31304, 0.78226)
+  * **Left Knee:** (0.30179, 0.85893)
+  * **Right Knee:** (0.28319, 0.85802)
+        Player 1 has lowered their body slightly, indicated by the lowering of the nose and knees, suggesting a crouching or preparation for a shot.
+
+
+4. **Frame 12:**
+
+
+  * **Left Eye:** (0.24824, 0.69933)
+  * **Left Hip:** (0.31145, 0.79314)
+  * **Right Hip:** (0.30856, 0.78873)
+  * **Left Knee:** (0.29076, 0.87747)
+  * **Right Knee:** (0.27356, 0.874)
+        Player 1 is bending forward more, with hips and knees moving upwards, indicating a ready or recovery position after a shot.
+
+
+5. **Frame 15:**
+
+
+  * **Left Ear:** (0.24328, 0.73808)
+  * **Left Shoulder:** (0.25862, 0.7609)
+  * **Left Hip:** (0.29446, 0.83703)
+  * **Right Hip:** (0.2895, 0.8274)
+  * **Left Knee:** (0.27039, 0.89484)
+  * **Right Knee:** (0.24608, 0.90079)
+        Player 1 is leaning forward significantly, suggesting a lunge or reaching position.
+
+
+#### General Trends:
+
+* Player 1's movements suggest a focus on maintaining a stable and low stance, with occasional crouches and forward leans, indicating active play and readiness for shots.  
+
+### Player 2
+
+#### Movement and Body Position:
+
+1. **Frame 3:**
+
+
+  * **Nose:** (0.41592, 0.58369)
+  * **Left Hip:** (0.44474, 0.72441)
+  * **Right Hip:** (0.46696, 0.71788)
+  * **Left Knee:** (0.45005, 0.80211)
+  * **Right Knee:** (0.47577, 0.7903)
+        Player 2 is positioned with a slight lean forward, with hips and nose in a middle position, and knees bent, suggesting a stable and forward-leaning stance.
+
+
+2. **Frame 6:**
+
+
+  * **Nose:** (0.42157, 0.57642)
+  * **Left Hip:** (0.44565, 0.72393)
+  * **Right Hip:** (0.47055, 0.7153)
+  * **Left Knee:** (0.45066, 0.79718)
+  * **Right Knee:** (0.48024, 0.77906)
+        Player 2 maintains a stable stance with hips and nose slightly lower, indicating a position of readiness or anticipation.
+
+
+3. **Frame 9:**
+
+
+  * **Nose:** (0.42943, 0.56326)
+  * **Left Hip:** (0.45411, 0.71085)
+  * **Right Hip:** (0.47887, 0.69999)
+  * **Left Knee:** (0.45732, 0.78745)
+  * **Right Knee:** (0.4838, 0.76406)
+        Player 2 is slightly lowering their body, suggested by the downward movement of the nose and knees, indicating a cautious or preparatory stance.
+
+
+4. **Frame 12:**
+
+
+  * **Nose:** (0.43417, 0.5613)
+  * **Left Hip:** (0.45839, 0.70252)
+  * **Right Hip:** (0.48121, 0.69168)
+  * **Left Knee:** (0.46004, 0.78167)
+  * **Right Knee:** (0.48409, 0.75563)
+        Player 2 continues to lower their body, with slight adjustments in hip and knee positions, suggesting preparation for movement or a shot.
+
+
+5. **Frame 15:**
+
+
+  * **Nose:** (0.44192, 0.55879)
+  * **Left Hip:** (0.47027, 0.68429)
+  * **Right Hip:** (0.48493, 0.68006)
+  * **Left Knee:** (0.45111, 0.75725)
+  * **Right Knee:** (0.48318, 0.75357)
+        Player 2 leans forward more, with hips moving further up, indicating an aggressive or reaching stance.
+
+
+6. **Frame 18:**
+
+
+  * **Nose:** (0.44363, 0.54813)
+  * **Left Hip:** (0.46786, 0.67781)
+  * **Right Hip:** (0.48819, 0.67193)
+  * **Left Knee:** (0.44543, 0.74713)
+  * **Right Knee:** (0.48336, 0.7442)
+        Player 2 is in a low, forward-leaning stance, indicating anticipation or readiness for quick movement.
+
+
+7. **Frame 21:**
+
+
+  * **Nose:** (0.44262, 0.5301)
+  * **Left Hip:** (0.4649, 0.66332)
+  * **Right Hip:** (0.48822, 0.65508)
+  * **Left Knee:** (0.44404, 0.7294)
+  * **Right Knee:** (0.48982, 0.72071)
+        Player 2 maintains the low forward-leaning stance, indicating continuous anticipation or readiness.
+
+
+8. **Frame 24:**
+
+
+  * **Left Ear:** (0.45036, 0.52784)
+  * **Left Shoulder:** (0.44978, 0.5713)
+  * **Left Hip:** (0.46228, 0.6653)
+  * **Right Hip:** (0.48986, 0.65733)
+  * **Left Knee:** (0.4436, 0.72924)
+  * **Right Knee:** (0.49578, 0.72013)
+        Player 2 is consistent in their forward-leaning stance.
+
+
+9. **Frame 27:**
+
+
+  * **Left Ear:** (0.45522, 0.55415)
+  * **Left Shoulder:** (0.45055, 0.59492)
+  * **Left Hip:** (0.45832, 0.68635)
+  * **Right Hip:** (0.4877, 0.68153)
+  * **Left Knee:** (0.43711, 0.74488)
+  * **Right Knee:** (0.50807, 0.7371)
+        Player 2 is slightly leaning forward more, maintaining a stable stance with anticipation.
+
+
+#### General Trends:
+
+* Player 2 shows a consistent pattern of maintaining a forward-leaning stance, indicating a readiness for quick movement and an aggressive play style.
+
+### Ball Position
+
+The ball position remains relatively constant at [319, 129] in the later frames, suggesting that it is in a steady position, possibly after being hit or placed.
+
+### Summary
+
+Player 1 shows more stability and readiness in their stance, while Player 2 displays a more aggressive and anticipatory stance, leaning forward consistently. The ball's position indicates it is in a steady spot, not moving significantly during this sequence.
