@@ -12,13 +12,14 @@ client = ChatCompletionsClient(
     credential=AzureKeyCredential(token),
 )
 import json
-squash_data=json.load(open("small_frame_data.json"))
+squash_data=json.load(open("300frames.json"))
 response = client.complete(
     messages=[
         SystemMessage(content="You are a squash coach reading through big data. Tell me exactly what both players are doing based on the following json data."),
         UserMessage(content=f"{squash_data}"),
         UserMessage(content="How exactly do you know? Use specific data points from the data.")
     ],
+    
     temperature=1.0,
     top_p=1.0,
     max_tokens=4000,
