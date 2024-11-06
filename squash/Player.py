@@ -20,3 +20,6 @@ class Player:
             return self.poses[-x]
         else:
             return None
+    def get_last_x_positions(self, x):
+        # Return the last x pose data
+        return self.poses[-x:] if len(self.poses) >= x else self.poses

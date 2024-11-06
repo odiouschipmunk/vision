@@ -13,20 +13,22 @@ class Ball:
         if a != 0: self.angles.append(a)
         self.sizes=[]
         if s !=0: self.sizes.append(s)
-    def update(self, x, y, s, a=0):
-        self.pastx=self.xcoord
-        self.pasty=self.ycoord
-        self.xcoord=x
-        self.ycoord=y
-        self.size=s
-        self.angle=a
-        self.positions.append([x,y])
-        if self.angle != 0: self.angles.append(self.angle)
-        if s !=0: self.sizes.append(s)
+
     def getlastpos(self):
         return [self.pastx, self.pasty]
     def getloc(self):
         return [self.xcoord, self.ycoord]
+    def get_last_x_pos(self, x):
+        if len(self.positions)>x:
+            return self.positions[-x]
+        else:
+            return None
+    def update(self, x, y, s, a=0):
+        self.xcoord = x
+        self.ycoord = y
+        self.positions.append([x, y])
+        # Update other attributes...
+
     def getcoordhistory(self):
         return self.positions
     def getanglehistory(self):

@@ -120,14 +120,14 @@ def print_pose_data(parsed_data):
     print("\n" + "="*50 + "\n")
 
 def main():
-    filename = "30fps1920/output/final.txt" 
+    filename = "output(25k)/output/final.txt" 
     frames_data = parse_file(filename)
     
     print(f"Processed {len(frames_data)} frames\n")
     for frame_data in frames_data:
         print_pose_data(frame_data)
     print(frames_data)
-    output_filename = "30fps1920.json"
+    output_filename = "output25kparsed.json"
     with open(output_filename, 'w') as json_file:
         json.dump(frames_data, json_file, indent=4)
 
