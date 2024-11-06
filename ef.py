@@ -103,7 +103,7 @@ def main():
         reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
         score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
         return score < threshold
-    def is_match_in_play(players, mainball, movement_threshold=5, frames_to_check=5, hit=50):
+    def is_match_in_play(players, mainball, movement_threshold=50, frames_to_check=5, hit=50):
         if players.get(1) is None or players.get(2) is None or mainball is None:
             return False
         try:
