@@ -1,4 +1,4 @@
-def main():
+def main(path="main.mp4"):
     import cv2
     from ultralytics import YOLO
     import numpy as np
@@ -64,7 +64,7 @@ def main():
     pose_model = YOLO("models/yolo11m-pose.pt")
     ballmodel = YOLO("trained-models/g-ball2(white_latest).pt")
 
-    path = "main.mp4"
+    
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
@@ -86,9 +86,11 @@ def main():
     past_ball_pos = []
     logging.getLogger("ultralytics").setLevel(logging.ERROR)
     output_path = "output/annotated.mp4"
+    weboutputpath="websiteout/annotated.mp4"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     fps = 30
     importantoutputpath="output/important.mp4"
+    weboutput=cv2.VideoWriter(weboutputpath, fourcc, fps, (frame_width, frame_height))
     importantout=cv2.VideoWriter(importantoutputpath, fourcc, fps, (frame_width, frame_height))
     out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
     ball_out = cv2.VideoWriter(ballvideopath, fourcc, fps, (frame_width, frame_height))
@@ -145,7 +147,7 @@ def main():
         else:
             return 'crosscourt'
     
-    def is_match_in_play(players, mainball, movement_threshold=50, hit=50):
+    def is_match_in_play(players, mainball, movement_threshold=100, hit=50):
         if players.get(1) is None or players.get(2) is None or mainball is None:
             return False
         try:
@@ -802,6 +804,7 @@ def main():
             print(f'probably not enough info: {e}')
         ball_out.write(annotated_frame)
         out.write(annotated_frame)
+        weboutput.write(annotated_frame)
         cv2.imshow("Annotated Frame", annotated_frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):

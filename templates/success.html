@@ -1,0 +1,23 @@
+<!-- templates/success.html -->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Analysis Complete</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Analysis Complete</h1>
+    <p>Your video "{{ filename }}" has been processed successfully.</p>
+    <h2>Annotated Video:</h2>
+    <video controls width="800">
+      <source src="{{ url_for('output_file', filename=output_video) }}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <br>
+    <a href="{{ url_for('upload_video') }}">Analyze Another Video</a>
+  </div>
+</body>
+</html>
