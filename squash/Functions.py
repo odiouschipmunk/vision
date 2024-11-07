@@ -659,6 +659,26 @@ def ballplayer_detections(
     if Functions.is_ball_false_pos(past_ball_pos, threshold=15):
         ball_false_pos.append(past_ball_pos[-1])
     label = ""
+    try:
+        for i in range(len(past_ball_pos)-10, len(past_ball_pos)):
+            cv2.circle(
+                annotated_frame,
+                (past_ball_pos[i][0],past_ball_pos[i][1]),
+                3,
+                (255, 255, 255),
+                5,
+            )
+            #draw a line between this point and the previous point
+            if i>0:
+                cv2.line(
+                    annotated_frame,
+                    (past_ball_pos[i][0],past_ball_pos[i][1]),
+                    (past_ball_pos[i-1][0],past_ball_pos[i-1][1]),
+                    (255, 255, 255),
+                    3,
+                )
+    except Exception as e:
+        print(f'probably not enough ball positions, : {e}')
     for box in ball[0].boxes:
         coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
         x1temp, y1temp, x2temp, y2temp = coords

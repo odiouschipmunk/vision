@@ -23,6 +23,11 @@ class Ball:
             return self.positions[-x]
         else:
             return None
+    def get_last_x_single_position(self, x):
+        if len(self.positions)>x:
+            return self.positions[-x]
+        else:
+            return None
     def update(self, x, y, s, a=0):
         self.xcoord = x
         self.ycoord = y
@@ -35,7 +40,8 @@ class Ball:
         return self.angles
     def getsizehistory(self):
         return self.sizes
-
+    def number_of_coords(self):
+        return len(self.positions)
     def convert_2d_to_3d(self, court_width=6.4, court_length=9.75, camera_distance=3.5):
         """
         Converts 2D coordinates to 3D based on squash court dimensions and camera position.

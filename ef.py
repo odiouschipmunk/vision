@@ -46,6 +46,20 @@ def main():
         f.write("")
     with open("output/read_player2.txt", "w") as f:
         f.write("")
+    with open("importantoutput/ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player2.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/ball-xyn.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player2.txt", "w") as f:
+        f.write("")
     past_10_ball_pos=[]#in the format of [ball pos, frame number]
     pose_model = YOLO("models/yolo11m-pose.pt")
     ballmodel = YOLO("trained-models/g-ball2(white_latest).pt")
@@ -58,8 +72,8 @@ def main():
         f.write(
             f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n"
         )
-    frame_width = 640
-    frame_height = 360
+    frame_width = 1920
+    frame_height = 1080
     players = {}
     courtref = 0
     occlusion_times = {}
@@ -74,6 +88,8 @@ def main():
     output_path = "output/annotated.mp4"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     fps = 30
+    importantoutputpath="output/important.mp4"
+    importantout=cv2.VideoWriter(importantoutputpath, fourcc, fps, (frame_width, frame_height))
     out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
     ball_out = cv2.VideoWriter(ballvideopath, fourcc, fps, (frame_width, frame_height))
     detections = []
@@ -103,36 +119,73 @@ def main():
         reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
         score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
         return score < threshold
-    def is_match_in_play(players, mainball, movement_threshold=50, frames_to_check=5, hit=50):
+
+    def classify_what_kind_of_shot(past_ball_pos):
+        #given that past ball pos is going to be structured as [[x,y,frame number], ...], clasify the shot as either a crosscourt or straight
+        if len(past_ball_pos) < 2:
+            return 'unknown'
+
+    # Extract positions
+        x_positions = [pos[0] for pos in past_ball_pos]
+        y_positions = [pos[1] for pos in past_ball_pos]
+
+        # Calculate differences
+        delta_x = x_positions[-1] - x_positions[0]
+        delta_y = y_positions[-1] - y_positions[0]
+
+        # Calculate angle in degrees
+        angle = math.degrees(math.atan2(delta_y, delta_x))
+
+        # Absolute angle
+        abs_angle = abs(angle)
+
+        # Determine shot type
+        if abs_angle < 30 or abs_angle > 150:
+            return 'straight'
+        else:
+            return 'crosscourt'
+    
+    def is_match_in_play(players, mainball, movement_threshold=50, hit=50):
         if players.get(1) is None or players.get(2) is None or mainball is None:
             return False
         try:
-            lastplayerpos=[]
+            lastplayer1pos=[]
+            
+            lastplayer2pos=[]
             lastballpos=[]
             ball_hit=player_move=False
-            for i in range(0, frames_to_check):
-                lastplayerpos.append(players.get(1).get_last_x_poses(i).xyn[0][16])
-                lastplayerpos.append(players.get(2).get_last_x_poses(i).xyn[0][16])
-                lastballpos.append(mainball.get_last_x_pos(i))
-            for i in lastplayerpos:
-                i[0]=i[0]*frame_width
-                i[1]=i[1]*frame_height
+            #lastplayerxpos in the format of [[lanklex, lankley], [ranklex, rankley]]
+            lastplayer1pos.append([players.get(1).get_last_x_poses(1).xyn[0][15][0]*frame_width, players.get(1).get_last_x_poses(1).xyn[0][15][1]*frame_height])
+            lastplayer2pos.append([players.get(2).get_last_x_poses(1).xyn[0][15][0]*frame_width, players.get(2).get_last_x_poses(1).xyn[0][15][1]*frame_height])
+            lastplayer1pos.append([players.get(1).get_last_x_poses(1).xyn[0][16][0]*frame_width, players.get(1).get_last_x_poses(1).xyn[0][16][1]*frame_height])
+            lastplayer2pos.append([players.get(2).get_last_x_poses(1).xyn[0][16][0]*frame_width, players.get(2).get_last_x_poses(1).xyn[0][16][1]*frame_height])
+            for i in range(1, mainball.number_of_coords()):
+                if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i-1):
+                    lastballpos.append(mainball.get_last_x_pos(i))
+            
+            #print(f'lastplayer1pos: {lastplayer1pos}')
+            lastplayer1distance=math.hypot(lastplayer1pos[0][0]-lastplayer1pos[1][0], lastplayer1pos[0][1]-lastplayer1pos[1][1])
+            lastplayer2distance=math.hypot(lastplayer2pos[0][0]-lastplayer2pos[1][0], lastplayer2pos[0][1]-lastplayer2pos[1][1])
+            # print(f'lastplayer1distance: {lastplayer1distance}')
+            # print(f'lastplayer2distance: {lastplayer2distance}')
             #given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so: 
             #if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
             #if the player has lunged, then the match is in play
-            #print(f'lastplayer pos: {lastplayerpos}')
-            if abs(lastplayerpos[0][0]-lastplayerpos[-1][0])>movement_threshold or abs(lastplayerpos[0][1]-lastplayerpos[-1][1])>movement_threshold:
-                player_move=True
+
             #print(f'last ball pos: {lastballpos}')
-            if abs(lastballpos[1][0]-lastballpos[-1][0])>hit or abs(lastballpos[1][1]-lastballpos[-1][1])>hit:
+            balldistance=math.hypot(lastballpos[0][0]-lastballpos[1][0], lastballpos[0][1]-lastballpos[1][1])
+            #print(f'balldistance: {balldistance}')
+            if balldistance>=hit:
                 ball_hit=True
             #print(f'last player pos: {lastplayerpos}')
             #print(f'last ball pos: {lastballpos}')
             #print(f'player lunged: {player_move}')
-            print(f'ball hit: {ball_hit}')
+            if lastplayer1distance>=movement_threshold or lastplayer2distance>=movement_threshold:
+                player_move=True
+            #print(f'ball hit: {ball_hit}')
             return [player_move, ball_hit]
         except Exception as e:
-            #print(f'got exception in is_match_in_play: {e}')
+            print(f'got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}')
             return False
             
     reference_points_3d = [
@@ -271,11 +324,20 @@ def main():
         #print(f'is match in play: {is_match_in_play(players, mainball)}')
         match_in_play=is_match_in_play(players, mainball)
         if match_in_play is not False:
-            print(match_in_play)
+            #print(match_in_play)
             cv2.putText(
                 annotated_frame,
                 f'ball hit: {str(match_in_play[1])}',
                 (10, frame_height - 100),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
+            )
+            cv2.putText(
+                annotated_frame,
+                f'player legs far apart: {str(match_in_play[0])}',
+                (10, frame_height - 120),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
                 (255, 255, 255),
@@ -698,6 +760,29 @@ def main():
                 f.write(
                     f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
                 )
+        def importantwrite():
+            with open("importantoutput/read_player1.txt", "a") as f:
+                f.write(f"{p1postemp}\n")
+                f.close()
+            with open("importantoutput/read_player2.txt", "a") as f:
+                f.write(f"{p2postemp}\n")
+                f.close()
+            with open("importantoutput/player1.txt", "a") as f:
+                for pos in p1postemp:
+                    f.write(f"{pos[0]}\n{pos[1]}\n")
+                f.close()
+            with open("importantoutput/player2.txt", "a") as f:
+                for pos in p2postemp:
+                    f.write(f"{pos[0]}\n{pos[1]}\n")
+                f.close()
+            with open("importantoutput/ball.txt", "a") as f:
+                f.write(f"{mainball.getloc()[0]}\n{mainball.getloc()[1]}\n")
+            with open("importantoutput/read_ball.txt", "a") as f:
+                f.write(f"{mainball.getloc()}\n")
+            with open("importantoutput/ball-xyn.txt", "a") as f:
+                f.write(
+                    f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
+                )
 
         if running_frame % 3 == 0:
             try:
@@ -706,7 +791,15 @@ def main():
                 print(
                     f"could not write to file, most likely because players were not detected yet: {e}"
                 )
+        try:
+            #print(match_in_play)
 
+            if match_in_play[0] or match_in_play[1]:
+                #print(f'wrote to important!')
+                importantout.write(annotated_frame)
+                importantwrite()
+        except Exception as e:
+            print(f'probably not enough info: {e}')
         ball_out.write(annotated_frame)
         out.write(annotated_frame)
         cv2.imshow("Annotated Frame", annotated_frame)
