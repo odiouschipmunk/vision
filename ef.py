@@ -68,7 +68,7 @@ def main(path="main.mp4"):
     print("loaded models")
     ballvideopath = "output/balltracking.mp4"
     cap = cv2.VideoCapture(path)
-    with open("output/final.txt", "a") as f:
+    with open("output/final.txt", "w") as f:
         f.write(
             f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n"
         )
@@ -234,7 +234,7 @@ def main(path="main.mp4"):
 
         if running_frame >= 500:
             pass
-        if frame_count >= 350:
+        if frame_count >= 60:
             cap.release()
             cv2.destroyAllWindows()
         if len(references1) != 0 and len(references2) != 0:
@@ -762,6 +762,10 @@ def main(path="main.mp4"):
                 f.write(
                     f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
                 )
+            with open("output/final.txt", "a") as f:
+                text = f"Frame: {running_frame}{{\nPlayer 1: {p1postemp}\n\nPlayer 2: {p2postemp}\n\nBall: {mainball.getloc()}}}\n\n"
+                f.write(f"{text}\n")
+                f.close()
         def importantwrite():
             with open("importantoutput/read_player1.txt", "a") as f:
                 f.write(f"{p1postemp}\n")
@@ -786,13 +790,14 @@ def main(path="main.mp4"):
                     f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
                 )
 
-        if running_frame % 3 == 0:
-            try:
+
+        try:
+            if running_frame%3==0:
                 write()
-            except Exception as e:
-                print(
-                    f"could not write to file, most likely because players were not detected yet: {e}"
-                )
+        except Exception as e:
+            print(
+                f"could not write to file, most likely because players were not detected yet: {e}"
+            )
         try:
             #print(match_in_play)
 
