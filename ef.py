@@ -1,25 +1,31 @@
-def main(path="main.mp4"):
+import cv2
+from ultralytics import YOLO
+import numpy as np
+import math
+from squash import Referencepoints, Functions
+import tensorflow as tf
+import matplotlib
+import json
+
+matplotlib.use("Agg")
+from matplotlib import pyplot as plt
+from squash.Ball import Ball
+import logging
+import os
+from skimage.metrics import structural_similarity as ssim_metric
+import time
+
+start = time.time()
+
+
+def main(path="main2.mp4", frame_width=1920, frame_height=1080):
     try:
-        import cv2
-        from ultralytics import YOLO
-        import numpy as np
-        import math
-        from squash import Referencepoints, Functions
-        import tensorflow as tf
-        import matplotlib
-        import json
-        matplotlib.use("Agg")
-        from matplotlib import pyplot as plt
-        from squash.Ball import Ball
-        import logging
-
-        from skimage.metrics import structural_similarity as ssim_metric
-
         print("imported all")
 
         ball_predict = tf.keras.models.load_model(
             "trained-models/ball_position_model(25k).keras"
         )
+        past_walls_hit = past_shot = None
 
         def load_data(file_path):
             with open(file_path, "r") as file:
@@ -62,7 +68,7 @@ def main(path="main.mp4"):
         with open("importantoutput/read_player2.txt", "w") as f:
             f.write("")
         with open("output/final.json", "w") as f:
-             f.write("[")
+            f.write("[")
         pose_model = YOLO("models/yolo11m-pose.pt")
         ballmodel = YOLO("trained-models/g-ball2(white_latest).pt")
 
@@ -73,8 +79,7 @@ def main(path="main.mp4"):
             f.write(
                 f"You are analyzing video: {path}.\nPlayer keypoints will be structured as such: 0: Nose 1: Left Eye 2: Right Eye 3: Left Ear 4: Right Ear 5: Left Shoulder 6: Right Shoulder 7: Left Elbow 8: Right Elbow 9: Left Wrist 10: Right Wrist 11: Left Hip 12: Right Hip 13: Left Knee 14: Right Knee 15: Left Ankle 16: Right Ankle.\nIf a keypoint is (0,0), then it has not beeen detected and should be deemed irrelevant. Here is how the output will be structured: \nFrame count\nPlayer 1 Keypoints\nPlayer 2 Keypoints\n Ball Position.\n\n"
             )
-        frame_width = 640
-        frame_height = 360
+
         players = {}
         courtref = 0
         occlusion_times = {}
@@ -89,7 +94,7 @@ def main(path="main.mp4"):
         output_path = "output/annotated.mp4"
         weboutputpath = "websiteout/annotated.mp4"
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        fps = 30
+        fps = 10
         importantoutputpath = "output/important.mp4"
         weboutput = cv2.VideoWriter(
             weboutputpath, fourcc, fps, (frame_width, frame_height)
@@ -849,19 +854,64 @@ def main(path="main.mp4"):
                     text = f"Frame: {running_frame}{{Player 1: {p1postemp}\nPlayer 2: {p2postemp}\nBall: {mainball.getloc()}\nType of shot: {type_of_shot[0]+type_of_shot[1]}\nBall hit: {str(match_in_play[1])}\nWalls hit: {type_of_shot[2]}}}\n"
                     f.write(f"{text}\n")
                     f.close()
+
             def jsonwrite():
+                temp1 = p1postemp.tolist()
+                temp2 = p2postemp.tolist()
+                # multiply all x values [0] by frame_width and all y values [1] by frame_height
+                for i in range(len(temp1)):
+                    temp1[i][0] = temp1[i][0] * frame_width
+                    temp1[i][0] = round(temp1[i][0], 2)
+                    temp1[i][1] = temp1[i][1] * frame_height
+                    temp1[i][1] = round(temp1[i][1], 2)
+                for i in range(len(temp2)):
+                    temp2[i][0] = temp2[i][0] * frame_width
+                    temp2[i][0] = round(temp2[i][0], 2)
+                    temp2[i][1] = temp2[i][1] * frame_height
+                    temp2[i][1] = round(temp2[i][1], 2)
                 data = {
                     "Frame": running_frame,
-                    "Player 1": p1postemp.tolist(),
-                    "Player 2": p2postemp.tolist(),
+                    "Player 1": temp1,
+                    "Player 2": temp2,
                     "Ball": mainball.getloc(),
-                    "Type of shot": type_of_shot[0] +' '+ type_of_shot[1],
+                    "Type of shot": type_of_shot[0] + " " + type_of_shot[1],
                     "Ball hit": str(match_in_play[1]),
                     "Walls hit": type_of_shot[2],
                 }
                 with open("output/final.json", "a") as f:
                     json.dump(data, f)
                     f.write(",\n")
+
+            def alljsonwrite():
+                # make it so that p1postemp, p2postemp, and mainball.getloc() are all in the same format, basically to multiple p1postemp and p2postemp by frame_width and frame_height
+                temp1 = p1postemp.tolist()
+                temp2 = p2postemp.tolist()
+                # multiply all x values [0] by frame_width and all y values [1] by frame_height
+                for i in range(len(temp1)):
+                    temp1[i][0] = temp1[i][0] * frame_width
+                    temp1[i][0] = round(temp1[i][0], 2)
+                    temp1[i][1] = temp1[i][1] * frame_height
+                    temp1[i][1] = round(temp1[i][1], 2)
+                for i in range(len(temp2)):
+                    temp2[i][0] = temp2[i][0] * frame_width
+                    temp2[i][0] = round(temp2[i][0], 2)
+                    temp2[i][1] = temp2[i][1] * frame_height
+                    temp2[i][1] = round(temp2[i][1], 2)
+                # print(temp1)
+
+                data = {
+                    "Frame": running_frame,
+                    "Player 1": temp1,
+                    "Player 2": temp2,
+                    "Ball": mainball.getloc(),
+                    "Type of shot": type_of_shot[0] + " " + type_of_shot[1],
+                    "Ball hit": str(match_in_play[1]),
+                    "Walls hit": type_of_shot[2],
+                }
+                with open("output/alldata.json", "a") as f:
+                    json.dump(data, f)
+                    f.write(",\n")
+
             def importantwrite():
                 with open("importantoutput/read_player1.txt", "a") as f:
                     f.write(f"{p1postemp}\n")
@@ -887,13 +937,27 @@ def main(path="main.mp4"):
                     )
 
             try:
+                shot = type_of_shot[0] + " " + type_of_shot[1]
+                wallhit = type_of_shot[2]
                 if running_frame % 3 == 0:
                     write()
-                jsonwrite()
-            except Exception as e:
+                # if theres a change in the shot type, if the ball hit a wall, or just generally(mod 10==0) then write to json file
+                if (
+                    past_walls_hit != wallhit
+                    or past_shot != shot
+                    or running_frame % 10 == 0
+                ):
+                    jsonwrite()
+
+                    past_walls_hit = wallhit
+                    past_shot = shot
+                alljsonwrite()
+            except Exception:
+                # print(f"error: {e}")
                 pass
-                #print(f"error: {e}")
-                #print(f'line was {e.__traceback__.tb_lineno}')
+
+                # print(f"error: {e}")
+                # print(f'line was {e.__traceback__.tb_lineno}')
                 # print(f'all info about e: ')
             try:
                 # print(match_in_play)
@@ -908,7 +972,8 @@ def main(path="main.mp4"):
             out.write(annotated_frame)
             weboutput.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
-
+            print(f'frame: {running_frame}')
+            print(f'time: {time.time()-start}')
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
@@ -916,18 +981,25 @@ def main(path="main.mp4"):
         cv2.destroyAllWindows()
     except Exception as e:
         print(f"error2: {e}")
-        print(f'line was {e.__traceback__.tb_lineno}')
-        print(f'other into about e: {e.__traceback__}')
-        print(f'other info about e: {e.__traceback__.tb_frame}')
-        print(f'other info about e: {e.__traceback__.tb_next}')
-        print(f'other info about e: {e.__traceback__.tb_lasti}')
-
-        
+        print(f"line was {e.__traceback__.tb_lineno}")
+        print(f"other into about e: {e.__traceback__}")
+        print(f"other info about e: {e.__traceback__.tb_frame}")
+        print(f"other info about e: {e.__traceback__.tb_next}")
+        print(f"other info about e: {e.__traceback__.tb_lasti}")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        print(f"error: {e}")
-        
+    # get keyboarinterrupt error
+    except KeyboardInterrupt:
+        print("keyboard interrupt")
+        # remove the last comma and add a closing ']' to the json file
+        with open("output/final.json", "rb+") as f:
+            f.seek(-2, os.SEEK_END)
+            f.truncate()
+            f.write(b"\n]")
+        exit()
+    except Exception:
+        # print(f"error: {e}")
+        pass
