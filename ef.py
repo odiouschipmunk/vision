@@ -18,7 +18,7 @@ import time
 start = time.time()
 
 
-def main(path="main2.mp4", frame_width=1920, frame_height=1080):
+def main(path="main3.mp4", frame_width=1920, frame_height=1080):
     try:
         print("imported all")
 
@@ -935,7 +935,7 @@ def main(path="main2.mp4", frame_width=1920, frame_height=1080):
                     f.write(
                         f"{mainball.getloc()[0]/frame_width}\n{mainball.getloc()[1]/frame_height}\n"
                     )
-
+    
             try:
                 shot = type_of_shot[0] + " " + type_of_shot[1]
                 wallhit = type_of_shot[2]
@@ -972,8 +972,8 @@ def main(path="main2.mp4", frame_width=1920, frame_height=1080):
             out.write(annotated_frame)
             weboutput.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
-            print(f'frame: {running_frame}')
-            print(f'time: {time.time()-start}')
+            #print(f'frame: {running_frame}')
+            #print(f'time: {time.time()-start}')
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
