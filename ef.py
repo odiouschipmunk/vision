@@ -7,7 +7,7 @@ def main(path="main.mp4"):
         from squash import Referencepoints, Functions
         import tensorflow as tf
         import matplotlib
-
+        import json
         matplotlib.use("Agg")
         from matplotlib import pyplot as plt
         from squash.Ball import Ball
@@ -61,6 +61,8 @@ def main(path="main.mp4"):
             f.write("")
         with open("importantoutput/read_player2.txt", "w") as f:
             f.write("")
+        with open("output/final.json", "w") as f:
+             f.write("[")
         pose_model = YOLO("models/yolo11m-pose.pt")
         ballmodel = YOLO("trained-models/g-ball2(white_latest).pt")
 
@@ -847,7 +849,19 @@ def main(path="main.mp4"):
                     text = f"Frame: {running_frame}{{Player 1: {p1postemp}\nPlayer 2: {p2postemp}\nBall: {mainball.getloc()}\nType of shot: {type_of_shot[0]+type_of_shot[1]}\nBall hit: {str(match_in_play[1])}\nWalls hit: {type_of_shot[2]}}}\n"
                     f.write(f"{text}\n")
                     f.close()
-
+            def jsonwrite():
+                data = {
+                    "Frame": running_frame,
+                    "Player 1": p1postemp.tolist(),
+                    "Player 2": p2postemp.tolist(),
+                    "Ball": mainball.getloc(),
+                    "Type of shot": type_of_shot[0] +' '+ type_of_shot[1],
+                    "Ball hit": str(match_in_play[1]),
+                    "Walls hit": type_of_shot[2],
+                }
+                with open("output/final.json", "a") as f:
+                    json.dump(data, f)
+                    f.write(",\n")
             def importantwrite():
                 with open("importantoutput/read_player1.txt", "a") as f:
                     f.write(f"{p1postemp}\n")
@@ -875,11 +889,11 @@ def main(path="main.mp4"):
             try:
                 if running_frame % 3 == 0:
                     write()
+                jsonwrite()
             except Exception as e:
-                print(
-                    f"could not write to file, most likely because players were not detected yet: {e}"
-                )
-                # print(f'line was {e.__traceback__.tb_lineno}')
+                pass
+                #print(f"error: {e}")
+                #print(f'line was {e.__traceback__.tb_lineno}')
                 # print(f'all info about e: ')
             try:
                 # print(match_in_play)
@@ -907,7 +921,7 @@ def main(path="main.mp4"):
         print(f'other info about e: {e.__traceback__.tb_frame}')
         print(f'other info about e: {e.__traceback__.tb_next}')
         print(f'other info about e: {e.__traceback__.tb_lasti}')
-        
+
         
 
 
@@ -916,3 +930,4 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(f"error: {e}")
+        
