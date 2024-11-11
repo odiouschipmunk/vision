@@ -9,10 +9,10 @@ from squash.Functions import Functions
 
 # Initialize DeepSORT tracker with stricter parameters
 tracker = DeepSort(
-    max_age=30,
+    max_age=50,
     n_init=2,
-    max_cosine_distance=0.2,  # Stricter appearance matching
-    nn_budget=100,
+    max_cosine_distance=0.1,  # Stricter appearance matching
+    nn_budget=500,
     override_track_class=None,
     embedder="mobilenet",
     half=True,
