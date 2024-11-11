@@ -6,7 +6,7 @@ from squash import Referencepoints, Functions
 import tensorflow as tf
 import matplotlib
 import json
-
+from squash import deepsortframepose as fpose
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
@@ -18,7 +18,7 @@ import time
 start = time.time()
 
 
-def main(path="main3.mp4", frame_width=1920, frame_height=1080):
+def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
 
@@ -70,7 +70,7 @@ def main(path="main3.mp4", frame_width=1920, frame_height=1080):
         with open("output/final.json", "w") as f:
             f.write("[")
         pose_model = YOLO("models/yolo11m-pose.pt")
-        ballmodel = YOLO("trained-models/g-ball2(white_latest).pt")
+        ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
 
         print("loaded models")
         ballvideopath = "output/balltracking.mp4"
@@ -291,17 +291,13 @@ def main(path="main3.mp4", frame_width=1920, frame_height=1080):
             frame = cv2.resize(frame, (frame_width, frame_height))
             frame_count += 1
 
-            if running_frame >= 500:
-                pass
-            if frame_count >= 9000:
-                cap.release()
-                cv2.destroyAllWindows()
+
             if len(references1) != 0 and len(references2) != 0:
                 sum(references1) / len(references1)
                 sum(references2) / len(references2)
 
             running_frame += 1
-
+            
             if running_frame == 1:
                 print("frame 1")
                 courtref = np.int64(
@@ -570,55 +566,56 @@ def main(path="main3.mp4", frame_width=1920, frame_height=1080):
                     plt.close()
 
             # Display the annotated frame
-
-            # Generate player ankle heatmap
-            if (
-                players.get(1).get_latest_pose() is not None
-                and players.get(2).get_latest_pose() is not None
-            ):
-                player_ankles = [
-                    (
-                        int(
-                            players.get(1).get_latest_pose().xyn[0][16][0] * frame_width
+            try:
+                # Generate player ankle heatmap
+                if (
+                    players.get(1).get_latest_pose() is not None
+                    and players.get(2).get_latest_pose() is not None
+                ):
+                    player_ankles = [
+                        (
+                            int(
+                                players.get(1).get_latest_pose().xyn[0][16][0] * frame_width
+                            ),
+                            int(
+                                players.get(1).get_latest_pose().xyn[0][16][1]
+                                * frame_height
+                            ),
                         ),
-                        int(
-                            players.get(1).get_latest_pose().xyn[0][16][1]
-                            * frame_height
+                        (
+                            int(
+                                players.get(2).get_latest_pose().xyn[0][16][0] * frame_width
+                            ),
+                            int(
+                                players.get(2).get_latest_pose().xyn[0][16][1]
+                                * frame_height
+                            ),
                         ),
-                    ),
-                    (
-                        int(
-                            players.get(2).get_latest_pose().xyn[0][16][0] * frame_width
-                        ),
-                        int(
-                            players.get(2).get_latest_pose().xyn[0][16][1]
-                            * frame_height
-                        ),
-                    ),
-                ]
+                    ]
 
-                # Draw points on the heatmap
-                for ankle in player_ankles:
-                    cv2.circle(
-                        heatmap_image, ankle, 5, (255, 0, 0), -1
-                    )  # Blue points for Player 1
-                    cv2.circle(
-                        heatmap_image, ankle, 5, (0, 0, 255), -1
-                    )  # Red points for Player 2
+                    # Draw points on the heatmap
+                    for ankle in player_ankles:
+                        cv2.circle(
+                            heatmap_image, ankle, 5, (255, 0, 0), -1
+                        )  # Blue points for Player 1
+                        cv2.circle(
+                            heatmap_image, ankle, 5, (0, 0, 255), -1
+                        )  # Red points for Player 2
 
-            blurred_heatmap_ankle = cv2.GaussianBlur(heatmap_image, (51, 51), 0)
+                blurred_heatmap_ankle = cv2.GaussianBlur(heatmap_image, (51, 51), 0)
 
-            # Normalize heatmap and apply color map in one step
-            normalized_heatmap = cv2.normalize(
-                blurred_heatmap_ankle, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U
-            )
-            heatmap_overlay = cv2.applyColorMap(normalized_heatmap, cv2.COLORMAP_JET)
+                # Normalize heatmap and apply color map in one step
+                normalized_heatmap = cv2.normalize(
+                    blurred_heatmap_ankle, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U
+                )
+                heatmap_overlay = cv2.applyColorMap(normalized_heatmap, cv2.COLORMAP_JET)
 
-            # Combine with white image
-            cv2.addWeighted(
-                np.ones_like(heatmap_overlay) * 255, 0.5, heatmap_overlay, 0.5, 0
-            )
-
+                # Combine with white image
+                cv2.addWeighted(
+                    np.ones_like(heatmap_overlay) * 255, 0.5, heatmap_overlay, 0.5, 0
+                )
+            except Exception as e:
+                print(f"line618: {e}") 
             # Save the combined image
             # cv2.imwrite("output/heatmap_ankle.png", combined_image)
             ballx = bally = 0
