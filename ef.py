@@ -18,7 +18,7 @@ import time
 start = time.time()
 
 
-def main(path="main.mp4", frame_width=640, frame_height=360):
+def main(path="main2.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
 
