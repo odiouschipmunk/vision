@@ -18,7 +18,7 @@ import time
 start = time.time()
 
 
-def main(path="main2.mp4", frame_width=640, frame_height=360):
+def main(path="main.mp4", frame_width=1920, frame_height=1080):
     try:
         print("imported all")
 
@@ -242,9 +242,9 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
                 # print(f'ball hit: {ball_hit}')
                 return [player_move, ball_hit]
             except Exception as e:
-                print(
-                    f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
-                )
+                # print(
+                #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
+                # )
                 return False
 
         reference_points_3d = [
@@ -278,10 +278,11 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
         ballxy = []
 
         running_frame = 0
-        print("started video input")
+        #print("started video input")
         int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         abs(reference_points[1][0] - reference_points[0][0])
         Functions.validate_reference_points(reference_points, reference_points_3d)
+        print(f'loaded everything in {time.time()-start} seconds')
         while cap.isOpened():
             success, frame = cap.read()
 
@@ -299,17 +300,17 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
             running_frame += 1
             
             if running_frame == 1:
-                print("frame 1")
+                #print("frame 1")
                 courtref = np.int64(
                     Functions.sum_pixels_in_bbox(
                         frame, [0, 0, frame_width, frame_height]
                     )
                 )
-                print(courtref)
+                #print(courtref)
                 referenceimage = frame
 
             if is_camera_angle_switched(frame, referenceimage, threshold=0.5):
-                print("camera angle switched")
+                #print("camera angle switched")
                 continue
 
             currentref = int(
@@ -317,13 +318,13 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
             )
 
             if abs(courtref - currentref) > courtref * 0.6:
-                print("most likely not original camera frame")
-                print("current ref: ", currentref)
-                print("court ref: ", courtref)
-                print(f"frame count: {frame_count}")
-                print(
-                    f"difference between current ref and court ref: {abs(courtref - currentref)}"
-                )
+                # print("most likely not original camera frame")
+                # print("current ref: ", currentref)
+                # print("court ref: ", courtref)
+                # print(f"frame count: {frame_count}")
+                # print(
+                #     f"difference between current ref and court ref: {abs(courtref - currentref)}"
+                # )
                 continue
 
             ball = ballmodel(frame)
@@ -339,7 +340,7 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
                     (0, 255, 0),
                     2,
                 )
-
+            print(f'loaded models')
             # frame, frame_height, frame_width, frame_count, annotated_frame, ballmodel, pose_model, mainball, ball, ballmap, past_ball_pos, ball_false_pos, running_frame
             # framepose_result=framepose.framepose(pose_model=pose_model, frame=frame, otherTrackIds=otherTrackIds, updated=updated, references1=references1, references2=references2, pixdiffs=pixdiffs, players=players, frame_count=frame_count, player_last_positions=player_last_positions, frame_width=frame_width, frame_height=frame_height, annotated_frame=annotated_frame)
             detections_result = Functions.ballplayer_detections(
@@ -380,7 +381,7 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
             pixdiffs = detections_result[13]
             players = detections_result[14]
             player_last_positions = detections_result[15]
-
+            print(f'finished detections')
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
             match_in_play = is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(
@@ -615,7 +616,8 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
                     np.ones_like(heatmap_overlay) * 255, 0.5, heatmap_overlay, 0.5, 0
                 )
             except Exception as e:
-                print(f"line618: {e}") 
+                #print(f"line618: {e}") 
+                pass
             # Save the combined image
             # cv2.imwrite("output/heatmap_ankle.png", combined_image)
             ballx = bally = 0
@@ -823,7 +825,7 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
-
+            print(f'finished writing frame {frame_count}')
             def write():
                 with open("output/read_player1.txt", "a") as f:
                     f.write(f"{p1postemp}\n")
@@ -964,11 +966,13 @@ def main(path="main2.mp4", frame_width=640, frame_height=360):
                     importantout.write(annotated_frame)
                     importantwrite()
             except Exception as e:
-                print(f"probably not enough info: {e}")
+                #print(f"probably not enough info: {e}")
+                pass
             ball_out.write(annotated_frame)
             out.write(annotated_frame)
             weboutput.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
+            print(f'finished frame {frame_count}')
             #print(f'frame: {running_frame}')
             #print(f'time: {time.time()-start}')
             if cv2.waitKey(1) & 0xFF == ord("q"):

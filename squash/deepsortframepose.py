@@ -17,7 +17,7 @@ tracker = DeepSort(
     embedder="clip_ViT-B/16",
     half=True,
     bgr=True,
-    embedder_gpu=True
+    embedder_gpu=False
 )
 
 # Initialize ResNet for appearance features with more robust feature extraction
@@ -120,8 +120,9 @@ def framepose(
             valid_detections = []
             for i, (box, kp) in enumerate(zip(boxes, keypoints)):
                 # Use keypoints to improve bounding box
-                print(f'kp: {kp[0][:, 2]}')
-                valid_points = kp[0][kp[0][:, 2][0] > 0.5]  # Only use keypoints with high confidence
+                #print(f'kp: {kp[0].data[:, :, 2]}')  # Access the confidence scores
+                valid_points = kp[0].data[kp[0].data[:, :, 2] > 0.5]  # Filter keypoints with confidence > 0.5
+                #print(f'Valid points: {valid_points}')
                 if len(valid_points) > 0:
                     x_min = valid_points[:, 0].min() * frame_width
                     x_max = valid_points[:, 0].max() * frame_width

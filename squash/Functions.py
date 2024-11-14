@@ -527,7 +527,8 @@ def ballplayer_detections(
                         3,
                     )
         except Exception as e:
-            print(f"probably not enough ball positions, : {e}")
+            #print(f"probably not enough ball positions, : {e}")
+            pass
         for box in ball[0].boxes:
             coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
             x1temp, y1temp, x2temp, y2temp = coords
@@ -595,7 +596,7 @@ def ballplayer_detections(
         FRAMEPOSE
         """
         # going to take frame, sum_pixels_in_bbox, otherTrackIds, updated, player1+2imagereference, pixdiffs, refrences1+2, players,
-        framepose_result = deepsortframepose.framepose(
+        framepose_result = framepose(
             pose_model=pose_model,
             frame=frame,
             otherTrackIds=otherTrackIds,
