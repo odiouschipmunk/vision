@@ -14,7 +14,10 @@ import logging
 import os
 from skimage.metrics import structural_similarity as ssim_metric
 import time
-
+from transformers import T5Tokenizer, T5ForConditionalGeneration
+import torch
+model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-large", device_map="auto", torch_dtype=torch.float16)
+tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-large")
 start = time.time()
 
 
@@ -857,17 +860,7 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
             def jsonwrite():
                 temp1 = p1postemp.tolist()
                 temp2 = p2postemp.tolist()
-                # multiply all x values [0] by frame_width and all y values [1] by frame_height
-                for i in range(len(temp1)):
-                    temp1[i][0] = temp1[i][0] * frame_width
-                    temp1[i][0] = round(temp1[i][0], 2)
-                    temp1[i][1] = temp1[i][1] * frame_height
-                    temp1[i][1] = round(temp1[i][1], 2)
-                for i in range(len(temp2)):
-                    temp2[i][0] = temp2[i][0] * frame_width
-                    temp2[i][0] = round(temp2[i][0], 2)
-                    temp2[i][1] = temp2[i][1] * frame_height
-                    temp2[i][1] = round(temp2[i][1], 2)
+ 
                 data = {
                     "Frame": running_frame,
                     "Player 1": temp1,
@@ -885,18 +878,6 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                 # make it so that p1postemp, p2postemp, and mainball.getloc() are all in the same format, basically to multiple p1postemp and p2postemp by frame_width and frame_height
                 temp1 = p1postemp.tolist()
                 temp2 = p2postemp.tolist()
-                # multiply all x values [0] by frame_width and all y values [1] by frame_height
-                for i in range(len(temp1)):
-                    temp1[i][0] = temp1[i][0] * frame_width
-                    temp1[i][0] = round(temp1[i][0], 2)
-                    temp1[i][1] = temp1[i][1] * frame_height
-                    temp1[i][1] = round(temp1[i][1], 2)
-                for i in range(len(temp2)):
-                    temp2[i][0] = temp2[i][0] * frame_width
-                    temp2[i][0] = round(temp2[i][0], 2)
-                    temp2[i][1] = temp2[i][1] * frame_height
-                    temp2[i][1] = round(temp2[i][1], 2)
-                # print(temp1)
 
                 data = {
                     "Frame": running_frame,
@@ -972,6 +953,31 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
             out.write(annotated_frame)
             weboutput.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
+
+            try:
+                temp1 = p1postemp.tolist()
+                temp2 = p2postemp.tolist()
+
+
+                data = {
+                        "Frame": running_frame,
+                        "Player 1": temp1,
+                        "Player 2": temp2,
+                        "Ball": mainball.getloc(),
+                        "Type of shot": type_of_shot[0] + " " + type_of_shot[1],
+                        "Ball hit": str(match_in_play[1]),
+                        "Walls hit": type_of_shot[2],
+                    }
+                input_text = f'analyze and respond in ENGLISH, not numbers: {str(data)}'
+                input_ids = tokenizer(input_text, return_tensors="pt").input_ids.to("cuda")
+                outputs = model.generate(input_ids, max_length=256)
+                print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+
+            except Exception as e:
+                print(f"error: {e}")
+                print(f'line was {e.__traceback__.tb_lineno}')
+                print(f'all info about e: {e.__traceback__}')
+                pass
             print(f'finished frame {frame_count}')
             #print(f'frame: {running_frame}')
             #print(f'time: {time.time()-start}')
