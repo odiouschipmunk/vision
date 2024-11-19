@@ -754,7 +754,7 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                     players.get(1).get_last_x_poses(3).xyn[0][16][0] * frame_width,
                     players.get(1).get_last_x_poses(3).xyn[0][16][1] * frame_height,
                 ]
-                rlp2postemp = [
+                rlp2postemp = [ 
                     players.get(2).get_last_x_poses(3).xyn[0][16][0] * frame_width,
                     players.get(2).get_last_x_poses(3).xyn[0][16][1] * frame_height,
                 ]
