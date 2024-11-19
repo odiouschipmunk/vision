@@ -2,7 +2,6 @@ import numpy as np
 import clip
 import torch
 import cv2
-from scipy.signal import savgol_filter
 
 
 def find_match_2d_array(array, x):
@@ -175,7 +174,6 @@ def display_player_positions(rlworldp1, rlworldp2):
     cv2.destroyAllWindows()
 
 
-
 def validate_reference_points(px_points, rl_points):
     """
     Validate reference points for homography calculation.
@@ -277,6 +275,8 @@ from PIL import Image
 from squash import Functions
 from squash.Player import Player
 
+
+# from squash.framepose import framepose
 def framepose(
     pose_model,
     frame,
@@ -292,6 +292,7 @@ def framepose(
     frame_height,
     annotated_frame,
     max_players=2,
+    occluded=False,
 ):
     try:
         track_results = pose_model.track(frame, persist=True, show=False)
@@ -307,8 +308,45 @@ def framepose(
             set(track_ids)
             # Update or add players for currently visible track IDs
             # note that this only works with occluded players < 2, still working on it :(
+            print(f"number of players found: {len(track_ids)}")
+            # occluded as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
+            if len(track_ids) < 2:
+                print(player_last_positions)
+                last_pos_p1 = player_last_positions.get(1, (None, None))
+                last_pos_p2 = player_last_positions.get(2, (None, None))
+                #print(f"last pos p1: {last_pos_p1}")
+                occluded=[]
+                try:
+                    occluded.append(
+                        [
+                            len(track_ids),
+                            last_pos_p1,
+                            last_pos_p2,
+                            frame_count,
+                        ]
+                    )
+                except Exception as e:
+                    pass
+                #print(f'occludedf: {occluded}')
+            if len(track_ids) > 2:
+                return [
+                    pose_model,
+                    frame,
+                    otherTrackIds,
+                    updated,
+                    references1,
+                    references2,
+                    pixdiffs,
+                    players,
+                    frame_count,
+                    player_last_positions,
+                    frame_width,
+                    frame_height,
+                    annotated_frame,
+                    occluded,
+                ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
-                x, y, w, h = box
+                x, y, w, h = box 
                 player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
                 Image.fromarray(player_crop)
                 Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
@@ -344,14 +382,18 @@ def framepose(
                     print(f"could not find player id for track id {track_id}")
                     continue
                 if track_id == 1:
-                    references1.append(Functions.sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    references1.append(
+                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                    )
                     references1[-1]
                     Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
                         if len(pixdiffs) < 5:
                             pixdiffs.append(abs(references1[-1] - references2[-1]))
                 elif track_id == 2:
-                    references2.append(Functions.sum_pixels_in_bbox(frame, [x, y, w, h]))
+                    references2.append(
+                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                    )
                     references2[-1]
                     Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
@@ -389,9 +431,13 @@ def framepose(
                         x = int(x * frame_width)
                         y = int(y * frame_height)
                         if playerid == 1:
-                            cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5)
+                            cv2.circle(
+                                annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5
+                            )
                         else:
-                            cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5)
+                            cv2.circle(
+                                annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5
+                            )
                         if i == 16:
                             cv2.putText(
                                 annotated_frame,
@@ -417,8 +463,9 @@ def framepose(
             frame_width,
             frame_height,
             annotated_frame,
+            occluded,
         ]
-    except Exception as e:
+    except Exception:
         return [
             pose_model,
             frame,
@@ -433,6 +480,7 @@ def framepose(
             frame_width,
             frame_height,
             annotated_frame,
+            occluded,
         ]
 
 
@@ -476,9 +524,9 @@ def sum_pixels_in_bbox(frame, bbox):
 
 import math
 
-from squash import inferenceslicing
-from squash import deepsortframepose
 
+# from squash import inferenceslicing
+# from squash import deepsortframepose
 def ballplayer_detections(
     frame,
     frame_height,
@@ -502,32 +550,25 @@ def ballplayer_detections(
     player_last_positions,
 ):
     try:
-        ball_detection_results = []
         highestconf = 0
         x1 = x2 = y1 = y2 = 0
         # Ball detection
         ball = ballmodel(frame)
         label = ""
         try:
-            for i in range(len(past_ball_pos) - 10, len(past_ball_pos)):
+            # Show last 10 positions with diminishing circles
+            start_idx = max(0, len(past_ball_pos) - 10)
+            for i, pos in enumerate(past_ball_pos[start_idx:]):
+                # Calculate radius - starts at 15 and diminishes to 3
+                radius = max(3, 15 - (i * 1.2))
                 cv2.circle(
                     annotated_frame,
-                    (past_ball_pos[i][0], past_ball_pos[i][1]),
-                    3,
+                    (pos[0], pos[1]),
+                    int(radius),
                     (255, 255, 255),
-                    5,
+                    2
                 )
-                # draw a line between this point and the previous point
-                if i > 0:
-                    cv2.line(
-                        annotated_frame,
-                        (past_ball_pos[i][0], past_ball_pos[i][1]),
-                        (past_ball_pos[i - 1][0], past_ball_pos[i - 1][1]),
-                        (255, 255, 255),
-                        3,
-                    )
-        except Exception as e:
-            #print(f"probably not enough ball positions, : {e}")
+        except Exception:
             pass
         for box in ball[0].boxes:
             coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
@@ -619,6 +660,7 @@ def ballplayer_detections(
         players = framepose_result[7]
         player_last_positions = framepose_result[9]
         annotated_frame = framepose_result[12]
+        occluded = framepose_result[13]
         return [
             frame,  # 0
             frame_count,  # 1
@@ -636,9 +678,11 @@ def ballplayer_detections(
             pixdiffs,  # 13
             players,  # 14
             player_last_positions,  # 15
+            occluded,  # 16
         ]
-    except Exception as e:
-        return [frame,  # 0
+    except Exception:
+        return [
+            frame,  # 0
             frame_count,  # 1
             annotated_frame,  # 2
             mainball,  # 3
@@ -654,6 +698,7 @@ def ballplayer_detections(
             pixdiffs,  # 13
             players,  # 14
             player_last_positions,  # 15
+            occluded,  # 16
         ]
 
 
@@ -675,7 +720,7 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
 
 
 from scipy.signal import find_peaks
-from typing import List, Tuple, Dict
+from typing import List, Dict
 
 
 def classify_shot(
@@ -694,7 +739,7 @@ def classify_shot(
         trajectory = np.array(past_ball_pos)
 
         # Apply homography transform if provided
-        if homography_matrix is not None:
+        if (homography_matrix is not None):
             points = np.column_stack((trajectory[:, 0:2], np.ones(len(trajectory))))
             transformed = np.dot(homography_matrix, points.T).T
             trajectory[:, 0:2] = transformed[:, :2] / transformed[:, 2:]
@@ -739,8 +784,10 @@ def classify_shot(
             "direction": direction,
             "wall_hits": len(wall_hits),
         }
-    except Exception as e:
-        print(f"Error in classify_shot: {str(e)}")
+    except Exception:
+        # print(f"Error in classify_shot: {str(e)}")
+        pass
+
 
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     if len(past_ball_pos) < 3:
@@ -767,9 +814,10 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
 
     def compute_angle(v1, v2):
         import math
-        dot_prod = v1[0]*v2[0] + v1[1]*v2[1]
-        mag1 = (v1[0]**2 + v1[1]**2) ** 0.5
-        mag2 = (v2[0]**2 + v2[1]**2) ** 0.5
+
+        dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
+        mag1 = (v1[0] ** 2 + v1[1] ** 2) ** 0.5
+        mag2 = (v2[0] ** 2 + v2[1] ** 2) ** 0.5
         if mag1 == 0 or mag2 == 0:
             return 0  # Cannot compute angle with zero-length vector
         cos_theta = dot_prod / (mag1 * mag2)
@@ -787,6 +835,8 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
 
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
+
+
 def predict_next_pos(past_ball_pos, num_predictions=2):
     # Define a fixed sequence length
     max_sequence_length = 10
@@ -807,7 +857,7 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
 
     # Define LSTM model
     model = Sequential()
-    model.add(LSTM(50, activation='relu', input_shape=(max_sequence_length, 2)))
+    model.add(LSTM(50, activation="relu", input_shape=(max_sequence_length, 2)))
     model.add(Dense(2))
 
     # Load pre-trained model weights if available
@@ -820,5 +870,5 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
         predictions.append(pred[0])
 
         # Update input sequence
-        input_seq = np.concatenate((input_seq[:,1:,:], pred.reshape(1,1,2)), axis=1)
+        input_seq = np.concatenate((input_seq[:, 1:, :], pred.reshape(1, 1, 2)), axis=1)
     return predictions
