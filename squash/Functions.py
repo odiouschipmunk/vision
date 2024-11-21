@@ -305,7 +305,7 @@ def framepose(
             boxes = track_results[0].boxes.xywh.cpu()
             track_ids = track_results[0].boxes.id.int().cpu().tolist()
             keypoints = track_results[0].keypoints.cpu().numpy()
-            set(track_ids)
+            set(track_ids) 
             # Update or add players for currently visible track IDs
             # note that this only works with occluded players < 2, still working on it :(
             print(f"number of players found: {len(track_ids)}")
