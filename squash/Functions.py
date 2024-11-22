@@ -305,7 +305,7 @@ def framepose(
             boxes = track_results[0].boxes.xywh.cpu()
             track_ids = track_results[0].boxes.id.int().cpu().tolist()
             keypoints = track_results[0].keypoints.cpu().numpy()
-            set(track_ids) 
+            set(track_ids)
             # Update or add players for currently visible track IDs
             # note that this only works with occluded players < 2, still working on it :(
             print(f"number of players found: {len(track_ids)}")
@@ -314,8 +314,8 @@ def framepose(
                 print(player_last_positions)
                 last_pos_p1 = player_last_positions.get(1, (None, None))
                 last_pos_p2 = player_last_positions.get(2, (None, None))
-                #print(f"last pos p1: {last_pos_p1}")
-                occluded=[]
+                # print(f"last pos p1: {last_pos_p1}")
+                occluded = []
                 try:
                     occluded.append(
                         [
@@ -325,9 +325,8 @@ def framepose(
                             frame_count,
                         ]
                     )
-                except Exception as e:
+                except Exception:
                     pass
-                #print(f'occludedf: {occluded}')
             if len(track_ids) > 2:
                 return [
                     pose_model,
@@ -346,7 +345,7 @@ def framepose(
                     occluded,
                 ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
-                x, y, w, h = box 
+                x, y, w, h = box
                 player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
                 Image.fromarray(player_crop)
                 Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
@@ -562,11 +561,7 @@ def ballplayer_detections(
                 # Calculate radius - starts at 15 and diminishes to 3
                 radius = max(3, 15 - (i * 1.2))
                 cv2.circle(
-                    annotated_frame,
-                    (pos[0], pos[1]),
-                    int(radius),
-                    (255, 255, 255),
-                    2
+                    annotated_frame, (pos[0], pos[1]), int(radius), (255, 255, 255), 2
                 )
         except Exception:
             pass
@@ -739,7 +734,7 @@ def classify_shot(
         trajectory = np.array(past_ball_pos)
 
         # Apply homography transform if provided
-        if (homography_matrix is not None):
+        if homography_matrix is not None:
             points = np.column_stack((trajectory[:, 0:2], np.ones(len(trajectory))))
             transformed = np.dot(homography_matrix, points.T).T
             trajectory[:, 0:2] = transformed[:, :2] / transformed[:, 2:]
@@ -872,3 +867,37 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
         # Update input sequence
         input_seq = np.concatenate((input_seq[:, 1:, :], pred.reshape(1, 1, 2)), axis=1)
     return predictions
+
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+
+def input_model(csvdata):
+    model_name = "Qwen/Qwen2.5-1.5B-Instruct"
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name, torch_dtype="auto", device_map="auto"
+    )
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    messages = [
+        {
+            "role": "system",
+            "content": 'You are a squash coach. You are to read through this csv data structured in the format: "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type" and provide a response that summarizes what happened',
+        },
+        {
+            "role": "user",
+            "content": f"Here is an example response: In frame 66, Player 1 is positioned in the back right quarter of the court, while Player 2 is in the front left quarter. Player 1 hits a crosscourt drive, and the ball was successfully hit, bouncing off 1 wall. Here is the data, reply back in the same way as the example: {csvdata}",
+        },
+    ]
+    text = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+
+    generated_ids = model.generate(**model_inputs, max_new_tokens=4096)
+    generated_ids = [
+        output_ids[len(input_ids) :]
+        for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+    ]
+
+    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+    return response

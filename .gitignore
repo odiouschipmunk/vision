@@ -12,3 +12,5 @@ black_ball_videos
 datasets
 *.zip
 github_token.txt
+output
+importantoutput
