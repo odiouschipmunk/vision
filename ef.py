@@ -19,7 +19,7 @@ import csv
 start = time.time()
 
 
-def main(path="main.mp4", frame_width=640, frame_height=360):
+def main(path="main.mp4", frame_width=1920, frame_height=1080):
     try:
         print("imported all")
 
