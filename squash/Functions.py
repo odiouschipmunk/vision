@@ -1,9 +1,25 @@
 import numpy as np
-import clip
-import torch
 import cv2
+import torch
+import clip
+import math
+from PIL import Image
+from skimage.metrics import structural_similarity as ssim_metric
+from scipy.signal import find_peaks
+# from squash import Functions  # Remove if Functions.py replaces this
+from squash.Player import Player
+from norfair import Detection, Tracker, draw_tracked_objects
+from norfair.filter import OptimizedKalmanFilterFactory
 
-
+def create_norfair_tracker():
+    return Tracker(
+        distance_function="euclidean",
+        distance_threshold=50,
+        hit_counter_max=10,
+        filter_factory=OptimizedKalmanFilterFactory(),
+        past_detections_length=5
+    )
+    
 def find_match_2d_array(array, x):
     for i in range(len(array)):
         if array[i][0] == x:
@@ -52,7 +68,7 @@ def sum_pixels_in_bbox(frame, bbox):
     return np.sum(roi, dtype=np.int64)
 
 
-def findLastOne(array):
+def find_last_one(array):
     possibleis = []
     for i in range(len(array)):
         if array[i][1] == 1:
@@ -64,7 +80,7 @@ def findLastOne(array):
     return -1
 
 
-def findLastTwo(array):
+def find_last_two(array):
     possibleis = []
     for i in range(len(array)):
         if array[i][1] == 2:
@@ -74,15 +90,15 @@ def findLastTwo(array):
     return -1
 
 
-def findLast(i, otherTrackIds):
+def find_last(i, other_track_ids):
     possibleits = []
-    for it in range(len(otherTrackIds)):
-        if otherTrackIds[it][1] == i:
+    for it in range(len(other_track_ids)):
+        if other_track_ids[it][1] == i:
             possibleits.append(it)
     return possibleits[-1]
 
 
-def pixel_to_3d(pixel_point, pixel_reference, reference_points_3d):
+def pixel_to_3d_pixel_reference(pixel_point, pixel_reference, reference_points_3d):
     """
     Maps a single 2D pixel coordinate to a 3D position based on reference points.
 
@@ -271,16 +287,13 @@ def pixel_to_3d(pixel_point, H, rl_reference_points):
     ]
 
 
-from PIL import Image
-from squash import Functions
-from squash.Player import Player
-
-
 # from squash.framepose import framepose
 def framepose(
+    playertracker,
+    balltracker,
     pose_model,
     frame,
-    otherTrackIds,
+    other_track_ids,
     updated,
     references1,
     references2,
@@ -293,6 +306,7 @@ def framepose(
     annotated_frame,
     max_players=2,
     occluded=False,
+    
 ):
     try:
         track_results = pose_model.track(frame, persist=True, show=False)
@@ -331,7 +345,7 @@ def framepose(
                 return [
                     pose_model,
                     frame,
-                    otherTrackIds,
+                    other_track_ids,
                     updated,
                     references1,
                     references2,
@@ -343,20 +357,22 @@ def framepose(
                     frame_height,
                     annotated_frame,
                     occluded,
+                    playertracker,
+                    balltracker,
                 ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
                 player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
                 Image.fromarray(player_crop)
-                Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                if not Functions.find_match_2d_array(otherTrackIds, track_id):
+                sum_pixels_in_bbox(frame, [x, y, w, h])
+                if not find_match_2d_array(other_track_ids, track_id):
                     # player 1 has been updated last
                     if updated[0][1] > updated[1][1]:
                         if len(references2) > 1:
-                            otherTrackIds.append([track_id, 2])
+                            other_track_ids.append([track_id, 2])
                             print(f"added track id {track_id} to player 2")
                     else:
-                        otherTrackIds.append([track_id, 1])
+                        other_track_ids.append([track_id, 1])
                         print(f"added track id {track_id} to player 1")
                 # if updated[0], then that means that player 1 was updated last
                 # bc of this, we can assume that the next player is player 2
@@ -382,19 +398,19 @@ def framepose(
                     continue
                 if track_id == 1:
                     references1.append(
-                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                        sum_pixels_in_bbox(frame, [x, y, w, h])
                     )
                     references1[-1]
-                    Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                    sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
                         if len(pixdiffs) < 5:
                             pixdiffs.append(abs(references1[-1] - references2[-1]))
                 elif track_id == 2:
                     references2.append(
-                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                        sum_pixels_in_bbox(frame, [x, y, w, h])
                     )
                     references2[-1]
-                    Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
+                    sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
                         if len(pixdiffs) < 5:
                             pixdiffs.append(abs(references1[-1] - references2[-1]))
@@ -410,8 +426,8 @@ def framepose(
                         updated[1][0] = True
                         updated[1][1] = frame_count
                 if len(players) < max_players:
-                    players[otherTrackIds[track_id][0]] = Player(
-                        player_id=otherTrackIds[track_id][1]
+                    players[other_track_ids[track_id][0]] = Player(
+                        player_id=other_track_ids[track_id][1]
                     )
                     player_last_positions[playerid] = (x, y)
                     if playerid == 1:
@@ -451,7 +467,7 @@ def framepose(
         return [
             pose_model,
             frame,
-            otherTrackIds,
+            other_track_ids,
             updated,
             references1,
             references2,
@@ -463,12 +479,14 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
+            playertracker,
+            balltracker,
         ]
     except Exception:
         return [
             pose_model,
             frame,
-            otherTrackIds,
+            other_track_ids,
             updated,
             references1,
             references2,
@@ -480,48 +498,9 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
+            playertracker,
+            balltracker,
         ]
-
-
-def apply_homography(H, points, inverse=False):
-    """
-    Apply homography transformation to a set of points.
-
-    Parameters:
-        H: 3x3 homography matrix
-        points: List of points to transform [[x, y], ...]
-        inverse: If True, applies inverse transformation
-
-    Returns:
-        np.ndarray: Transformed points
-    """
-    try:
-        points = np.array(points, dtype=np.float32)
-        if points.ndim == 1:
-            points = points.reshape(1, 2)
-
-        if inverse:
-            H = np.linalg.inv(H)
-
-        # Reshape points to Nx1x2 format required by cv2.perspectiveTransform
-        points_reshaped = points.reshape(-1, 1, 2)
-
-        # Apply transformation
-        transformed_points = cv2.perspectiveTransform(points_reshaped, H)
-
-        return transformed_points.reshape(-1, 2)
-
-    except Exception as e:
-        raise ValueError(f"Error in apply_homography: {str(e)}")
-
-
-def sum_pixels_in_bbox(frame, bbox):
-    x, y, w, h = bbox
-    roi = frame[int(y) : int(y + h), int(x) : int(x + w)]
-    return np.sum(roi, dtype=np.int64)
-
-
-import math
 
 
 # from squash import inferenceslicing
@@ -540,13 +519,15 @@ def ballplayer_detections(
     past_ball_pos,
     ball_false_pos,
     running_frame,
-    otherTrackIds,
+    other_track_ids,
     updated,
     references1,
     references2,
     pixdiffs,
     players,
     player_last_positions,
+    playertracker,
+    balltracker,
 ):
     try:
         highestconf = 0
@@ -615,7 +596,7 @@ def ballplayer_detections(
                 math.hypot(
                     avg_x - mainball.getlastpos()[0], avg_y - mainball.getlastpos()[1]
                 )
-                Functions.drawmap(
+                drawmap(
                     mainball.getloc()[0],
                     mainball.getloc()[1],
                     mainball.getlastpos()[0],
@@ -629,7 +610,7 @@ def ballplayer_detections(
         framepose_result = framepose(
             pose_model=pose_model,
             frame=frame,
-            otherTrackIds=otherTrackIds,
+            other_track_ids=other_track_ids,
             updated=updated,
             references1=references1,
             references2=references2,
@@ -640,8 +621,10 @@ def ballplayer_detections(
             frame_width=frame_width,
             frame_height=frame_height,
             annotated_frame=annotated_frame,
+            playertracker=playertracker,
+            balltracker=balltracker,
         )
-        otherTrackIds = framepose_result[2]
+        other_track_ids = framepose_result[2]
         updated = framepose_result[3]
         references1 = framepose_result[4]
         references2 = framepose_result[5]
@@ -650,6 +633,9 @@ def ballplayer_detections(
         player_last_positions = framepose_result[9]
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
+        playertracker=framepose_result[14]
+        balltracker=framepose_result[15]
+        
         return [
             frame,  # 0
             frame_count,  # 1
@@ -660,7 +646,7 @@ def ballplayer_detections(
             past_ball_pos,  # 6
             ball_false_pos,  # 7
             running_frame,  # 8
-            otherTrackIds,  # 9
+            other_track_ids,  # 9
             updated,  # 10
             references1,  # 11
             references2,  # 12
@@ -668,6 +654,8 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
+            playertracker,  # 17
+            balltracker,  # 18
         ]
     except Exception:
         return [
@@ -680,7 +668,7 @@ def ballplayer_detections(
             past_ball_pos,  # 6
             ball_false_pos,  # 7
             running_frame,  # 8
-            otherTrackIds,  # 9
+            other_track_ids,  # 9
             updated,  # 10
             references1,  # 11
             references2,  # 12
@@ -688,9 +676,41 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
+            playertracker,  # 17
+            balltracker,  # 18
         ]
 
-from skimage.metrics import structural_similarity as ssim_metric
+def apply_homography(H, points, inverse=False):
+    """
+    Apply homography transformation to a set of points.
+
+    Parameters:
+        H: 3x3 homography matrix
+        points: List of points to transform [[x, y], ...]
+        inverse: If True, applies inverse transformation
+
+    Returns:
+        np.ndarray: Transformed points
+    """
+    try:
+        points = np.array(points, dtype=np.float32)
+        if points.ndim == 1:
+            points = points.reshape(1, 2)
+
+        if inverse:
+            H = np.linalg.inv(H)
+
+        # Reshape points to Nx1x2 format required by cv2.perspectiveTransform
+        points_reshaped = points.reshape(-1, 1, 2)
+
+        # Apply transformation
+        transformed_points = cv2.perspectiveTransform(points_reshaped, H)
+
+        return transformed_points.reshape(-1, 2)
+
+    except Exception as e:
+        raise ValueError(f"Error in apply_homography: {str(e)}")
+
 
 frame_height=360
 frame_width=640
@@ -828,7 +848,6 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 
 
-from scipy.signal import find_peaks
 from typing import List, Dict
 
 
@@ -942,8 +961,8 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     return False
 
 
-from keras.models import Sequential
-from keras.layers import LSTM, Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
 
 def predict_next_pos(past_ball_pos, num_predictions=2):

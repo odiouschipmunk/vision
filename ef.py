@@ -2,7 +2,7 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 import math
-from squash import Referencepoints, Functions
+from squash import Referencepoints, Functions  # Ensure Functions is imported
 import tensorflow as tf
 import matplotlib
 matplotlib.use("Agg")
@@ -15,7 +15,8 @@ import csv
 from norfair import Detection, Tracker, Video, draw_tracked_objects
 
 start = time.time()
-
+norfair_player_tracker=Functions.create_norfair_tracker()
+norfair_ball_tracker=Functions.create_norfair_tracker()
 
 def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
@@ -234,13 +235,15 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 past_ball_pos=past_ball_pos,
                 ball_false_pos=ball_false_pos,
                 running_frame=running_frame,
-                otherTrackIds=otherTrackIds,
+                other_track_ids=otherTrackIds,
                 updated=updated,
                 references1=references1,
                 references2=references2,
                 pixdiffs=pixdiffs,
                 players=players,
                 player_last_positions=player_last_positions,
+                playertracker=norfair_player_tracker,
+                balltracker=norfair_ball_tracker,
             )
             frame = detections_result[0]
             frame_count = detections_result[1]
@@ -259,7 +262,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             players = detections_result[14]
             player_last_positions = detections_result[15]
             occluded = detections_result[16]
-            print(f"occluded: {occluded}")
+            #print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
             match_in_play = Functions.is_match_in_play(players, mainball)
@@ -361,7 +364,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     text_p1 = f"P1 position(ankle): {avgxank1},{avgyank1}"
                     cv2.putText(
                         annotated_frame,
-                        f"{otherTrackIds[Functions.findLast(1, otherTrackIds)][1]}",
+                        f"{otherTrackIds[Functions.find_last(1, otherTrackIds)][1]}",
                         (p1_left_ankle_x, p1_left_ankle_y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.4,
@@ -370,7 +373,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     )
                     cv2.putText(
                         annotated_frame,
-                        f"{otherTrackIds[Functions.findLast(2, otherTrackIds)][1]}",
+                        f"{otherTrackIds[Functions.find_last(2, otherTrackIds)][1]}",
                         (p2_left_ankle_x, p2_left_ankle_y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.4,
@@ -719,8 +722,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 # write()
                 csvwrite()
             except Exception as e:
-                print(f"error:3 {e}")
-                print(f"line was {e.__traceback__.tb_lineno}")
+                pass
 
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
