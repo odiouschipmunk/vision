@@ -191,7 +191,7 @@ def main():
         'Player 1 Numerical': None,
         'Player 2 Numerical': None
     }
-    df = pd.read_csv('output2/final.csv')
+    df = pd.read_csv('output/final.csv')
     analyses=[]
     for index, row in df.iterrows():
         frame = row['Frame count']
