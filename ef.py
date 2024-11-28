@@ -2,33 +2,24 @@ import cv2
 from ultralytics import YOLO
 import numpy as np
 import math
-from squash import Referencepoints, Functions, Player
+from squash import Referencepoints, Functions
 import tensorflow as tf
 import matplotlib
-from norfair import Tracker
 
 # from squash import deepsortframepose as fpose
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
 import logging
+import os
+from skimage.metrics import structural_similarity as ssim_metric
 import time
 import csv
 
 start = time.time()
-ball_tracker = Tracker(
-    distance_function="euclidean", distance_threshold=30, hit_counter_max=5
-)
-
-pose_tracker = Tracker(
-    distance_function="euclidean",
-    distance_threshold=50,
-    hit_counter_max=10,
-    initialization_delay=3,
-)
 
 
-def main(path="main.mp4", frame_width=1920, frame_height=1080):
+def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
 
@@ -48,8 +39,40 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
 
             return positions
 
-        Functions.cleanwrite()
-
+        with open("output/ball.txt", "w") as f:
+            f.write("")
+        with open("output/player1.txt", "w") as f:
+            f.write("")
+        with open("output/player2.txt", "w") as f:
+            f.write("")
+        with open("output/ball-xyn.txt", "w") as f:
+            f.write("")
+        with open("output/read_ball.txt", "w") as f:
+            f.write("")
+        with open("output/read_player1.txt", "w") as f:
+            f.write("")
+        with open("output/read_player2.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/ball.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/player1.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/player2.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/ball-xyn.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/read_ball.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/read_player1.txt", "w") as f:
+            f.write("")
+        with open("importantoutput/read_player2.txt", "w") as f:
+            f.write("")
+        with open("output/final.json", "w") as f:
+            f.write("[")
+        with open("output/final.csv", "w") as f:
+            f.write(
+                "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
+            )
         pose_model = YOLO("models/yolo11m-pose.pt")
         ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
 
@@ -67,7 +90,9 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
         for i in range(1, 3):
             occlusion_times[i] = 0
         future_predict = None
+        player_last_positions = {}
         frame_count = 0
+        ball_false_pos = []
         past_ball_pos = []
         logging.getLogger("ultralytics").setLevel(logging.ERROR)
         output_path = "output/annotated.mp4"
@@ -82,8 +107,9 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
         detections = []
 
         mainball = Ball(0, 0, 0, 0)
-        np.zeros((frame_height, frame_width), dtype=np.float32)
+        ballmap = np.zeros((frame_height, frame_width), dtype=np.float32)
         otherTrackIds = [[0, 0], [1, 1], [2, 2]]
+        updated = [[False, 0], [False, 0]]
         reference_points = []
         reference_points = Referencepoints.get_reference_points(
             path=path, frame_width=frame_width, frame_height=frame_height
@@ -92,13 +118,132 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
         references1 = []
         references2 = []
 
+        pixdiffs = []
+
         p1distancesfromT = []
         p2distancesfromT = []
 
         courtref = np.int64(courtref)
         referenceimage = None
 
+        def is_camera_angle_switched(frame, reference_image, threshold=0.5):
+            frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
+            score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
+            return score < threshold
+
         # function to see what kind of shot has been hit
+        def shot_type(past_ball_pos, threshold=3):
+            # go through the past threshold number of past ball positions and see what kind of shot it is
+            # past_ball_pos ordered as [[x,y,frame_number], ...]
+            if len(past_ball_pos) < threshold:
+                return None
+            threshballpos = past_ball_pos[-threshold:]
+            # check for crosscourt or straight shots
+            xdiff = threshballpos[-1][0] - threshballpos[0][0]
+            ydiff = threshballpos[-1][1] - threshballpos[0][1]
+            typeofshot = ""
+            if xdiff < 50 and ydiff < 50:
+                typeofshot = "straight"
+            else:
+                typeofshot = "crosscourt"
+            # check how high the ball has moved
+            maxheight = 0
+            height = ""
+            for i in range(1, len(threshballpos)):
+                if threshballpos[i][1] > maxheight:
+                    maxheight = threshballpos[i][1]
+                    # print(f"{threshballpos[i]}")
+                    # print(f'maxheight: {maxheight}')
+                    # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
+            if maxheight < (frame_height) / 1.35:
+                height += "lob"
+                # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
+            else:
+                height += "drive"
+            return typeofshot + " " + height
+
+        def is_match_in_play(
+            players,
+            mainball,
+            movement_threshold=0.2 * frame_width,
+            hit=0.15 * frame_height,
+        ):
+            if players.get(1) is None or players.get(2) is None or mainball is None:
+                return False
+            try:
+                lastplayer1pos = []
+
+                lastplayer2pos = []
+                lastballpos = []
+                ball_hit = player_move = False
+                # lastplayerxpos in the format of [[lanklex, lankley], [ranklex, rankley]]
+                lastplayer1pos.append(
+                    [
+                        players.get(1).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                        players.get(1).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+                    ]
+                )
+                lastplayer2pos.append(
+                    [
+                        players.get(2).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                        players.get(2).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+                    ]
+                )
+                lastplayer1pos.append(
+                    [
+                        players.get(1).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                        players.get(1).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+                    ]
+                )
+                lastplayer2pos.append(
+                    [
+                        players.get(2).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                        players.get(2).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+                    ]
+                )
+                for i in range(1, mainball.number_of_coords()):
+                    if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i - 1):
+                        lastballpos.append(mainball.get_last_x_pos(i))
+
+                # print(f'lastplayer1pos: {lastplayer1pos}')
+                lastplayer1distance = math.hypot(
+                    lastplayer1pos[0][0] - lastplayer1pos[1][0],
+                    lastplayer1pos[0][1] - lastplayer1pos[1][1],
+                )
+                lastplayer2distance = math.hypot(
+                    lastplayer2pos[0][0] - lastplayer2pos[1][0],
+                    lastplayer2pos[0][1] - lastplayer2pos[1][1],
+                )
+                # print(f'lastplayer1distance: {lastplayer1distance}')
+                # print(f'lastplayer2distance: {lastplayer2distance}')
+                # given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so:
+                # if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
+                # if the player has lunged, then the match is in play
+
+                # print(f'last ball pos: {lastballpos}')
+                balldistance = math.hypot(
+                    lastballpos[0][0] - lastballpos[1][0],
+                    lastballpos[0][1] - lastballpos[1][1],
+                )
+                # print(f'balldistance: {balldistance}')
+                if balldistance >= hit:
+                    ball_hit = True
+                # print(f'last player pos: {lastplayerpos}')
+                # print(f'last ball pos: {lastballpos}')
+                # print(f'player lunged: {player_move}')
+                if (
+                    lastplayer1distance >= movement_threshold
+                    or lastplayer2distance >= movement_threshold
+                ):
+                    player_move = True
+                # print(f'ball hit: {ball_hit}')
+                return [player_move, ball_hit]
+            except Exception:
+                # print(
+                #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
+                # )
+                return False
 
         reference_points_3d = [
             [0, 0, 9.75],  # Top-left corner, 1
@@ -158,7 +303,7 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                 )
                 referenceimage = frame
 
-            if Functions.is_camera_angle_switched(frame, referenceimage, threshold=0.5):
+            if is_camera_angle_switched(frame, referenceimage, threshold=0.5):
                 continue
 
             currentref = int(
@@ -191,38 +336,49 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
             print("loaded models")
             # frame, frame_height, frame_width, frame_count, annotated_frame, ballmodel, pose_model, mainball, ball, ballmap, past_ball_pos, ball_false_pos, running_frame
             # framepose_result=framepose.framepose(pose_model=pose_model, frame=frame, otherTrackIds=otherTrackIds, updated=updated, references1=references1, references2=references2, pixdiffs=pixdiffs, players=players, frame_count=frame_count, player_last_positions=player_last_positions, frame_width=frame_width, frame_height=frame_height, annotated_frame=annotated_frame)
-            try:
-                frame_result = Functions.ballplayer_detections(
-                    frame=frame,
-                    frame_height=frame_height, 
-                    frame_width=frame_width,
-                    frame_count=frame_count,
-                    annotated_frame=annotated_frame,
-                    ballmodel=ballmodel,
-                    pose_model=pose_model,
-                    mainball=mainball
-                )
-                
-                if frame_result is not None:
-                    frame, frame_count, annotated_frame, mainball, tracked_poses, tracked_balls = frame_result
-
-                    if tracked_poses is not None and len(tracked_poses) > 0:
-                        print(f"Number of tracked poses: {len(tracked_poses)}")
-                        for tracked_pose in tracked_poses:
-                            if tracked_pose and getattr(tracked_pose, 'estimate', None) is not None:
-                                player_id = tracked_pose.id
-                                keypoints = tracked_pose.estimate
-                                if player_id not in players:
-                                    players[player_id] = Player.Player(player_id)
-                                players[player_id].add_pose(keypoints)
-                    else:
-                        print("No tracked poses available for this frame.")
-            except Exception as e:
-                print(f"Error in frame processing: {e}")
-                print(f"Line: {e.__traceback__.tb_lineno}")
+            detections_result = Functions.ballplayer_detections(
+                frame=frame,
+                frame_height=frame_height,
+                frame_width=frame_width,
+                frame_count=frame_count,
+                annotated_frame=annotated_frame,
+                ballmodel=ballmodel,
+                pose_model=pose_model,
+                mainball=mainball,
+                ball=ball,
+                ballmap=ballmap,
+                past_ball_pos=past_ball_pos,
+                ball_false_pos=ball_false_pos,
+                running_frame=running_frame,
+                otherTrackIds=otherTrackIds,
+                updated=updated,
+                references1=references1,
+                references2=references2,
+                pixdiffs=pixdiffs,
+                players=players,
+                player_last_positions=player_last_positions,
+            )
+            frame = detections_result[0]
+            frame_count = detections_result[1]
+            annotated_frame = detections_result[2]
+            mainball = detections_result[3]
+            ball = detections_result[4]
+            ballmap = detections_result[5]
+            past_ball_pos = detections_result[6]
+            ball_false_pos = detections_result[7]
+            running_frame = detections_result[8]
+            otherTrackIds = detections_result[9]
+            updated = detections_result[10]
+            references1 = detections_result[11]
+            references2 = detections_result[12]
+            pixdiffs = detections_result[13]
+            players = detections_result[14]
+            player_last_positions = detections_result[15]
+            occluded = detections_result[16]
+            print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
-            match_in_play = Functions.is_match_in_play(players, mainball)
+            match_in_play = is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(
                 past_ball_pos, homography_matrix=homography
             )
@@ -508,8 +664,17 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                                 -1,
                             )
 
+                            # cv2.circle(
+                            #    annotated_frame,
+                            #    (next_pos[0], next_pos[1]),
+                            #    5,
+                            #    (0, 255, 0),
+                            #    -1,
+                            # )
+
             for ball_pos in ballxy:
                 if frame_count - ball_pos[2] < 7:
+                    # print(f'wrote to frame on line 1028 with coords: {ball_pos}')
                     cv2.circle(
                         annotated_frame, (ball_pos[0], ball_pos[1]), 5, (0, 255, 0), -1
                     )
@@ -643,6 +808,10 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                 )
             print(f"finished writing frame {frame_count}")
 
+            def write():
+                with open("output/ball.txt", "a") as f:
+                    f.write(f"{mainball.getloc()[0]}\n{mainball.getloc()[1]}\n")
+
             def csvwrite():
                 with open("output/final.csv", "a") as f:
                     csvwriter = csv.writer(f)
@@ -662,6 +831,24 @@ def main(path="main.mp4", frame_width=1920, frame_height=1080):
                     ]
                     csvwriter.writerow(data)
 
+            try:
+                # write()
+                csvwrite()
+            except Exception as e:
+                print(f"error:3 {e}")
+                print(f"line was {e.__traceback__.tb_lineno}")
+
+            # check if the csv file has more than 50 lines and then get the last 5 csv lines
+            """
+            with open("output/final.csv", "r") as f:
+                lines = f.readlines()
+                if len(lines) > 500:
+                    csvreader = csv.reader(lines)
+                    last50 = list(csvreader)[-50:]
+                    print(f'last 50 lines: {last50}')
+                    print(Functions.input_model(str(last50)))
+                    #print(f'last 5 lines: {last5}')
+            """
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
 
@@ -688,6 +875,11 @@ if __name__ == "__main__":
     # get keyboarinterrupt error
     except KeyboardInterrupt:
         print("keyboard interrupt")
+        # remove the last comma and add a closing ']' to the json file
+        with open("output/final.json", "rb+") as f:
+            f.seek(-2, os.SEEK_END)
+            f.truncate()
+            f.write(b"\n]")
         exit()
     except Exception:
         # print(f"error: {e}")
