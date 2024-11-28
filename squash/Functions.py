@@ -2,7 +2,7 @@ import numpy as np
 import clip
 import torch
 import cv2
-
+import math
 
 def find_match_2d_array(array, x):
     for i in range(len(array)):
@@ -274,214 +274,208 @@ def pixel_to_3d(pixel_point, H, rl_reference_points):
 from PIL import Image
 from squash import Functions
 from squash.Player import Player
+from norfair import Detection, Tracker, draw_tracked_objects, draw_points
+import traceback
+
+pose_tracker = Tracker(
+    distance_function="euclidean",
+    distance_threshold=250,
+    hit_counter_max=150,
+)
+ball_tracker = Tracker(
+        distance_function="euclidean",
+        distance_threshold=30,
+        hit_counter_max=5,
+        
+    )
 
 
-# from squash.framepose import framepose
-def framepose(
-    pose_model,
-    frame,
-    otherTrackIds,
-    updated,
-    references1,
-    references2,
-    pixdiffs,
-    players,
-    frame_count,
-    player_last_positions,
-    frame_width,
-    frame_height,
-    annotated_frame,
-    max_players=2,
-    occluded=False,
-):
+def framepose(pose_model, frame, frame_width, frame_height, annotated_frame, tracker=pose_tracker):
+    """Process pose detection and tracking using Norfair"""
+    print("Starting pose detection")
+    
+    KEYPOINT_CONNECTIONS = [
+        (5,7), (7,9), (6,8), (8,10),  # Arms
+        (5,6), (11,12),  # Shoulders and hips
+        (11,13), (13,15), (12,14), (14,16)  # Legs
+    ]
+    
+    track_results = pose_model.track(frame, persist=True, show=False)
+    
+    if not track_results:
+        return None
+        
+    detections = []
     try:
-        track_results = pose_model.track(frame, persist=True, show=False)
-        if (
-            track_results
-            and hasattr(track_results[0], "keypoints")
-            and track_results[0].keypoints is not None
-        ):
-            # Extract boxes, track IDs, and keypoints from pose results
-            boxes = track_results[0].boxes.xywh.cpu()
-            track_ids = track_results[0].boxes.id.int().cpu().tolist()
-            keypoints = track_results[0].keypoints.cpu().numpy()
-            set(track_ids)
-            # Update or add players for currently visible track IDs
-            # note that this only works with occluded players < 2, still working on it :(
-            print(f"number of players found: {len(track_ids)}")
-            # occluded as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
-            if len(track_ids) < 2:
-                print(player_last_positions)
-                last_pos_p1 = player_last_positions.get(1, (None, None))
-                last_pos_p2 = player_last_positions.get(2, (None, None))
-                # print(f"last pos p1: {last_pos_p1}")
-                occluded = []
-                try:
-                    occluded.append(
-                        [
-                            len(track_ids),
-                            last_pos_p1,
-                            last_pos_p2,
-                            frame_count,
-                        ]
-                    )
-                except Exception:
-                    pass
-            if len(track_ids) > 2:
-                return [
-                    pose_model,
-                    frame,
-                    otherTrackIds,
-                    updated,
-                    references1,
-                    references2,
-                    pixdiffs,
-                    players,
-                    frame_count,
-                    player_last_positions,
-                    frame_width,
-                    frame_height,
+        for result in track_results:
+            if hasattr(result, "keypoints") and result.keypoints is not None:
+                keypoints_obj = result.keypoints
+                keypoints_array = keypoints_obj.xy.cpu().numpy()
+                keypoints_conf = keypoints_obj.conf.cpu().numpy()
+                
+                print(f"Keypoints array shape: {keypoints_array.shape}")
+                
+                for person_idx in range(keypoints_array.shape[0]):
+                    person_keypoints = keypoints_array[person_idx]
+                    person_conf = keypoints_conf[person_idx]
+                    
+                    # Initialize arrays with zeros for all keypoints
+                    all_keypoints = np.zeros((17, 2))  # Fixed size for all 17 keypoints
+                    valid_mask = np.zeros(17, dtype=bool)
+                    
+                    # Fill valid keypoints and mark them
+                    for kp_idx, (kp, conf) in enumerate(zip(person_keypoints, person_conf)):
+                        x, y = kp[0], kp[1]
+                        if conf > 0.3 and not (x == 0 and y == 0):
+                            all_keypoints[kp_idx] = [float(x), float(y)]
+                            valid_mask[kp_idx] = True
+                            cv2.circle(annotated_frame, 
+                                     (int(x), int(y)), 
+                                     4, (0,255,0), -1)
+                    
+                    # Create detection with all keypoints to maintain consistent dimensions
+                    if np.sum(valid_mask) >= 5:  # At least 5 valid keypoints
+                        detection = Detection(points=all_keypoints)
+                        detections.append(detection)
+                        
+                        # Draw connections only between valid keypoints
+                        for conn in KEYPOINT_CONNECTIONS:
+                            if valid_mask[conn[0]] and valid_mask[conn[1]]:
+                                pt1 = tuple(map(int, all_keypoints[conn[0]]))
+                                pt2 = tuple(map(int, all_keypoints[conn[1]]))
+                                if all(x >= 0 for x in pt1 + pt2):
+                                    cv2.line(annotated_frame, pt1, pt2, (255,0,0), 2)
+                
+                print(f"Created {len(detections)} detections")
+        
+        if detections:
+            tracked_objects = tracker.update(detections=detections)
+            
+            if tracked_objects:
+                for tracked_obj in tracked_objects:
+                    points = tracked_obj.estimate
+                    # Use mean of valid points only
+                    valid_points = points[~np.all(points == 0, axis=1)]
+                    if len(valid_points) > 0:
+                        center = valid_points.mean(axis=0)
+                        
+                        # Draw ID with background for better visibility
+                        text = f"Player {tracked_obj.id}"
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        scale = 0.8
+                        thickness = 2
+                        
+                        # Get text size
+                        (text_width, text_height), baseline = cv2.getTextSize(
+                            text, font, scale, thickness)
+                        
+                        # Draw background rectangle
+                        cv2.rectangle(
+                            annotated_frame,
+                            (int(center[0] - text_width/2), int(center[1] - text_height - 5)),
+                            (int(center[0] + text_width/2), int(center[1] + 5)),
+                            (0, 0, 0),
+                            -1
+                        )
+                        
+                        # Draw text
+                        cv2.putText(
+                            annotated_frame,
+                            text,
+                            (int(center[0] - text_width/2), int(center[1])),
+                            font,
+                            scale,
+                            (255, 255, 0),
+                            thickness
+                        )
+                
+                print(f"Tracking {len(tracked_objects)} objects")
+                return tracked_objects
+        
+        return None
+        
+    except Exception as e:
+        print(f"Error in framepose: {str(e)}")
+        traceback.print_exc()
+        return None
+    
+    
+def ballplayer_detections(frame, frame_height, frame_width, frame_count, annotated_frame,
+                         ballmodel, pose_model, mainball, **kwargs):
+    """Process ball and player detections"""
+    try:
+        # Ball detection
+        ball_results = ballmodel(frame)
+        ball_coords = []
+        print(f"Ball results: {len(ball_results)} detections")
+        
+        if len(ball_results) > 0 and hasattr(ball_results[0], 'boxes'):
+            boxes = ball_results[0].boxes
+            if len(boxes) > 0:
+                box = boxes[0]  # Take first detection
+                if hasattr(box, 'xyxy') and len(box.xyxy) > 0:
+                    coords = box.xyxy[0].cpu().numpy()
+                    x1, y1, x2, y2 = coords
+                    ball_coords = [int((x1 + x2)/2), int((y1 + y2)/2)]
+        
+        # Create Norfair detections
+        ball_detections = create_norfair_detections(None, ball_coords)
+        print(f"Updated ball detections: {ball_detections}")
+        
+        # Update trackers
+        tracked_balls = ball_tracker.update(detections=ball_detections)
+        print(f"Tracked balls: {tracked_balls}")
+        
+        # Process poses
+        tracked_poses = framepose(pose_model, frame, frame_width, frame_height, annotated_frame)
+        
+        if tracked_balls:
+            for tracked_ball in tracked_balls:
+                points = tracked_ball.estimate
+                cv2.circle(
                     annotated_frame,
-                    occluded,
-                ]
-            for box, track_id, kp in zip(boxes, track_ids, keypoints):
-                x, y, w, h = box
-                player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
-                Image.fromarray(player_crop)
-                Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                if not Functions.find_match_2d_array(otherTrackIds, track_id):
-                    # player 1 has been updated last
-                    if updated[0][1] > updated[1][1]:
-                        if len(references2) > 1:
-                            otherTrackIds.append([track_id, 2])
-                            print(f"added track id {track_id} to player 2")
-                    else:
-                        otherTrackIds.append([track_id, 1])
-                        print(f"added track id {track_id} to player 1")
-                # if updated[0], then that means that player 1 was updated last
-                # bc of this, we can assume that the next player is player 2
-                if track_id == 1:
-                    playerid = 1
-                elif track_id == 2:
-                    playerid = 2
-                # updated [0] is player 1, updated [1] is player 2
-                # if player1 was updated last, then player 2 is next
-                # if player 2 was updated last, then player 1 is next
-                # if both were updated at the same time, then player 1 is next as track ids go from 1 --> 2 im really hoping
-                elif updated[0][1] > updated[1][1]:
-                    playerid = 2
-                    # player 1 was updated last
-                elif updated[0][1] < updated[1][1]:
-                    playerid = 1
-                    # player 2 was updated last
-                elif updated[0][1] == updated[1][1]:
-                    playerid = 1
-                    # both players were updated at the same time, so we are assuming that player 1 is the next player
-                else:
-                    print(f"could not find player id for track id {track_id}")
-                    continue
-                if track_id == 1:
-                    references1.append(
-                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                    )
-                    references1[-1]
-                    Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                    if len(references1) > 1 and len(references2) > 1:
-                        if len(pixdiffs) < 5:
-                            pixdiffs.append(abs(references1[-1] - references2[-1]))
-                elif track_id == 2:
-                    references2.append(
-                        Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                    )
-                    references2[-1]
-                    Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
-                    if len(references1) > 1 and len(references2) > 1:
-                        if len(pixdiffs) < 5:
-                            pixdiffs.append(abs(references1[-1] - references2[-1]))
-                # If player is already tracked, update their info
-                if playerid in players:
-                    players[playerid].add_pose(kp)
-                    player_last_positions[playerid] = (x, y)  # Update position
-                    players[playerid].add_pose(kp)
-                    if playerid == 1:
-                        updated[0][0] = True
-                        updated[0][1] = frame_count
-                    if playerid == 2:
-                        updated[1][0] = True
-                        updated[1][1] = frame_count
-                if len(players) < max_players:
-                    players[otherTrackIds[track_id][0]] = Player(
-                        player_id=otherTrackIds[track_id][1]
-                    )
-                    player_last_positions[playerid] = (x, y)
-                    if playerid == 1:
-                        updated[0][0] = True
-                        updated[0][1] = frame_count
-                    else:
-                        updated[1][0] = True
-                        updated[1][1] = frame_count
-                    print(f"Player {playerid} added.")
-                # putting player keypoints on the frame
-                for keypoint in kp:
-                    # print(keypoint.xyn[0])
-                    i = 0
-                    for k in keypoint.xyn[0]:
-                        x, y = k
-                        x = int(x * frame_width)
-                        y = int(y * frame_height)
-                        if playerid == 1:
-                            cv2.circle(
-                                annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5
-                            )
-                        else:
-                            cv2.circle(
-                                annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5
-                            )
-                        if i == 16:
-                            cv2.putText(
-                                annotated_frame,
-                                f"{playerid}",
-                                (int(x), int(y)),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                2.5,
-                                (255, 255, 255),
-                                7,
-                            )
-                        i += 1
-        return [
-            pose_model,
-            frame,
-            otherTrackIds,
-            updated,
-            references1,
-            references2,
-            pixdiffs,
-            players,
-            frame_count,
-            player_last_positions,
-            frame_width,
-            frame_height,
-            annotated_frame,
-            occluded,
-        ]
-    except Exception:
-        return [
-            pose_model,
-            frame,
-            otherTrackIds,
-            updated,
-            references1,
-            references2,
-            pixdiffs,
-            players,
-            frame_count,
-            player_last_positions,
-            frame_width,
-            frame_height,
-            annotated_frame,
-            occluded,
-        ]
+                    (int(points[0][0]), int(points[0][1])),
+                    5,
+                    (0, 255, 0),
+                    2
+                )
+        
+        # Update main ball
+        if ball_coords:
+            mainball.update(ball_coords[0], ball_coords[1], 0)
+            
+        return frame, frame_count, annotated_frame, mainball, tracked_poses, tracked_balls
+        
+    except Exception as e:
+        print(f"Error in ballplayer_detections: {str(e)}")
+        return frame, frame_count, annotated_frame, mainball, None, None
 
+def create_norfair_detections(pose_keypoints, ball_coords=None):
+    """Convert pose keypoints and ball coordinates to Norfair detections"""
+    detections = []
+    
+    # Convert pose keypoints
+    if pose_keypoints is not None:
+        for keypoints in pose_keypoints:
+            # Convert keypoints to format expected by Norfair
+            points = np.array([[kp[0], kp[1]] for kp in keypoints])
+            detections.append(Detection(points=points))
+    
+    # Convert ball coordinates if present
+    if ball_coords is not None and ball_coords != [0, 0]:
+        ball_point = np.array([[ball_coords[0], ball_coords[1]]])
+        detections.append(Detection(points=ball_point))
+    
+    return detections
+
+
+def slice_frame(width, height, overlap, frame):
+    slices = []
+    for y in range(0, frame.shape[0], height - overlap):
+        for x in range(0, frame.shape[1], width - overlap):
+            slice_frame = frame[y : y + height, x : x + width]
+            slices.append(slice_frame)
+    return slices
 
 def apply_homography(H, points, inverse=False):
     """
@@ -519,191 +513,6 @@ def sum_pixels_in_bbox(frame, bbox):
     x, y, w, h = bbox
     roi = frame[int(y) : int(y + h), int(x) : int(x + w)]
     return np.sum(roi, dtype=np.int64)
-
-
-import math
-
-
-# from squash import inferenceslicing
-# from squash import deepsortframepose
-def ballplayer_detections(
-    frame,
-    frame_height,
-    frame_width,
-    frame_count,
-    annotated_frame,
-    ballmodel,
-    pose_model,
-    mainball,
-    ball,
-    ballmap,
-    past_ball_pos,
-    ball_false_pos,
-    running_frame,
-    otherTrackIds,
-    updated,
-    references1,
-    references2,
-    pixdiffs,
-    players,
-    player_last_positions,
-):
-    try:
-        highestconf = 0
-        x1 = x2 = y1 = y2 = 0
-        # Ball detection
-        ball = ballmodel(frame)
-        label = ""
-        try:
-            # Show last 10 positions with diminishing circles
-            start_idx = max(0, len(past_ball_pos) - 10)
-            for i, pos in enumerate(past_ball_pos[start_idx:]):
-                # Calculate radius - starts at 15 and diminishes to 3
-                radius = max(3, 15 - (i * 1.2))
-                cv2.circle(
-                    annotated_frame, (pos[0], pos[1]), int(radius), (255, 255, 255), 2
-                )
-        except Exception:
-            pass
-        for box in ball[0].boxes:
-            coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
-            x1temp, y1temp, x2temp, y2temp = coords
-            label = ballmodel.names[int(box.cls)]
-            confidence = float(box.conf)  # Convert tensor to float
-            int((x1temp + x2temp) / 2)
-            int((y1temp + y2temp) / 2)
-
-            if confidence > highestconf:
-                highestconf = confidence
-                x1 = x1temp
-                y1 = y1temp
-                x2 = x2temp
-                y2 = y2temp
-
-        cv2.rectangle(
-            annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2
-        )
-
-        cv2.putText(
-            annotated_frame,
-            f"{label} {highestconf:.2f}",
-            (int(x1), int(y1) - 10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 255, 0),
-            2,
-        )
-
-        # print(label)
-        cv2.putText(
-            annotated_frame,
-            f"Frame: {frame_count}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.9,
-            (0, 255, 0),
-            2,
-        )
-
-        avg_x = int((x1 + x2) / 2)
-        avg_y = int((y1 + y2) / 2)
-        size = avg_x * avg_y
-        if avg_x > 0 or avg_y > 0:
-            if mainball.getlastpos()[0] != avg_x or mainball.getlastpos()[1] != avg_y:
-                # print(mainball.getlastpos())
-                # print(mainball.getloc())
-                mainball.update(avg_x, avg_y, size)
-                past_ball_pos.append([avg_x, avg_y, running_frame])
-                # print(mainball.getlastpos())
-                # print(mainball.getloc())
-                math.hypot(
-                    avg_x - mainball.getlastpos()[0], avg_y - mainball.getlastpos()[1]
-                )
-
-                # print(f'Position(in pixels): {mainball.getloc()}\nDistance: {distance}\n')
-                Functions.drawmap(
-                    mainball.getloc()[0],
-                    mainball.getloc()[1],
-                    mainball.getlastpos()[0],
-                    mainball.getlastpos()[1],
-                    ballmap,
-                )
-        """
-        FRAMEPOSE
-        """
-        # going to take frame, sum_pixels_in_bbox, otherTrackIds, updated, player1+2imagereference, pixdiffs, refrences1+2, players,
-        framepose_result = framepose(
-            pose_model=pose_model,
-            frame=frame,
-            otherTrackIds=otherTrackIds,
-            updated=updated,
-            references1=references1,
-            references2=references2,
-            pixdiffs=pixdiffs,
-            players=players,
-            frame_count=frame_count,
-            player_last_positions=player_last_positions,
-            frame_width=frame_width,
-            frame_height=frame_height,
-            annotated_frame=annotated_frame,
-        )
-        otherTrackIds = framepose_result[2]
-        updated = framepose_result[3]
-        references1 = framepose_result[4]
-        references2 = framepose_result[5]
-        pixdiffs = framepose_result[6]
-        players = framepose_result[7]
-        player_last_positions = framepose_result[9]
-        annotated_frame = framepose_result[12]
-        occluded = framepose_result[13]
-        return [
-            frame,  # 0
-            frame_count,  # 1
-            annotated_frame,  # 2
-            mainball,  # 3
-            ball,  # 4
-            ballmap,  # 5
-            past_ball_pos,  # 6
-            ball_false_pos,  # 7
-            running_frame,  # 8
-            otherTrackIds,  # 9
-            updated,  # 10
-            references1,  # 11
-            references2,  # 12
-            pixdiffs,  # 13
-            players,  # 14
-            player_last_positions,  # 15
-            occluded,  # 16
-        ]
-    except Exception:
-        return [
-            frame,  # 0
-            frame_count,  # 1
-            annotated_frame,  # 2
-            mainball,  # 3
-            ball,  # 4
-            ballmap,  # 5
-            past_ball_pos,  # 6
-            ball_false_pos,  # 7
-            running_frame,  # 8
-            otherTrackIds,  # 9
-            updated,  # 10
-            references1,  # 11
-            references2,  # 12
-            pixdiffs,  # 13
-            players,  # 14
-            player_last_positions,  # 15
-            occluded,  # 16
-        ]
-
-
-def slice_frame(width, height, overlap, frame):
-    slices = []
-    for y in range(0, frame.shape[0], height - overlap):
-        for x in range(0, frame.shape[1], width - overlap):
-            slice_frame = frame[y : y + height, x : x + width]
-            slices.append(slice_frame)
-    return slices
 
 
 def inference_slicing(model, frame, width=100, height=100, overlap=50):
@@ -901,3 +710,167 @@ def input_model(csvdata):
 
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
     return response
+
+
+def cleanwrite():
+    with open("output/ball.txt", "w") as f:
+            f.write("")
+    with open("output/player1.txt", "w") as f:
+        f.write("")
+    with open("output/player2.txt", "w") as f:
+        f.write("")
+    with open("output/ball-xyn.txt", "w") as f:
+        f.write("")
+    with open("output/read_ball.txt", "w") as f:
+        f.write("")
+    with open("output/read_player1.txt", "w") as f:
+        f.write("")
+    with open("output/read_player2.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player2.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/ball-xyn.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player2.txt", "w") as f:
+        f.write("")
+    with open("output/final.json", "w") as f:
+        f.write("[")
+    with open("output/final.csv", "w") as f:
+        f.write(
+            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
+        )
+        
+
+
+from skimage.metrics import structural_similarity as ssim_metric
+
+def is_camera_angle_switched(frame, reference_image, threshold=0.5):
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
+    score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
+    return score < threshold
+
+
+def shot_type(past_ball_pos, threshold=3, frame_height=360):
+    # go through the past threshold number of past ball positions and see what kind of shot it is
+    # past_ball_pos ordered as [[x,y,frame_number], ...]
+    if len(past_ball_pos) < threshold:
+        return None
+    threshballpos = past_ball_pos[-threshold:]
+    # check for crosscourt or straight shots
+    xdiff = threshballpos[-1][0] - threshballpos[0][0]
+    ydiff = threshballpos[-1][1] - threshballpos[0][1]
+    typeofshot = ""
+    if xdiff < 50 and ydiff < 50:
+        typeofshot = "straight"
+    else:
+        typeofshot = "crosscourt"
+    # check how high the ball has moved
+    maxheight = 0
+    height = ""
+    for i in range(1, len(threshballpos)):
+        if threshballpos[i][1] > maxheight:
+            maxheight = threshballpos[i][1]
+            # print(f"{threshballpos[i]}")
+            # print(f'maxheight: {maxheight}')
+            # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
+    if maxheight < (frame_height) / 1.35:
+        height += "lob"
+        # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
+    else:
+        height += "drive"
+    return typeofshot + " " + height
+
+
+def is_match_in_play(
+    players,
+    mainball,
+    movement_threshold=0.2 * 640,
+    hit=0.15 * 360,
+):
+    frame_width = 640
+    frame_height = 360
+    #TODO: make sure it can also be something other than 640x360
+    if players.get(1) is None or players.get(2) is None or mainball is None:
+        return False
+    try:
+        lastplayer1pos = []
+
+        lastplayer2pos = []
+        lastballpos = []
+        ball_hit = player_move = False
+        # lastplayerxpos in the format of [[lanklex, lankley], [ranklex, rankley]]
+        lastplayer1pos.append(
+            [
+                players.get(1).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                players.get(1).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+            ]
+        )
+        lastplayer2pos.append(
+            [
+                players.get(2).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                players.get(2).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+            ]
+        )
+        lastplayer1pos.append(
+            [
+                players.get(1).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                players.get(1).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+            ]
+        )
+        lastplayer2pos.append(
+            [
+                players.get(2).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                players.get(2).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+            ]
+        )
+        for i in range(1, mainball.number_of_coords()):
+            if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i - 1):
+                lastballpos.append(mainball.get_last_x_pos(i))
+
+        # print(f'lastplayer1pos: {lastplayer1pos}')
+        lastplayer1distance = math.hypot(
+            lastplayer1pos[0][0] - lastplayer1pos[1][0],
+            lastplayer1pos[0][1] - lastplayer1pos[1][1],
+        )
+        lastplayer2distance = math.hypot(
+            lastplayer2pos[0][0] - lastplayer2pos[1][0],
+            lastplayer2pos[0][1] - lastplayer2pos[1][1],
+        )
+        # print(f'lastplayer1distance: {lastplayer1distance}')
+        # print(f'lastplayer2distance: {lastplayer2distance}')
+        # given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so:
+        # if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
+        # if the player has lunged, then the match is in play
+
+        # print(f'last ball pos: {lastballpos}')
+        balldistance = math.hypot(
+            lastballpos[0][0] - lastballpos[1][0],
+            lastballpos[0][1] - lastballpos[1][1],
+        )
+        # print(f'balldistance: {balldistance}')
+        if balldistance >= hit:
+            ball_hit = True
+        # print(f'last player pos: {lastplayerpos}')
+        # print(f'last ball pos: {lastballpos}')
+        # print(f'player lunged: {player_move}')
+        if (
+            lastplayer1distance >= movement_threshold
+            or lastplayer2distance >= movement_threshold
+        ):
+            player_move = True
+        # print(f'ball hit: {ball_hit}')
+        return [player_move, ball_hit]
+    except Exception:
+        # print(
+        #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
+        # )
+        return False
