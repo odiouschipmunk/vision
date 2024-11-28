@@ -18,3 +18,11 @@ output(25k)
 output_for_website
 all_main_1_output
 30fps1920
+output
+positions(10k)
+trained-models
+runs
+*.avi
+squash/__pycache__
+.idea
+__pycache__
