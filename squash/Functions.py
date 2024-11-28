@@ -610,17 +610,11 @@ def ballplayer_detections(
         size = avg_x * avg_y
         if avg_x > 0 or avg_y > 0:
             if mainball.getlastpos()[0] != avg_x or mainball.getlastpos()[1] != avg_y:
-                # print(mainball.getlastpos())
-                # print(mainball.getloc())
                 mainball.update(avg_x, avg_y, size)
                 past_ball_pos.append([avg_x, avg_y, running_frame])
-                # print(mainball.getlastpos())
-                # print(mainball.getloc())
                 math.hypot(
                     avg_x - mainball.getlastpos()[0], avg_y - mainball.getlastpos()[1]
                 )
-
-                # print(f'Position(in pixels): {mainball.getloc()}\nDistance: {distance}\n')
                 Functions.drawmap(
                     mainball.getloc()[0],
                     mainball.getloc()[1],
@@ -695,6 +689,126 @@ def ballplayer_detections(
             player_last_positions,  # 15
             occluded,  # 16
         ]
+
+from skimage.metrics import structural_similarity as ssim_metric
+
+frame_height=360
+frame_width=640
+def shot_type(past_ball_pos, threshold=3):
+            # go through the past threshold number of past ball positions and see what kind of shot it is
+            # past_ball_pos ordered as [[x,y,frame_number], ...]
+            if len(past_ball_pos) < threshold:
+                return None
+            threshballpos = past_ball_pos[-threshold:]
+            # check for crosscourt or straight shots
+            xdiff = threshballpos[-1][0] - threshballpos[0][0]
+            ydiff = threshballpos[-1][1] - threshballpos[0][1]
+            typeofshot = ""
+            if xdiff < 50 and ydiff < 50:
+                typeofshot = "straight"
+            else:
+                typeofshot = "crosscourt"
+            # check how high the ball has moved
+            maxheight = 0
+            height = ""
+            for i in range(1, len(threshballpos)):
+                if threshballpos[i][1] > maxheight:
+                    maxheight = threshballpos[i][1]
+                    # print(f"{threshballpos[i]}")
+                    # print(f'maxheight: {maxheight}')
+                    # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
+            if maxheight < (frame_height) / 1.35:
+                height += "lob"
+                # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
+            else:
+                height += "drive"
+            return typeofshot + " " + height
+def is_camera_angle_switched(frame, reference_image, threshold=0.5):
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
+    score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
+    return score < threshold
+def is_match_in_play(
+    players,
+    mainball,
+    movement_threshold=0.2 * frame_width,
+    hit=0.15 * frame_height,
+):
+    if players.get(1) is None or players.get(2) is None or mainball is None:
+        return False
+    try:
+        lastplayer1pos = []
+
+        lastplayer2pos = []
+        lastballpos = []
+        ball_hit = player_move = False
+        # lastplayerxpos in the format of [[lanklex, lankley], [ranklex, rankley]]
+        lastplayer1pos.append(
+            [
+                players.get(1).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                players.get(1).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+            ]
+        )
+        lastplayer2pos.append(
+            [
+                players.get(2).get_last_x_poses(1).xyn[0][15][0] * frame_width,
+                players.get(2).get_last_x_poses(1).xyn[0][15][1] * frame_height,
+            ]
+        )
+        lastplayer1pos.append(
+            [
+                players.get(1).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                players.get(1).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+            ]
+        )
+        lastplayer2pos.append(
+            [
+                players.get(2).get_last_x_poses(1).xyn[0][16][0] * frame_width,
+                players.get(2).get_last_x_poses(1).xyn[0][16][1] * frame_height,
+            ]
+        )
+        for i in range(1, mainball.number_of_coords()):
+            if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i - 1):
+                lastballpos.append(mainball.get_last_x_pos(i))
+
+        # print(f'lastplayer1pos: {lastplayer1pos}')
+        lastplayer1distance = math.hypot(
+            lastplayer1pos[0][0] - lastplayer1pos[1][0],
+            lastplayer1pos[0][1] - lastplayer1pos[1][1],
+        )
+        lastplayer2distance = math.hypot(
+            lastplayer2pos[0][0] - lastplayer2pos[1][0],
+            lastplayer2pos[0][1] - lastplayer2pos[1][1],
+        )
+        # print(f'lastplayer1distance: {lastplayer1distance}')
+        # print(f'lastplayer2distance: {lastplayer2distance}')
+        # given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so:
+        # if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
+        # if the player has lunged, then the match is in play
+
+        # print(f'last ball pos: {lastballpos}')
+        balldistance = math.hypot(
+            lastballpos[0][0] - lastballpos[1][0],
+            lastballpos[0][1] - lastballpos[1][1],
+        )
+        # print(f'balldistance: {balldistance}')
+        if balldistance >= hit:
+            ball_hit = True
+        # print(f'last player pos: {lastplayerpos}')
+        # print(f'last ball pos: {lastballpos}')
+        # print(f'player lunged: {player_move}')
+        if (
+            lastplayer1distance >= movement_threshold
+            or lastplayer2distance >= movement_threshold
+        ):
+            player_move = True
+        # print(f'ball hit: {ball_hit}')
+        return [player_move, ball_hit]
+    except Exception:
+        # print(
+        #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
+        # )
+        return False
 
 
 def slice_frame(width, height, overlap, frame):

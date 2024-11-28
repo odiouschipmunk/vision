@@ -5,16 +5,14 @@ import math
 from squash import Referencepoints, Functions
 import tensorflow as tf
 import matplotlib
-
-# from squash import deepsortframepose as fpose
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
 import logging
 import os
-from skimage.metrics import structural_similarity as ssim_metric
 import time
 import csv
+from norfair import Detection, Tracker, Video, draw_tracked_objects
 
 start = time.time()
 
@@ -126,124 +124,10 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
         courtref = np.int64(courtref)
         referenceimage = None
 
-        def is_camera_angle_switched(frame, reference_image, threshold=0.5):
-            frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
-            score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
-            return score < threshold
+        
 
         # function to see what kind of shot has been hit
-        def shot_type(past_ball_pos, threshold=3):
-            # go through the past threshold number of past ball positions and see what kind of shot it is
-            # past_ball_pos ordered as [[x,y,frame_number], ...]
-            if len(past_ball_pos) < threshold:
-                return None
-            threshballpos = past_ball_pos[-threshold:]
-            # check for crosscourt or straight shots
-            xdiff = threshballpos[-1][0] - threshballpos[0][0]
-            ydiff = threshballpos[-1][1] - threshballpos[0][1]
-            typeofshot = ""
-            if xdiff < 50 and ydiff < 50:
-                typeofshot = "straight"
-            else:
-                typeofshot = "crosscourt"
-            # check how high the ball has moved
-            maxheight = 0
-            height = ""
-            for i in range(1, len(threshballpos)):
-                if threshballpos[i][1] > maxheight:
-                    maxheight = threshballpos[i][1]
-                    # print(f"{threshballpos[i]}")
-                    # print(f'maxheight: {maxheight}')
-                    # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
-            if maxheight < (frame_height) / 1.35:
-                height += "lob"
-                # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
-            else:
-                height += "drive"
-            return typeofshot + " " + height
-
-        def is_match_in_play(
-            players,
-            mainball,
-            movement_threshold=0.2 * frame_width,
-            hit=0.15 * frame_height,
-        ):
-            if players.get(1) is None or players.get(2) is None or mainball is None:
-                return False
-            try:
-                lastplayer1pos = []
-
-                lastplayer2pos = []
-                lastballpos = []
-                ball_hit = player_move = False
-                # lastplayerxpos in the format of [[lanklex, lankley], [ranklex, rankley]]
-                lastplayer1pos.append(
-                    [
-                        players.get(1).get_last_x_poses(1).xyn[0][15][0] * frame_width,
-                        players.get(1).get_last_x_poses(1).xyn[0][15][1] * frame_height,
-                    ]
-                )
-                lastplayer2pos.append(
-                    [
-                        players.get(2).get_last_x_poses(1).xyn[0][15][0] * frame_width,
-                        players.get(2).get_last_x_poses(1).xyn[0][15][1] * frame_height,
-                    ]
-                )
-                lastplayer1pos.append(
-                    [
-                        players.get(1).get_last_x_poses(1).xyn[0][16][0] * frame_width,
-                        players.get(1).get_last_x_poses(1).xyn[0][16][1] * frame_height,
-                    ]
-                )
-                lastplayer2pos.append(
-                    [
-                        players.get(2).get_last_x_poses(1).xyn[0][16][0] * frame_width,
-                        players.get(2).get_last_x_poses(1).xyn[0][16][1] * frame_height,
-                    ]
-                )
-                for i in range(1, mainball.number_of_coords()):
-                    if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i - 1):
-                        lastballpos.append(mainball.get_last_x_pos(i))
-
-                # print(f'lastplayer1pos: {lastplayer1pos}')
-                lastplayer1distance = math.hypot(
-                    lastplayer1pos[0][0] - lastplayer1pos[1][0],
-                    lastplayer1pos[0][1] - lastplayer1pos[1][1],
-                )
-                lastplayer2distance = math.hypot(
-                    lastplayer2pos[0][0] - lastplayer2pos[1][0],
-                    lastplayer2pos[0][1] - lastplayer2pos[1][1],
-                )
-                # print(f'lastplayer1distance: {lastplayer1distance}')
-                # print(f'lastplayer2distance: {lastplayer2distance}')
-                # given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so:
-                # if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
-                # if the player has lunged, then the match is in play
-
-                # print(f'last ball pos: {lastballpos}')
-                balldistance = math.hypot(
-                    lastballpos[0][0] - lastballpos[1][0],
-                    lastballpos[0][1] - lastballpos[1][1],
-                )
-                # print(f'balldistance: {balldistance}')
-                if balldistance >= hit:
-                    ball_hit = True
-                # print(f'last player pos: {lastplayerpos}')
-                # print(f'last ball pos: {lastballpos}')
-                # print(f'player lunged: {player_move}')
-                if (
-                    lastplayer1distance >= movement_threshold
-                    or lastplayer2distance >= movement_threshold
-                ):
-                    player_move = True
-                # print(f'ball hit: {ball_hit}')
-                return [player_move, ball_hit]
-            except Exception:
-                # print(
-                #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
-                # )
-                return False
+        
 
         reference_points_3d = [
             [0, 0, 9.75],  # Top-left corner, 1
@@ -303,7 +187,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 )
                 referenceimage = frame
 
-            if is_camera_angle_switched(frame, referenceimage, threshold=0.5):
+            if Functions.is_camera_angle_switched(frame, referenceimage, threshold=0.5):
                 continue
 
             currentref = int(
@@ -378,7 +262,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
-            match_in_play = is_match_in_play(players, mainball)
+            match_in_play = Functions.is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(
                 past_ball_pos, homography_matrix=homography
             )
@@ -838,23 +722,10 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 print(f"error:3 {e}")
                 print(f"line was {e.__traceback__.tb_lineno}")
 
-            # check if the csv file has more than 50 lines and then get the last 5 csv lines
-            """
-            with open("output/final.csv", "r") as f:
-                lines = f.readlines()
-                if len(lines) > 500:
-                    csvreader = csv.reader(lines)
-                    last50 = list(csvreader)[-50:]
-                    print(f'last 50 lines: {last50}')
-                    print(Functions.input_model(str(last50)))
-                    #print(f'last 5 lines: {last5}')
-            """
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
 
             print(f"finished frame {frame_count}")
-            # print(f'frame: {running_frame}')
-            # print(f'time: {time.time()-start}')
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
@@ -875,11 +746,7 @@ if __name__ == "__main__":
     # get keyboarinterrupt error
     except KeyboardInterrupt:
         print("keyboard interrupt")
-        # remove the last comma and add a closing ']' to the json file
-        with open("output/final.json", "rb+") as f:
-            f.seek(-2, os.SEEK_END)
-            f.truncate()
-            f.write(b"\n]")
+
         exit()
     except Exception:
         # print(f"error: {e}")
