@@ -15,9 +15,6 @@ import csv
 from norfair import Detection, Tracker, Video, draw_tracked_objects
 
 start = time.time()
-norfair_player_tracker=Functions.create_norfair_tracker()
-norfair_ball_tracker=Functions.create_norfair_tracker()
-
 def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
@@ -242,8 +239,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 pixdiffs=pixdiffs,
                 players=players,
                 player_last_positions=player_last_positions,
-                playertracker=norfair_player_tracker,
-                balltracker=norfair_ball_tracker,
             )
             frame = detections_result[0]
             frame_count = detections_result[1]

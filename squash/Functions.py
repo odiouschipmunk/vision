@@ -285,12 +285,8 @@ def pixel_to_3d(pixel_point, H, rl_reference_points):
         round(interpolated_y, 3),
         round(interpolated_z, 3),
     ]
-
-
 # from squash.framepose import framepose
 def framepose(
-    playertracker,
-    balltracker,
     pose_model,
     frame,
     other_track_ids,
@@ -357,8 +353,6 @@ def framepose(
                     frame_height,
                     annotated_frame,
                     occluded,
-                    playertracker,
-                    balltracker,
                 ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
@@ -479,8 +473,6 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
-            playertracker,
-            balltracker,
         ]
     except Exception:
         return [
@@ -498,8 +490,6 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
-            playertracker,
-            balltracker,
         ]
 
 
@@ -526,8 +516,6 @@ def ballplayer_detections(
     pixdiffs,
     players,
     player_last_positions,
-    playertracker,
-    balltracker,
 ):
     try:
         highestconf = 0
@@ -536,14 +524,19 @@ def ballplayer_detections(
         ball = ballmodel(frame)
         label = ""
         try:
-            # Show last 10 positions with diminishing circles
+            # Get the last 10 positions
             start_idx = max(0, len(past_ball_pos) - 10)
-            for i, pos in enumerate(past_ball_pos[start_idx:]):
-                # Calculate radius - starts at 15 and diminishes to 3
-                radius = max(3, 15 - (i * 1.2))
-                cv2.circle(
-                    annotated_frame, (pos[0], pos[1]), int(radius), (255, 255, 255), 2
-                )
+            positions = past_ball_pos[start_idx:]
+            # Loop through positions
+            for i in range(len(positions)):
+                pos = positions[i]
+                # Draw circle with constant radius
+                radius = 5  # Adjust as needed
+                cv2.circle(annotated_frame, (pos[0], pos[1]), radius, (255, 255, 255), 2)
+                # Draw line to next position
+                if i < len(positions) - 1:
+                    next_pos = positions[i + 1]
+                    cv2.line(annotated_frame, (pos[0], pos[1]), (next_pos[0], next_pos[1]), (255, 255, 255), 2)
         except Exception:
             pass
         for box in ball[0].boxes:
@@ -621,8 +614,6 @@ def ballplayer_detections(
             frame_width=frame_width,
             frame_height=frame_height,
             annotated_frame=annotated_frame,
-            playertracker=playertracker,
-            balltracker=balltracker,
         )
         other_track_ids = framepose_result[2]
         updated = framepose_result[3]
@@ -633,8 +624,6 @@ def ballplayer_detections(
         player_last_positions = framepose_result[9]
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
-        playertracker=framepose_result[14]
-        balltracker=framepose_result[15]
         
         return [
             frame,  # 0
@@ -654,8 +643,6 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
-            playertracker,  # 17
-            balltracker,  # 18
         ]
     except Exception:
         return [
@@ -676,8 +663,6 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
-            playertracker,  # 17
-            balltracker,  # 18
         ]
 
 def apply_homography(H, points, inverse=False):
