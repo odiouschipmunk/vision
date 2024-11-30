@@ -26,3 +26,4 @@ runs
 squash/__pycache__
 .idea
 __pycache__
+.env

@@ -79,6 +79,42 @@ def find_last_one(array):
 
     return -1
 
+def cleanwrite():
+    with open("output/ball.txt", "w") as f:
+            f.write("")
+    with open("output/player1.txt", "w") as f:
+        f.write("")
+    with open("output/player2.txt", "w") as f:
+        f.write("")
+    with open("output/ball-xyn.txt", "w") as f:
+        f.write("")
+    with open("output/read_ball.txt", "w") as f:
+        f.write("")
+    with open("output/read_player1.txt", "w") as f:
+        f.write("")
+    with open("output/read_player2.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/player2.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/ball-xyn.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_ball.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player1.txt", "w") as f:
+        f.write("")
+    with open("importantoutput/read_player2.txt", "w") as f:
+        f.write("")
+    with open("output/final.json", "w") as f:
+        f.write("[")
+    with open("output/final.csv", "w") as f:
+        f.write(
+            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
+        )
+
 
 def find_last_two(array):
     possibleis = []

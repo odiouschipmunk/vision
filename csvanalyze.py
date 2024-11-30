@@ -214,5 +214,32 @@ def main():
             with open('output/frame_analysis.txt', 'a') as f:
                 f.write(f"\nFrame {frame}:\n{frame_analysis}\n{'-' * 50}\n")
 
+def parse_through(start,end,filename):
+    prev_positions = {
+        'Player 1 Numerical': None,
+        'Player 2 Numerical': None
+    }
+    df = pd.read_csv(filename)
+    bigstring=''
+    analyses=[]
+    for index, row in df.iterrows():
+        frame = row['Frame count']
+        if index>=start and index<=end:
+            print(f"\nFrame {frame}:")
+            try:
+                frame_analysis = analyze_frame(row, prev_positions)
+                print(frame_analysis)
+            except Exception as e:
+                print(f"Error processing frame {frame}: {e}")
+            print("-" * 50)
+            analyses.append(frame_analysis)
+            if len(analyses)>2:
+                if analyses[-1]==analyses[-2]==frame_analysis:
+                    bigstring+=f"\nFrame {frame}:\nSame as last frame.\n{'-' * 50}\n"
+                else:
+                    bigstring+=f"\nFrame {frame}:\n{frame_analysis}\n{'-' * 50}\n"
+            else:
+                bigstring+=f"\nFrame {frame}:\n{frame_analysis}\n{'-' * 50}\n"
+    return bigstring
 if __name__ == "__main__":
     main()

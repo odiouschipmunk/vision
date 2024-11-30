@@ -13,16 +13,18 @@ import os
 import time
 import csv
 from norfair import Detection, Tracker, Video, draw_tracked_objects
-
+import csvanalyze
 start = time.time()
+
 def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
-
+        csvstart=0
+        end=csvstart+100
         ball_predict = tf.keras.models.load_model(
             "trained-models/ball_position_model(25k).keras"
         )
-
+        Functions.cleanwrite()
         def load_data(file_path):
             with open(file_path, "r") as file:
                 data = file.readlines()
@@ -35,40 +37,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
 
             return positions
 
-        with open("output/ball.txt", "w") as f:
-            f.write("")
-        with open("output/player1.txt", "w") as f:
-            f.write("")
-        with open("output/player2.txt", "w") as f:
-            f.write("")
-        with open("output/ball-xyn.txt", "w") as f:
-            f.write("")
-        with open("output/read_ball.txt", "w") as f:
-            f.write("")
-        with open("output/read_player1.txt", "w") as f:
-            f.write("")
-        with open("output/read_player2.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/ball.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/player1.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/player2.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/ball-xyn.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/read_ball.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/read_player1.txt", "w") as f:
-            f.write("")
-        with open("importantoutput/read_player2.txt", "w") as f:
-            f.write("")
-        with open("output/final.json", "w") as f:
-            f.write("[")
-        with open("output/final.csv", "w") as f:
-            f.write(
-                "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
-            )
+        
         pose_model = YOLO("models/yolo11m-pose.pt")
         ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
 
@@ -690,10 +659,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 )
             print(f"finished writing frame {frame_count}")
 
-            def write():
-                with open("output/ball.txt", "a") as f:
-                    f.write(f"{mainball.getloc()[0]}\n{mainball.getloc()[1]}\n")
-
             def csvwrite():
                 with open("output/final.csv", "a") as f:
                     csvwriter = csv.writer(f)
@@ -718,7 +683,16 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 csvwrite()
             except Exception as e:
                 pass
-
+            
+            if running_frame>end:
+                try:
+                    with open('final.txt', 'a') as f:
+                        f.write(csvanalyze.parse_through(csvstart, end, 'output/final.csv'))
+                    csvstart=end
+                    end+=100
+                except Exception as e:
+                    print(f"error: {e}")
+                    pass
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
 
