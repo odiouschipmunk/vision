@@ -286,6 +286,40 @@ def pixel_to_3d(pixel_point, H, rl_reference_points):
         round(interpolated_z, 3),
     ]
 # from squash.framepose import framepose
+import torch.nn.functional as F
+from torchreid.utils import FeatureExtractor
+feature_extractor = FeatureExtractor(
+    model_name='osnet_x1_0',  # You can choose other models as well
+    device='cuda' if torch.cuda.is_available() else 'cpu'
+)
+known_players_features = {}
+
+def appearance_reid(player_crop, known_players_features, threshold=0.7):
+    # Resize and preprocess the player crop
+    player_crop_resized = cv2.resize(player_crop, (128, 256))
+    # Convert BGR to RGB
+    player_crop_rgb = cv2.cvtColor(player_crop_resized, cv2.COLOR_BGR2RGB)
+    
+    # Extract features
+    features = feature_extractor([player_crop_rgb])  # Returns a numpy array
+    features = torch.tensor(features)
+    features = F.normalize(features, p=2, dim=1)
+    
+    max_similarity = 0
+    matched_player_id = None
+    
+    # Compare with known players
+    for player_id, known_feature in known_players_features.items():
+        similarity = F.cosine_similarity(features, known_feature).item()
+        if similarity > max_similarity:
+            max_similarity = similarity
+            matched_player_id = player_id
+    
+    # Check if similarity exceeds the threshold
+    if max_similarity > threshold:
+        return matched_player_id, features
+    else:
+        return None, features
 def framepose(
     pose_model,
     frame,
@@ -304,6 +338,7 @@ def framepose(
     occluded=False,
     
 ):
+    global known_players_features
     try:
         track_results = pose_model.track(frame, persist=True, show=False)
         if (
@@ -355,10 +390,29 @@ def framepose(
                     occluded,
                 ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
-                x, y, w, h = box
-                player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
-                Image.fromarray(player_crop)
-                sum_pixels_in_bbox(frame, [x, y, w, h])
+                cx, cy, w, h = box
+                x1 = int(cx - w / 2)
+                y1 = int(cy - h / 2)
+                x2 = int(cx + w / 2)
+                y2 = int(cy + h / 2)
+                # Ensure coordinates are within the frame
+                x1 = max(0, x1)
+                y1 = max(0, y1)
+                x2 = min(frame_width - 1, x2)
+                y2 = min(frame_height - 1, y2)
+                player_crop = frame[y1:y2, x1:x2]
+                if player_crop.size == 0:
+                    continue
+                
+                player_id,features=appearance_reid(player_crop, known_players_features)
+                if player_id is None:
+                    player_id = len(known_players_features) + 1
+                    known_players_features[player_id] = features
+                    print(f'assigned new player id: {player_id}')
+                else:
+                    known_players_features[player_id] = features
+                    print(f'matched player id: {player_id}')
+                
                 if not find_match_2d_array(other_track_ids, track_id):
                     # player 1 has been updated last
                     if updated[0][1] > updated[1][1]:
