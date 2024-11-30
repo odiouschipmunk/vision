@@ -324,6 +324,52 @@ def appearance_reid(player_crop, known_players_features, threshold=0.7):
         return None, features
     
 '''
+
+
+'''
+HISTOGRAM:::
+import cv2
+import numpy as np
+
+# Initialize known player histograms with IDs 1 and 2
+known_players_histograms = {}
+
+def appearance_reid(player_crop, known_players_histograms, threshold=0.7):
+    # Resize the player crop for consistency
+    player_crop_resized = cv2.resize(player_crop, (64, 128))
+    
+    # Convert to HSV color space
+    hsv_crop = cv2.cvtColor(player_crop_resized, cv2.COLOR_BGR2HSV)
+    
+    # Compute color histogram
+    hist = cv2.calcHist([hsv_crop], [0, 1], None, [50, 60], [0, 180, 0, 256])
+    cv2.normalize(hist, hist)
+    
+    max_similarity = 0
+    matched_player_id = None
+    
+    # Compare with known players
+    for player_id in [1, 2]:
+        known_hist = known_players_histograms.get(player_id)
+        if known_hist is not None:
+            similarity = cv2.compareHist(hist, known_hist, cv2.HISTCMP_CORREL)
+            if similarity > max_similarity:
+                max_similarity = similarity
+                matched_player_id = player_id
+    
+    # Check if similarity exceeds the threshold
+    if max_similarity > threshold:
+        return matched_player_id, hist
+    else:
+        # Assign the player to an available ID (1 or 2)
+        available_ids = [1, 2]
+        for pid in available_ids:
+            if pid not in known_players_histograms:
+                known_players_histograms[pid] = hist
+                return pid, hist
+        # If both IDs are taken but no match, default to the closest match
+        return matched_player_id, hist
+'''
 def framepose(
     pose_model,
     frame,
