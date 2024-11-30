@@ -268,7 +268,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 # print(match_in_play)
                 cv2.putText(
                     annotated_frame,
-                    f"ball hit: {str(match_in_play[1])}",
+                    f"ball hit: {str(match_in_play[1])}", 
                     (10, frame_height - 100),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.4,
