@@ -91,7 +91,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
         referenceimage = None
 
         
-
+        
         # function to see what kind of shot has been hit
         
 
@@ -232,6 +232,8 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             type_of_shot = Functions.classify_shot(
                 past_ball_pos, homography_matrix=homography
             )
+            
+
             if match_in_play is not False:
                 # print(match_in_play)
                 cv2.putText(

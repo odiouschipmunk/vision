@@ -478,3 +478,243 @@ Player 2 is in the back right area, forward and not leaning sideways, and is sta
 Ball position: [599, 335]
 Shot type: straight drive
 --------------------------------------------------
+
+Frame 66:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [462, 115]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 67:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [454, 95]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 68:
+Player 1 is in the back right area, forward and not leaning sideways, and is 
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [456, 97]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 69:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [460, 101]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 70:
+Player 1 is in the back right area, forward and not leaning sideways, and is 
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [464, 105]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 71:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [464, 105]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 72:
+Player 1 is in the back right area, forward and not leaning sideways, and is 
+Player 2 is in the middle right area, forward and not leaning sideways, and is 
+Ball position: [468, 111]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 73:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is 
+Ball position: [472, 118]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 74:
+Player 1 is in the back right area, forward and not leaning sideways, and is 
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [476, 125]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 75:
+Player 1 is in the back right area, forward and not leaning sideways, and is 
+Player 2 is in the middle right area, forward and not leaning sideways, and is 
+Ball position: [480, 134]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 76:
+Same as last frame.
+--------------------------------------------------
+
+Frame 77:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [480, 134]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 78:
+Same as last frame.
+--------------------------------------------------
+
+Frame 79:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [494, 170]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 80:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [499, 186]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 81:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [504, 202]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 82:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is right forward
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 83:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 84:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is 
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 85:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 86:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is 
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 87:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [510, 221]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 88:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle right area, forward and not leaning sideways, and is stationary
+Ball position: [539, 314]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 89:
+Same as last frame.
+--------------------------------------------------
+
+Frame 90:
+Player 1 is in the middle right area, forward and not leaning sideways, and is 
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [544, 311]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 91:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [550, 308]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 92:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [556, 308]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 93:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [562, 308]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 94:
+Player 1 is in the middle center area, forward and not leaning sideways, and is 
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [568, 310]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 95:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [568, 310]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 96:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [575, 313]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 97:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [581, 318]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 98:
+Same as last frame.
+--------------------------------------------------
+
+Frame 99:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is 
+Ball position: [581, 318]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is 
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 101:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------

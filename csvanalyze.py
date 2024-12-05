@@ -241,5 +241,7 @@ def parse_through(start,end,filename):
             else:
                 bigstring+=f"\nFrame {frame}:\n{frame_analysis}\n{'-' * 50}\n"
     return bigstring
+
+
 if __name__ == "__main__":
     main()
