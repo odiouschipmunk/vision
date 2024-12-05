@@ -12,7 +12,6 @@ import logging
 import os
 import time
 import csv
-from norfair import Detection, Tracker, Video, draw_tracked_objects
 import csvanalyze
 start = time.time()
 
