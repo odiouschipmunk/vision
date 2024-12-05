@@ -28,3 +28,4 @@ squash/__pycache__
 __pycache__
 .env
 *.pyc
+!main_laptop.mp4
