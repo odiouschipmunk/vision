@@ -115,7 +115,12 @@ def cleanwrite():
             "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
         )
 
-
+def get_data(length):
+    #go through the data in the file output/final.csv and then return all the data in a list
+    for i in range(0,length):
+        with open('output/final.csv', 'r') as f:
+            data=f.read()
+    return data
 def find_last_two(array):
     possibleis = []
     for i in range(len(array)):
