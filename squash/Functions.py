@@ -427,7 +427,7 @@ def framepose(
     annotated_frame,
     max_players=2,
     occluded=False,
-    
+    importantdata=[]
 ):
     global known_players_features
     try:
@@ -479,6 +479,7 @@ def framepose(
                     frame_height,
                     annotated_frame,
                     occluded,
+                    importantdata
                 ]
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
@@ -585,6 +586,8 @@ def framepose(
                                 7,
                             )
                         i += 1
+            #in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
+            importantdata=[]
         return [
             pose_model,
             frame,
@@ -600,6 +603,7 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
+            importantdata
         ]
     except Exception:
         return [
@@ -617,6 +621,7 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
+            importantdata
         ]
 
 
@@ -643,6 +648,8 @@ def ballplayer_detections(
     pixdiffs,
     players,
     player_last_positions,
+    occluded,
+    importantdata
 ):
     try:
         highestconf = 0
@@ -741,6 +748,8 @@ def ballplayer_detections(
             frame_width=frame_width,
             frame_height=frame_height,
             annotated_frame=annotated_frame,
+            occluded=occluded,
+            importantdata=importantdata
         )
         other_track_ids = framepose_result[2]
         updated = framepose_result[3]
@@ -751,7 +760,13 @@ def ballplayer_detections(
         player_last_positions = framepose_result[9]
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
-        
+        importantdata=framepose_result[14]
+        #in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
+        importantdata.append(shot_type(past_ball_pos))
+        importantdata.append(math.hypot(avg_x - player_last_positions.get(1)[0], avg_y - player_last_positions.get(1)[1]))
+        importantdata.append(math.hypot(avg_x - player_last_positions.get(2)[0], avg_y - player_last_positions.get(2)[1]))
+        print(f'idata: {importantdata}')
+        del framepose_result
         return [
             frame,  # 0
             frame_count,  # 1
@@ -770,6 +785,7 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
+            importantdata,  # 17
         ]
     except Exception:
         return [
@@ -790,6 +806,7 @@ def ballplayer_detections(
             players,  # 14
             player_last_positions,  # 15
             occluded,  # 16
+            importantdata,  # 17
         ]
 
 def apply_homography(H, points, inverse=False):

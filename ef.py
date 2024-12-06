@@ -207,6 +207,8 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                 pixdiffs=pixdiffs,
                 players=players,
                 player_last_positions=player_last_positions,
+                occluded=False,
+                importantdata=[]
             )
             frame = detections_result[0]
             frame_count = detections_result[1]
