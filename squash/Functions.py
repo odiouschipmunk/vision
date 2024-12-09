@@ -94,20 +94,6 @@ def cleanwrite():
         f.write("")
     with open("output/read_player2.txt", "w") as f:
         f.write("")
-    with open("importantoutput/ball.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/player1.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/player2.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/ball-xyn.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/read_ball.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/read_player1.txt", "w") as f:
-        f.write("")
-    with open("importantoutput/read_player2.txt", "w") as f:
-        f.write("")
     with open("output/final.json", "w") as f:
         f.write("[")
     with open("output/final.csv", "w") as f:
@@ -464,6 +450,7 @@ def framepose(
                 except Exception:
                     pass
             if len(track_ids) > 2:
+                print(f'track ids were greater than 2: {track_ids}')
                 return [
                     pose_model,
                     frame,
@@ -481,6 +468,7 @@ def framepose(
                     occluded,
                     importantdata
                 ]
+                
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
                 player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
@@ -605,7 +593,8 @@ def framepose(
             occluded,
             importantdata
         ]
-    except Exception:
+    except Exception as e:
+        print(f'e: {e}')
         return [
             pose_model,
             frame,
