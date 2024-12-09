@@ -754,7 +754,7 @@ def ballplayer_detections(
         importantdata.append(shot_type(past_ball_pos))
         importantdata.append(math.hypot(avg_x - player_last_positions.get(1)[0], avg_y - player_last_positions.get(1)[1]))
         importantdata.append(math.hypot(avg_x - player_last_positions.get(2)[0], avg_y - player_last_positions.get(2)[1]))
-        print(f'idata: {importantdata}')
+        #print(f'idata: {importantdata}')
         del framepose_result
         return [
             frame,  # 0
@@ -797,6 +797,85 @@ def ballplayer_detections(
             occluded,  # 16
             importantdata,  # 17
         ]
+
+def reorganize_shots(alldata, min_sequence=5):
+    if not alldata:
+        return []
+    
+    # Step 1: Group consecutive shots
+    sequences = []
+    current_type = alldata[0][0]
+    current_sequence = []
+    
+    for shot in alldata:
+        if shot[0] == current_type:
+            current_sequence.append(shot)
+        else:
+            sequences.append((current_type, current_sequence))
+            current_type = shot[0]
+            current_sequence = [shot]
+    sequences.append((current_type, current_sequence))
+    
+    # Step 2: Fix short sequences
+    i = 0
+    while i < len(sequences):
+        if len(sequences[i][1]) < min_sequence:
+            shot_type = sequences[i][0]
+            short_sequence = sequences[i][1]
+            
+            # Look for same shot type in adjacent sequences
+            borrowed_shots = []
+            
+            # Check forward
+            j = i + 1
+            while j < len(sequences):
+                if sequences[j][0] == shot_type:
+                    available = len(sequences[j][1])
+                    needed = min_sequence - len(short_sequence)
+                    if available > min_sequence:
+                        borrowed = sequences[j][1][:needed]
+                        sequences[j] = (sequences[j][0], sequences[j][1][needed:])
+                        borrowed_shots.extend(borrowed)
+                        break
+                j += 1
+                
+            # Check backward if still needed
+            if len(borrowed_shots) + len(short_sequence) < min_sequence:
+                j = i - 1
+                while j >= 0:
+                    if sequences[j][0] == shot_type:
+                        available = len(sequences[j][1])
+                        needed = min_sequence - len(short_sequence) - len(borrowed_shots)
+                        if available > min_sequence:
+                            borrowed = sequences[j][1][-needed:]
+                            sequences[j] = (sequences[j][0], sequences[j][1][:-needed])
+                            borrowed_shots = borrowed + borrowed_shots
+                            break
+                    j -= 1
+            
+            # If can't borrow enough, merge with larger adjacent sequence
+            if len(borrowed_shots) + len(short_sequence) < min_sequence:
+                prev_size = float('-inf') if i == 0 else len(sequences[i-1][1])
+                next_size = float('-inf') if i == len(sequences)-1 else len(sequences[i+1][1])
+                
+                if prev_size > next_size:
+                    sequences[i-1] = (sequences[i-1][0], sequences[i-1][1] + short_sequence)
+                    sequences.pop(i)
+                    i -= 1
+                else:
+                    sequences[i+1] = (sequences[i+1][0], short_sequence + sequences[i+1][1])
+                    sequences.pop(i)
+                    i -= 1
+            else:
+                sequences[i] = (shot_type, borrowed_shots[::-1] + short_sequence + borrowed_shots)
+        i += 1
+    
+    # Flatten result
+    result = []
+    for _, sequence in sequences:
+        result.extend(sequence)
+    
+    return result
 
 def apply_homography(H, points, inverse=False):
     """

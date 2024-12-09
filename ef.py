@@ -14,7 +14,7 @@ import time
 import csv
 import csvanalyze
 start = time.time()
-
+alldata=[]
 def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
@@ -227,15 +227,19 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             players = detections_result[14]
             player_last_positions = detections_result[15]
             occluded = detections_result[16]
-            #print(f"occluded: {occluded}")
-            # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
-            # print(f'is match in play: {is_match_in_play(players, mainball)}')
+            idata=detections_result[17]
+            if idata: alldata.append(idata)
+            #given that idata is formatted in [typeofshot, xcoord, ycoord]
+            
             match_in_play = Functions.is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(
                 past_ball_pos, homography_matrix=homography
             )
-            
-
+            try: 
+                print(Functions.reorganize_shots(alldata))
+            except Exception as e:
+                print(f"error reorganizing: {e}")
+                pass
             if match_in_play is not False:
                 # print(match_in_play)
                 cv2.putText(
