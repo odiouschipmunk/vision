@@ -14,7 +14,7 @@ import time
 import csv
 import csvanalyze
 start = time.time()
-alldata=[]
+alldata=organizeddata=[]
 def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
@@ -236,7 +236,12 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                 past_ball_pos, homography_matrix=homography
             )
             try: 
-                print(Functions.reorganize_shots(alldata))
+                organizeddata=Functions.reorganize_shots(alldata)
+                if running_frame%20==0:
+                    res=Functions.visualize_shots(organizeddata)
+                    cv2.imshow(winname='visual representation',mat=res)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
             except Exception as e:
                 print(f"error reorganizing: {e}")
                 pass
@@ -269,6 +274,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
+                print(type_of_shot)
             # Save the heatmap
             # print(players)
             # print(players.get(1).get_latest_pose())

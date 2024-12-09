@@ -802,80 +802,144 @@ def reorganize_shots(alldata, min_sequence=5):
     if not alldata:
         return []
     
+    # Filter out None types and replace with "unknown"
+    cleaned_data = [[shot[0] if shot[0] is not None else "unknown"] + shot[1:] for shot in alldata]
+    
     # Step 1: Group consecutive shots
     sequences = []
-    current_type = alldata[0][0]
+    current_type = cleaned_data[0][0]
     current_sequence = []
     
-    for shot in alldata:
+    for shot in cleaned_data:
         if shot[0] == current_type:
             current_sequence.append(shot)
         else:
-            sequences.append((current_type, current_sequence))
+            if len(current_sequence) > 0:
+                sequences.append((current_type, current_sequence))
             current_type = shot[0]
             current_sequence = [shot]
-    sequences.append((current_type, current_sequence))
+    if current_sequence:
+        sequences.append((current_type, current_sequence))
     
-    # Step 2: Fix short sequences
+    # Step 2: Fix short sequences, especially for crosscourts
     i = 0
     while i < len(sequences):
-        if len(sequences[i][1]) < min_sequence:
-            shot_type = sequences[i][0]
+        shot_type = sequences[i][0]
+        if len(sequences[i][1]) < min_sequence and shot_type.lower() == "crosscourt":
             short_sequence = sequences[i][1]
             
             # Look for same shot type in adjacent sequences
             borrowed_shots = []
             
-            # Check forward
-            j = i + 1
-            while j < len(sequences):
+            # Check forward and backward for shots to borrow
+            for j in range(i+1, len(sequences)):
                 if sequences[j][0] == shot_type:
                     available = len(sequences[j][1])
-                    needed = min_sequence - len(short_sequence)
+                    needed = min_sequence - len(short_sequence) - len(borrowed_shots)
                     if available > min_sequence:
                         borrowed = sequences[j][1][:needed]
                         sequences[j] = (sequences[j][0], sequences[j][1][needed:])
                         borrowed_shots.extend(borrowed)
-                        break
-                j += 1
-                
-            # Check backward if still needed
+                        if len(borrowed_shots) + len(short_sequence) >= min_sequence:
+                            break
+            
             if len(borrowed_shots) + len(short_sequence) < min_sequence:
-                j = i - 1
-                while j >= 0:
+                for j in range(i-1, -1, -1):
                     if sequences[j][0] == shot_type:
                         available = len(sequences[j][1])
                         needed = min_sequence - len(short_sequence) - len(borrowed_shots)
                         if available > min_sequence:
-                            borrowed = sequences[j][1][-needed:]
+                            borrowed_prev = sequences[j][1][-needed:]
                             sequences[j] = (sequences[j][0], sequences[j][1][:-needed])
-                            borrowed_shots = borrowed + borrowed_shots
-                            break
-                    j -= 1
+                            borrowed_shots = borrowed_prev + borrowed_shots
+                            if len(borrowed_shots) + len(short_sequence) >= min_sequence:
+                                break
             
-            # If can't borrow enough, merge with larger adjacent sequence
-            if len(borrowed_shots) + len(short_sequence) < min_sequence:
-                prev_size = float('-inf') if i == 0 else len(sequences[i-1][1])
-                next_size = float('-inf') if i == len(sequences)-1 else len(sequences[i+1][1])
-                
-                if prev_size > next_size:
+            # Update sequence with borrowed shots
+            if len(borrowed_shots) + len(short_sequence) >= min_sequence:
+                sequences[i] = (shot_type, borrowed_shots + short_sequence)
+            else:
+                # Merge with adjacent sequence if can't borrow enough
+                if i > 0:
                     sequences[i-1] = (sequences[i-1][0], sequences[i-1][1] + short_sequence)
                     sequences.pop(i)
                     i -= 1
-                else:
+                elif i < len(sequences) - 1:
                     sequences[i+1] = (sequences[i+1][0], short_sequence + sequences[i+1][1])
                     sequences.pop(i)
                     i -= 1
-            else:
-                sequences[i] = (shot_type, borrowed_shots[::-1] + short_sequence + borrowed_shots)
         i += 1
     
-    # Flatten result
+    # Step 3: Format output
     result = []
-    for _, sequence in sequences:
-        result.extend(sequence)
+    for shot_type, sequence in sequences:
+        coords = []
+        for shot in sequence:
+            coords.extend([shot[1], shot[2]])
+        result.append([shot_type, len(sequence), coords])
     
     return result
+
+
+def visualize_shots(shot_data, width=640, height=360):
+    # Create white image
+    image = np.ones((height, width, 3), dtype=np.uint8) * 255
+    
+    # Define color mapping (BGR format for OpenCV)
+    colors = {
+        'straight drive': (0, 0, 255),    # Red
+        'crosscourt drive': (0, 255, 0),  # Green
+        'crosscourt': (0, 255, 0),        # Green
+        'unknown': (255, 0, 0)            # Blue
+    }
+    
+    # Find coordinate ranges for normalization
+    all_x = []
+    all_y = []
+    for sequence in shot_data:
+        coords = sequence[2]
+        for i in range(0, len(coords), 2):
+            all_x.append(coords[i])
+            all_y.append(coords[i + 1])
+    
+    x_min, x_max = min(all_x), max(all_x)
+    y_min, y_max = min(all_y), max(all_y)
+    
+    # Add padding to prevent edge cases
+    padding = 50
+    
+    # Draw circles and connecting lines for each shot sequence
+    for sequence in shot_data:
+        shot_type = sequence[0]
+        coords = sequence[2]
+        color = colors.get(shot_type.lower(), (255, 0, 0))
+        
+        prev_point = None
+        # Process coordinates in pairs
+        for i in range(0, len(coords), 2):
+            # Normalize coordinates to fit window with padding
+            x = int(((coords[i] - x_min) / (x_max - x_min)) * (width - 2*padding) + padding)
+            y = int(((coords[i+1] - y_min) / (y_max - y_min)) * (height - 2*padding) + padding)
+            
+            # Ensure coordinates are within bounds
+            x = min(max(x, padding), width-padding)
+            y = min(max(y, padding), height-padding)
+            
+            # Draw circle
+            cv2.circle(image, (x, y), 3, color, -1)  # Increased radius to 3
+            
+            # Draw connecting line to previous point
+            if prev_point is not None:
+                cv2.line(image, prev_point, (x, y), color, 1)
+            prev_point = (x, y)
+            
+            # Add shot type label at first point
+            if i == 0:
+                cv2.putText(image, shot_type, (x+5, y-5), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+    
+    return image
+
 
 def apply_homography(H, points, inverse=False):
     """
