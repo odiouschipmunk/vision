@@ -718,3 +718,94 @@ Player 2 is in the back right area, forward and not leaning sideways, and is sta
 Ball position: [599, 335]
 Shot type: straight drive
 --------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight lob lob
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle center area, forward and not leaning sideways, and is stationary
+Player 2 is in the back right area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: crosscourt drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the back right area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle center area, forward and not leaning sideways, and is stationary
+Ball position: [599, 335]
+Shot type: straight drive
+--------------------------------------------------

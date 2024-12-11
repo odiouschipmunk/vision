@@ -15,15 +15,16 @@ import csv
 import csvanalyze
 start = time.time()
 alldata=organizeddata=[]
-def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
+
+def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
         csvstart=0
-        end=csvstart+100
+        end=csvstart+100    
         ball_predict = tf.keras.models.load_model(
             "trained-models/ball_position_model(25k).keras"
         )
-        Functions.cleanwrite()
+
         def load_data(file_path):
             with open(file_path, "r") as file:
                 data = file.readlines()
@@ -36,8 +37,8 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
 
             return positions
 
-        
-        pose_model = YOLO("models/yolo11m-pose.pt")
+        Functions.cleanwrite()
+        pose_model = YOLO("models/yolo11n-pose.pt")
         ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
 
         print("loaded models")
@@ -91,7 +92,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
         referenceimage = None
 
         
-        
+
         # function to see what kind of shot has been hit
         
 
@@ -229,19 +230,16 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             occluded = detections_result[16]
             idata=detections_result[17]
             if idata: alldata.append(idata)
-            #given that idata is formatted in [typeofshot, xcoord, ycoord]
-            
+            #print(f"occluded: {occluded}")
+            # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
+            # print(f'is match in play: {is_match_in_play(players, mainball)}')
             match_in_play = Functions.is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(
-                past_ball_pos, homography_matrix=homography
+                past_ball_pos=past_ball_pos, homography_matrix=homography
             )
-            try: 
+            try:
                 organizeddata=Functions.reorganize_shots(alldata)
-                if running_frame%20==0:
-                    res=Functions.visualize_shots(organizeddata)
-                    cv2.imshow(winname='visual representation',mat=res)
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
+                #print(f"organized data: {organizeddata}")
             except Exception as e:
                 print(f"error reorganizing: {e}")
                 pass
@@ -274,7 +272,6 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
-                print(type_of_shot)
             # Save the heatmap
             # print(players)
             # print(players.get(1).get_latest_pose())
@@ -690,13 +687,14 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                         shot,
                     ]
                     csvwriter.writerow(data)
-
+            #print(past_ball_pos)
+            
             try:
                 # write()
-                csvwrite()
+                if running_frame % 100 == 0:
+                    csvwrite()
             except Exception as e:
                 pass
-            
             if running_frame>end:
                 try:
                     with open('final.txt', 'a') as f:
