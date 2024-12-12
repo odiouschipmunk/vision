@@ -5,6 +5,7 @@ import math
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 import tensorflow as tf
 import matplotlib
+
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
@@ -13,14 +14,16 @@ import os
 import time
 import csv
 import csvanalyze
-start = time.time()
-alldata=organizeddata=[]
 
-def main(path="main.mp4", frame_width=640, frame_height=360):
+start = time.time()
+alldata = organizeddata = []
+
+
+def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
-        csvstart=0
-        end=csvstart+100    
+        csvstart = 0
+        end = csvstart + 100
         ball_predict = tf.keras.models.load_model(
             "trained-models/ball_position_model(25k).keras"
         )
@@ -91,10 +94,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
         courtref = np.int64(courtref)
         referenceimage = None
 
-        
-
         # function to see what kind of shot has been hit
-        
 
         reference_points_3d = [
             [0, 9.75, 0],  # Top-left corner, 1
@@ -209,7 +209,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 players=players,
                 player_last_positions=player_last_positions,
                 occluded=False,
-                importantdata=[]
+                importantdata=[],
             )
             frame = detections_result[0]
             frame_count = detections_result[1]
@@ -228,18 +228,17 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             players = detections_result[14]
             player_last_positions = detections_result[15]
             occluded = detections_result[16]
-            idata=detections_result[17]
-            if idata: alldata.append(idata)
-            #print(f"occluded: {occluded}")
+            idata = detections_result[17]
+            if idata:
+                alldata.append(idata)
+            # print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
             match_in_play = Functions.is_match_in_play(players, mainball)
-            type_of_shot = Functions.classify_shot(
-                past_ball_pos=past_ball_pos, homography_matrix=homography
-            )
+            type_of_shot = Functions.classify_shot(past_ball_pos=past_ball_pos)
             try:
-                organizeddata=Functions.reorganize_shots(alldata)
-                #print(f"organized data: {organizeddata}")
+                organizeddata = Functions.reorganize_shots(alldata)
+                # print(f"organized data: {organizeddata}")
             except Exception as e:
                 print(f"error reorganizing: {e}")
                 pass
@@ -247,7 +246,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 # print(match_in_play)
                 cv2.putText(
                     annotated_frame,
-                    f"ball hit: {str(match_in_play[1])}", 
+                    f"ball hit: {str(match_in_play[1])}",
                     (10, frame_height - 100),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.4,
@@ -687,20 +686,33 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         shot,
                     ]
                     csvwriter.writerow(data)
-            #print(past_ball_pos)
-            
+
+            # print(past_ball_pos)
+            if past_ball_pos is not None:
+                text=f'ball in rlworld: {Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)}'
+                cv2.putText(
+                    annotated_frame,
+                    text,
+                    (10, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    (255, 255, 255),
+                    1,
+                )
             try:
                 # write()
                 if running_frame % 100 == 0:
                     csvwrite()
             except Exception as e:
                 pass
-            if running_frame>end:
+            if running_frame > end:
                 try:
-                    with open('final.txt', 'a') as f:
-                        f.write(csvanalyze.parse_through(csvstart, end, 'output/final.csv'))
-                    csvstart=end
-                    end+=100
+                    with open("final.txt", "a") as f:
+                        f.write(
+                            csvanalyze.parse_through(csvstart, end, "output/final.csv")
+                        )
+                    csvstart = end
+                    end += 100
                 except Exception as e:
                     print(f"error: {e}")
                     pass

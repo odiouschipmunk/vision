@@ -1112,66 +1112,101 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
 from typing import List, Dict
 
 
-def classify_shot(
-    past_ball_pos: List[List[float]], homography_matrix: np.ndarray = None
-) -> Dict:
+
+def classify_shot(past_ball_pos, court_width=640, court_height=360):
+    """
+    Classifies shots based on trajectory angles and court position
+    Returns [direction, shot_type, wall_hits]
+    """
     try:
-        """
-        Classify shot type based on ball trajectory
-        Args:
-            past_ball_pos: List of [x, y, frame_number]
-            homography_matrix: Optional homography matrix for perspective correction
-        Returns:
-            Dictionary containing shot classification
-        """
-        # Convert to numpy array for easier manipulation
-        trajectory = np.array(past_ball_pos)
+        if len(past_ball_pos) < 3:
+            return ["straight", "drive", 0]
+        #shorten the past ball positions to the last 5
+        if len(past_ball_pos) > 5:
+            past_ball_pos = past_ball_pos[-5:]
+        # Calculate angles between consecutive points
+        angles = []
+        for i in range(len(past_ball_pos)-2):
+            x1, y1, _ = past_ball_pos[i]
+            x2, y2, _ = past_ball_pos[i+1]
+            x3, y3, _ = past_ball_pos[i+2]
+            
+            angle = calculate_angle(x1, y1, x2, y2, x3, y3)
+            angles.append(angle)
 
-        # Apply homography transform if provided
-        if homography_matrix is not None:
-            points = np.column_stack((trajectory[:, 0:2], np.ones(len(trajectory))))
-            transformed = np.dot(homography_matrix, points.T).T
-            trajectory[:, 0:2] = transformed[:, :2] / transformed[:, 2:]
+        # Calculate horizontal displacement
+        start_x = past_ball_pos[0][0]
+        end_x = past_ball_pos[-1][0]
+        displacement = abs(end_x - start_x) / court_width
 
-        # Detect wall hits using velocity changes
-        velocities = np.diff(trajectory[:, 0:2], axis=0)
-        speed = np.linalg.norm(velocities, axis=1)
-        wall_hits, _ = find_peaks(-speed, height=-np.inf, distance=10)
+        # Initialize variables
+        direction = "straight"
+        shot_type = "drive"
+        wall_hits = count_wall_hits(past_ball_pos)
 
-        if len(wall_hits) == 0:
-            return {"shot_type": "unknown", "direction": "unknown"}
-
-        # Get trajectory after last wall hit
-        last_hit_idx = wall_hits[-1]
-        shot_trajectory = trajectory[last_hit_idx:]
-
-        # Classify direction
-        start_pos = shot_trajectory[0, 0:2]
-        end_pos = shot_trajectory[-1, 0:2]
-        direction_vector = end_pos - start_pos
-
-        # Assume court center line is at x=0
-        if (direction_vector[0] * start_pos[0]) < 0:
+        # Classify direction based on displacement and angles
+        if displacement > 0.4:
+            direction = "wide_crosscourt"
+        elif displacement > 0.25:
             direction = "crosscourt"
+        elif displacement > 0.15:
+            direction = "slight_crosscourt"
+        elif displacement < 0.1:
+            direction = "tight_straight"
         else:
             direction = "straight"
 
-        # Classify shot type based on height profile
-        height_profile = shot_trajectory[:, 1]
-        max_height = np.max(height_profile)
-        height_variation = np.std(height_profile)
-
-        if (
-            max_height > 300 or height_variation > 100
-        ):  # Adjust thresholds based on your coordinate system
+        # Classify shot type based on vertical movement
+        avg_angle = sum(angles) / len(angles)
+        if avg_angle > 60:
             shot_type = "lob"
+        elif avg_angle < 20:
+            shot_type = "hard_drive"
         else:
             shot_type = "drive"
-        return [direction, shot_type, len(wall_hits)]
+
+        return [direction, shot_type, wall_hits]
+
+    except Exception as e:
+        return ["straight", "drive", 0]
+
+def calculate_angle(x1, y1, x2, y2, x3, y3):
+    """
+    Calculate angle between three points
+    """
+    
+    # Calculate vectors
+    vector1 = [x2 - x1, y2 - y1]
+    vector2 = [x3 - x2, y3 - y2]
+    
+    # Calculate dot product
+    dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
+    
+    # Calculate magnitudes
+    mag1 = math.sqrt(vector1[0]**2 + vector1[1]**2)
+    mag2 = math.sqrt(vector2[0]**2 + vector2[1]**2)
+    
+    # Calculate angle in degrees
+    if mag1 * mag2 == 0:
+        return 0
+    
+    angle = math.degrees(math.acos(dot_product / (mag1 * mag2)))
+    return angle
+
+def count_wall_hits(past_ball_pos, threshold=10):
+    """
+    Count number of wall hits based on direction changes
+    """
+    wall_hits = 0
+    for i in range(1, len(past_ball_pos)-1):
+        x1, y1, _ = past_ball_pos[i-1]
+        x2, y2, _ = past_ball_pos[i]
+        x3, y3, _ = past_ball_pos[i+1]
         
-    except Exception:
-        # print(f"Error in classify_shot: {str(e)}")
-        pass
+        if abs(x2 - x1) < threshold and abs(x3 - x2) < threshold:
+            wall_hits += 1
+    return wall_hits
+
 
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     if len(past_ball_pos) < 3:
