@@ -96,19 +96,19 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
         
 
         reference_points_3d = [
-            [0, 0, 9.75],  # Top-left corner, 1
-            [6.4, 0, 9.75],  # Top-right corner, 2
+            [0, 9.75, 0],  # Top-left corner, 1
+            [6.4, 9.75, 0],  # Top-right corner, 2
             [6.4, 0, 0],  # Bottom-right corner, 3
             [0, 0, 0],  # Bottom-left corner, 4
-            [3.2, 0, 4.26],  # "T" point, 5
-            [0, 0, 2.66],  # Left bottom of the service box, 6
-            [6.4, 0, 2.66],  # Right bottom of the service box, 7
-            [0, 0.48, 9.75],  # left of tin, 8
-            [6.4, 0.48, 9.75],  # right of tin, 9
-            [0, 1.83, 9.75],  # Left of the service line, 10
-            [4.8, 1.83, 9.75],  # Right of the service line, 11
-            [0, 4.57, 9.75],  # Left of the top line of the front court, 12
-            [6.4, 4.57, 9.75],  # Right of the top line of the front court, 13
+            [3.2, 0, 4.31],  # "T" point, 5
+            [0, 2.71, 0],  # Left bottom of the service box, 6
+            [6.4, 2.71, 0],  # Right bottom of the service box, 7
+            [0, 9.75, 0.48],  # left of tin, 8
+            [6.4, 9.75, 0.48],  # right of tin, 9
+            [0, 9.75, 1.78],  # Left of the service line, 10
+            [6.4, 9.75, 1.78],  # Right of the service line, 11
+            [0, 9.75, 4.57],  # Left of the top line of the front court, 12
+            [6.4, 9.75, 4.57],  # Right of the top line of the front court, 13
         ]
         homography = Functions.generate_homography(
             reference_points, reference_points_3d
