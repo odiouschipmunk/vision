@@ -1168,15 +1168,10 @@ def classify_shot(
         else:
             shot_type = "drive"
         return [direction, shot_type, len(wall_hits)]
-        return {
-            "shot_type": shot_type,
-            "direction": direction,
-            "wall_hits": len(wall_hits),
-        }
+        
     except Exception:
         # print(f"Error in classify_shot: {str(e)}")
         pass
-
 
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     if len(past_ball_pos) < 3:
