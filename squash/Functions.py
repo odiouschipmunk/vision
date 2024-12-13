@@ -1244,3 +1244,25 @@ def input_model(csvdata):
 
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
     return response
+
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+def plot_coords(coords_list):
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for coords in coords_list:
+        x_coords, y_coords, z_coords = zip(*coords)
+        ax.scatter(x_coords, y_coords, z_coords)
+
+    ax.set_xlim(0, 6.4)
+    ax.set_ylim(0, 9.75)
+    ax.set_zlim(0, 4.57)
+
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Z axis')
+
+    plt.show()

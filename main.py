@@ -1,4 +1,17 @@
 def main():
+    import csv
+    import ast
+    frames=[]
+    with open('output/final.csv', 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        for row in csvreader:
+            frames.append(row)
+    print(ast.literal_eval(frames[1][1])[0])
+if __name__ == "__main__":
+    main()
+
+'''
+def main():
     """
     The `main` function processes video frames to detect players, their poses, and the ball trajectory
     in a squash game.
@@ -868,3 +881,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
