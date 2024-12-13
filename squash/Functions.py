@@ -1160,8 +1160,6 @@ def classify_shot(past_ball_pos, court_width=640, court_height=360):
         avg_angle = sum(angles) / len(angles)
         if avg_angle > 60:
             shot_type = "lob"
-        elif avg_angle < 20:
-            shot_type = "hard_drive"
         else:
             shot_type = "drive"
 

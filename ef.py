@@ -10,7 +10,6 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
 import logging
-import os
 import time
 import csv
 import csvanalyze
@@ -19,7 +18,7 @@ start = time.time()
 alldata = organizeddata = []
 
 
-def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
+def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
         csvstart = 0
@@ -114,6 +113,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
         homography = Functions.generate_homography(
             reference_points, reference_points_3d
         )
+
         np.zeros((frame_height, frame_width), dtype=np.float32)
         np.zeros((frame_height, frame_width), dtype=np.float32)
         heatmap_overlay_path = "output/white.png"
@@ -139,6 +139,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                 break
 
             frame = cv2.resize(frame, (frame_width, frame_height))
+            # force it to go to lowestx-->highestx and then lowesty-->highesty
             frame_count += 1
 
             if len(references1) != 0 and len(references2) != 0:
@@ -227,7 +228,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             pixdiffs = detections_result[13]
             players = detections_result[14]
             player_last_positions = detections_result[15]
-            occluded = detections_result[16]
+            detections_result[16]
             idata = detections_result[17]
             if idata:
                 alldata.append(idata)
@@ -237,7 +238,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             match_in_play = Functions.is_match_in_play(players, mainball)
             type_of_shot = Functions.classify_shot(past_ball_pos=past_ball_pos)
             try:
-                organizeddata = Functions.reorganize_shots(alldata)
+                Functions.reorganize_shots(alldata)
                 # print(f"organized data: {organizeddata}")
             except Exception as e:
                 print(f"error reorganizing: {e}")
@@ -689,7 +690,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
 
             # print(past_ball_pos)
             if past_ball_pos is not None:
-                text=f'ball in rlworld: {Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)}'
+                text = f"ball in rlworld: {Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)}"
                 cv2.putText(
                     annotated_frame,
                     text,
@@ -700,10 +701,8 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     1,
                 )
             try:
-                # write()
-                if running_frame % 100 == 0:
-                    csvwrite()
-            except Exception as e:
+                csvwrite()
+            except Exception:
                 pass
             if running_frame > end:
                 try:
