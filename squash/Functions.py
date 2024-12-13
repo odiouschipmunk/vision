@@ -1,25 +1,10 @@
-import numpy as np
-import cv2
-import torch
-import clip
-import math
-from PIL import Image
+import numpy as np, cv2, clip, torch, math
 from skimage.metrics import structural_similarity as ssim_metric
-from scipy.signal import find_peaks
-# from squash import Functions  # Remove if Functions.py replaces this
 from squash.Player import Player
-from norfair import Detection, Tracker, draw_tracked_objects
-from norfair.filter import OptimizedKalmanFilterFactory
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
 
-def create_norfair_tracker():
-    return Tracker(
-        distance_function="euclidean",
-        distance_threshold=50,
-        hit_counter_max=10,
-        filter_factory=OptimizedKalmanFilterFactory(),
-        past_detections_length=5
-    )
-    
 def find_match_2d_array(array, x):
     for i in range(len(array)):
         if array[i][0] == x:
@@ -881,65 +866,6 @@ def reorganize_shots(alldata, min_sequence=5):
     return result
 
 
-def visualize_shots(shot_data, width=640, height=360):
-    # Create white image
-    image = np.ones((height, width, 3), dtype=np.uint8) * 255
-    
-    # Define color mapping (BGR format for OpenCV)
-    colors = {
-        'straight drive': (0, 0, 255),    # Red
-        'crosscourt drive': (0, 255, 0),  # Green
-        'crosscourt': (0, 255, 0),        # Green
-        'unknown': (255, 0, 0)            # Blue
-    }
-    
-    # Find coordinate ranges for normalization
-    all_x = []
-    all_y = []
-    for sequence in shot_data:
-        coords = sequence[2]
-        for i in range(0, len(coords), 2):
-            all_x.append(coords[i])
-            all_y.append(coords[i + 1])
-    
-    x_min, x_max = min(all_x), max(all_x)
-    y_min, y_max = min(all_y), max(all_y)
-    
-    # Add padding to prevent edge cases
-    padding = 50
-    
-    # Draw circles and connecting lines for each shot sequence
-    for sequence in shot_data:
-        shot_type = sequence[0]
-        coords = sequence[2]
-        color = colors.get(shot_type.lower(), (255, 0, 0))
-        
-        prev_point = None
-        # Process coordinates in pairs
-        for i in range(0, len(coords), 2):
-            # Normalize coordinates to fit window with padding
-            x = int(((coords[i] - x_min) / (x_max - x_min)) * (width - 2*padding) + padding)
-            y = int(((coords[i+1] - y_min) / (y_max - y_min)) * (height - 2*padding) + padding)
-            
-            # Ensure coordinates are within bounds
-            x = min(max(x, padding), width-padding)
-            y = min(max(y, padding), height-padding)
-            
-            # Draw circle
-            cv2.circle(image, (x, y), 3, color, -1)  # Increased radius to 3
-            
-            # Draw connecting line to previous point
-            if prev_point is not None:
-                cv2.line(image, prev_point, (x, y), color, 1)
-            prev_point = (x, y)
-            
-            # Add shot type label at first point
-            if i == 0:
-                cv2.putText(image, shot_type, (x+5, y-5), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
-    
-    return image
-
 
 def apply_homography(H, points, inverse=False):
     """
@@ -1109,8 +1035,6 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 
 
-from typing import List, Dict
-
 
 
 def classify_shot(past_ball_pos, court_width=640, court_height=360):
@@ -1165,7 +1089,7 @@ def classify_shot(past_ball_pos, court_width=640, court_height=360):
 
         return [direction, shot_type, wall_hits]
 
-    except Exception as e:
+    except Exception:
         return ["straight", "drive", 0]
 
 def calculate_angle(x1, y1, x2, y2, x3, y3):
@@ -1230,7 +1154,7 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     v2 = (x2 - x1, y2 - y1)
 
     def compute_angle(v1, v2):
-        import math
+        #import math
 
         dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
         mag1 = (v1[0] ** 2 + v1[1] ** 2) ** 0.5
@@ -1250,8 +1174,6 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     return False
 
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 
 
 def predict_next_pos(past_ball_pos, num_predictions=2):
@@ -1291,7 +1213,6 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
     return predictions
 
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def input_model(csvdata):

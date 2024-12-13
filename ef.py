@@ -1,24 +1,18 @@
-import cv2
+import time
+start = time.time()
+from dotenv import load_dotenv
+load_dotenv()
+import cv2, csv, time, csvanalyze, logging, math, numpy as np, matplotlib, tensorflow as tf
 from ultralytics import YOLO
-import numpy as np
-import math
 from squash import Referencepoints, Functions  # Ensure Functions is imported
-import tensorflow as tf
-import matplotlib
-
-matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
-import logging
-import time
-import csv
-import csvanalyze
-
-start = time.time()
+matplotlib.use("Agg")
+print(f'time to import everything: {time.time()-start}')
 alldata = organizeddata = []
 
 
-def main(path="main.mp4", frame_width=640, frame_height=360):
+def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
         csvstart = 0
@@ -681,11 +675,13 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     )
                     data = [
                         running_frame,
-                        players.get(1).get_latest_pose().xyn[0],
-                        players.get(2).get_latest_pose().xyn[0],
+                        players.get(1).get_latest_pose().xyn[0].tolist(),
+                        players.get(2).get_latest_pose().xyn[0].tolist(),
                         mainball.getloc(),
                         shot,
                     ]
+                    print(type(players.get(1).get_latest_pose().xyn[0]))
+                    print(players.get(1).get_latest_pose().xyn[0])
                     csvwriter.writerow(data)
 
             # print(past_ball_pos)

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-
+import ast, csv
 def parse_coordinates(coord_str):
     """Convert string representation of coordinates to numpy array"""
     try:
@@ -243,5 +243,132 @@ def parse_through(start,end,filename):
     return bigstring
 
 
-if __name__ == "__main__":
-    main()
+def human_readable(filename):
+    import csv
+    import ast
+
+    def analyze_posture(keypoints):
+        try:
+            points = ast.literal_eval(keypoints)
+            description = []
+
+            # Head and neck analysis (points 0 and 1)
+            if points[0][0] != 0 and points[1][0] != 0:
+                head_tilt = points[0][0] - points[1][0]
+                if abs(head_tilt) > 0.05:
+                    description.append(f"head tilted {'right' if head_tilt > 0 else 'left'}")
+                else:
+                    description.append("head facing forward")
+
+            # Shoulder analysis (points 5 and 6)
+            if points[5][1] != 0 and points[6][1] != 0:
+                shoulder_level = abs(points[5][1] - points[6][1])
+                if shoulder_level > 0.05:
+                    description.append("shoulders tilted")
+                else:
+                    description.append("shoulders level")
+
+            # Arm positions (points 7, 8, 9, 10)
+            if points[7][1] != 0 and points[9][1] != 0 and points[5][1] != 0 and points[6][1] != 0:
+                left_arm_up = points[7][1] < points[5][1]
+                right_arm_up = points[9][1] < points[6][1]
+                if left_arm_up and right_arm_up:
+                    description.append("both arms raised")
+                elif left_arm_up:
+                    description.append("left arm raised")
+                elif right_arm_up:
+                    description.append("right arm raised")
+                else:
+                    description.append("arms down")
+
+            # Hip analysis (points 11 and 12)
+            if points[11][1] != 0 and points[12][1] != 0:
+                hip_level = abs(points[11][1] - points[12][1])
+                if hip_level > 0.05:
+                    description.append("hips tilted")
+                else:
+                    description.append("hips level")
+
+            # Leg positions (points 13 and 14)
+            if points[13][0] != 0 and points[14][0] != 0:
+                leg_spread = abs(points[13][0] - points[14][0])
+                if leg_spread > 0.2:
+                    description.append("legs widely spread")
+                elif leg_spread > 0.1:
+                    description.append("legs moderately spread")
+                else:
+                    description.append("legs close together")
+
+            # Knee bend (points 13-15 and 14-16)
+            if points[13][1] != 0 and points[15][1] != 0:
+                left_knee_bend = points[15][1] - points[13][1]
+                if left_knee_bend > 0.1:
+                    description.append("left knee bent")
+            if points[14][1] != 0 and points[16][1] != 0:
+                right_knee_bend = points[16][1] - points[14][1]
+                if right_knee_bend > 0.1:
+                    description.append("right knee bent")
+
+            # Foot positions (points 15 and 16)
+            if points[15][0] != 0 and points[16][0] != 0:
+                feet_distance = abs(points[15][0] - points[16][0])
+                if feet_distance > 0.2:
+                    description.append("feet wide apart")
+                else:
+                    description.append("feet close together")
+
+            return ", ".join(description) if description else "in neutral position"
+        except:
+            return "position unclear"
+
+    def relative_to_ball(player_points, ball_pos):
+        try:
+            points = ast.literal_eval(player_points)
+            ball = ast.literal_eval(ball_pos)
+
+            valid_points = [p[0] for p in points if p[0] != 0]
+            if not valid_points:
+                return "position unknown"
+
+            center_x = sum(valid_points) / len(valid_points)
+            ball_x = ball[0] / 1000 if isinstance(ball[0], (int, float)) else 0
+
+            distance = abs(center_x - ball_x)
+            if distance < 0.2:
+                return "very close to"
+            elif distance < 0.4:
+                return "near"
+            else:
+                return "far from"
+        except:
+            return "position unknown"
+
+    try:
+        with open(filename, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+
+            for row in reader:
+                if len(row) != 5:
+                    continue
+
+                frame, p1_points, p2_points, ball_pos, shot = row
+
+                p1_description = analyze_posture(p1_points)
+                p2_description = analyze_posture(p2_points)
+
+                p1_ball_pos = relative_to_ball(p1_points, ball_pos)
+                p2_ball_pos = relative_to_ball(p2_points, ball_pos)
+
+                description = f"Frame {frame}: Player 1 is {p1_description} and is {p1_ball_pos} the ball. "
+                description += f"Player 2 is {p2_description} and is {p2_ball_pos} the ball. "
+                description += f"The shot being played is a {shot}."
+
+                print(description)
+    except FileNotFoundError:
+        print(f"Error: Could not find file {filename}")
+    except Exception as e:
+        print(f"Error processing file: {str(e)}")
+
+if __name__ == '__main__':
+    human_readable('output/final.csv')
