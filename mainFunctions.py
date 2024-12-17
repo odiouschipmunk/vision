@@ -54,3 +54,40 @@ def load_reference_points():
         [6.4, 9.75, 4.57],  # Right of the top line of the front court, 13
     ]
     return reference_points_3d
+
+def generate_camera_projection(pixel_points, real_world_points):
+    """
+    Generate camera projection parameters from corresponding pixel and 3D real-world points.
+    
+    Args:
+        pixel_points (list): List of [x, y] coordinates in pixel space
+        real_world_points (list): List of [x, y, z] coordinates in real-world space
+        
+    Returns:
+        tuple: (rotation_vector, translation_vector, camera_matrix)
+    """
+    if len(pixel_points) < 6 or len(real_world_points) < 6:
+        raise ValueError("At least 6 corresponding points are recommended for accurate 3D projection")
+    
+    # Convert points to numpy arrays
+    pixel_points = np.array(pixel_points, dtype=np.float32)
+    real_world_points = np.array(real_world_points, dtype=np.float32)
+    
+    # Estimate initial camera parameters
+    camera_matrix = np.array([[1000, 0, 500],
+                            [0, 1000, 500],
+                            [0, 0, 1]], dtype=np.float32)  # Initial guess
+    dist_coeffs = np.zeros((4,1))  # Assume no lens distortion
+    
+    # Find the rotation and translation vectors
+    success, rotation_vector, translation_vector = cv2.solvePnP(
+        real_world_points,
+        pixel_points,
+        camera_matrix,
+        dist_coeffs
+    )
+    
+    if not success:
+        raise ValueError("Could not compute camera projection parameters")
+        
+    return rotation_vector, translation_vector, camera_matrix
