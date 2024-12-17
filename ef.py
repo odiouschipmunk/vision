@@ -94,7 +94,7 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             [6.4, 9.75, 0],  # Top-right corner, 2
             [6.4, 0, 0],  # Bottom-right corner, 3
             [0, 0, 0],  # Bottom-left corner, 4
-            [3.2, 0, 4.31],  # "T" point, 5
+            [3.2, 4.57, 0],  # "T" point, 5
             [0, 2.71, 0],  # Left bottom of the service box, 6
             [6.4, 2.71, 0],  # Right bottom of the service box, 7
             [0, 9.75, 0.48],  # left of tin, 8
@@ -636,44 +636,8 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
-
-            if len(ballxy) > 0:
-                balltext = f"Ball position: {ballxy[-1][0]},{ballxy[-1][1]}"
-                rlball = Functions.pixel_to_3d(
-                    [ballxy[-1][0], ballxy[-1][1]], homography, reference_points_3d
-                )
-                text4 = f"Ball position in world: {rlball}"
-                cv2.putText(
-                    annotated_frame,
-                    balltext,
-                    (10, 90),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,
-                    (255, 255, 255),
-                    1,
-                )
-                cv2.putText(
-                    annotated_frame,
-                    text4,
-                    (10, 110),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,
-                    (255, 255, 255),
-                    1,
-                )
+            rlball=Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)
             print(f"finished writing frame {frame_count}")
-            player1rlworldpos=player2rlworldpos=[]
-            try:
-                for position in players.get(1).get_latest_pose().xyn[0]:
-                    player1rlworldpos.append(Functions.pixel_to_3d(position, homography, reference_points_3d))
-                for position in players.get(2).get_latest_pose().xyn[0]:
-                    player2rlworldpos.append(Functions.pixel_to_3d(position, homography, reference_points_3d))
-                Functions.plot_coords(player1rlworldpos)
-            except Exception as e:
-                print(f"error: {e}")
-                pass
-            
-            print(f"player 1 rlworld pos: {player1rlworldpos}")
             def csvwrite():
                 with open("output/final.csv", "a") as f:
                     csvwriter = csv.writer(f)
@@ -690,9 +654,11 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                         players.get(2).get_latest_pose().xyn[0].tolist(),
                         mainball.getloc(),
                         shot,
+                        rlworldp1,
+                        rlworldp2,
+                        rlball,
                     ]
-                    print(type(players.get(1).get_latest_pose().xyn[0]))
-                    print(players.get(1).get_latest_pose().xyn[0])
+                    print(data)
                     csvwriter.writerow(data)
 
             # print(past_ball_pos)
@@ -709,7 +675,8 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                 )
             try:
                 csvwrite()
-            except Exception:
+            except Exception as e:
+                print(f"error: {e}")
                 pass
             if running_frame > end:
                 try:

@@ -83,7 +83,7 @@ def cleanwrite():
         f.write("[")
     with open("output/final.csv", "w") as f:
         f.write(
-            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type\n"
+            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type,Player 1 RL World Position,Player 2 RL World Position,Ball RL World Position\n"
         )
 
 def get_data(length):
