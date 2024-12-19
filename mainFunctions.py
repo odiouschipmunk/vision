@@ -57,12 +57,14 @@ def load_reference_points():
         [3.2, 4.31, 0],  # "T" point, 5
         [0, 2.71, 0],  # Left bottom of the service box, 6
         [6.4, 2.71, 0],  # Right bottom of the service box, 7
-        [0, 9.75, 0.48],  # left of tin, 8
-        [6.4, 9.75, 0.48],  # right of tin, 9
-        [0, 9.75, 1.78],  # Left of the service line, 10
-        [6.4, 9.75, 1.78],  # Right of the service line, 11
-        [0, 9.75, 4.57],  # Left of the top line of the front court, 12
-        [6.4, 9.75, 4.57],  # Right of the top line of the front court, 13
+        [0, 4.31, 0], #left top of service box, 8
+        [6.4, 4.31, 0], #right top of service box, 9
+        [0, 9.75, 0.48],  # left of tin, 10
+        [6.4, 9.75, 0.48],  # right of tin, 11
+        [0, 9.75, 1.78],  # Left of the service line, 12
+        [6.4, 9.75, 1.78],  # Right of the service line, 13
+        [0, 9.75, 4.57],  # Left of the top line of the front court, 14
+        [6.4, 9.75, 4.57],  # Right of the top line of the front court, 15
     ]
     return reference_points_3d
 def read_rl_positions(path='final.csv'):
@@ -122,6 +124,19 @@ def convert_2d_to_3d(points_2d, H_xy, H_z):
     points_3d = np.column_stack((xy_transformed[:2].T, z_transformed[0].T))
     
     return points_3d
+
+def visualize_3d_ball_position(reference_points_3d, ball_positions):
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ref_points = np.array(reference_points_3d)
+    ball_pos = np.array(ball_positions)
+    ax.scatter(ref_points[:, 0], ref_points[:, 1], ref_points[:, 2], c='green', s=100, marker='o', label='Reference Points')
+    ax.scatter(ball_pos[:, 0], ball_pos[:, 1], ball_pos[:, 2], c='red', s=100, marker='o', label='Ball Position')
+    ax.set_xlabel('X (m)')
+    ax.set_ylabel('Y (m)')
+    ax.set_zlabel('Z (m)')
+    ax.legend()
+    plt.show()
 
 
 def visualize_3d_animation(reference_points_3d, player1_positions, player2_positions):
