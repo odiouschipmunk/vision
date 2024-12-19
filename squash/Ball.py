@@ -1,33 +1,38 @@
-import math
 class Ball:
     def __init__(self, x, y, a, s):
-        self.xcoord=x
-        self.ycoord=y
-        self.pastx=0
-        self.pasty=0
-        self.angle=a
-        self.size=s
-        self.positions=[[]]
-        self.positions.append([x,y])
-        self.angles=[]
-        if a != 0: self.angles.append(a)
-        self.sizes=[]
-        if s !=0: self.sizes.append(s)
+        self.xcoord = x
+        self.ycoord = y
+        self.pastx = 0
+        self.pasty = 0
+        self.angle = a
+        self.size = s
+        self.positions = [[]]
+        self.positions.append([x, y])
+        self.angles = []
+        if a != 0:
+            self.angles.append(a)
+        self.sizes = []
+        if s != 0:
+            self.sizes.append(s)
 
     def getlastpos(self):
         return [self.pastx, self.pasty]
+
     def getloc(self):
         return [self.xcoord, self.ycoord]
+
     def get_last_x_pos(self, x):
-        if len(self.positions)>x:
+        if len(self.positions) > x:
             return self.positions[-x]
         else:
             return None
+
     def get_last_x_single_position(self, x):
-        if len(self.positions)>x:
+        if len(self.positions) > x:
             return self.positions[-x]
         else:
             return None
+
     def update(self, x, y, s, a=0):
         self.xcoord = x
         self.ycoord = y
@@ -36,12 +41,16 @@ class Ball:
 
     def getcoordhistory(self):
         return self.positions
+
     def getanglehistory(self):
         return self.angles
+
     def getsizehistory(self):
         return self.sizes
+
     def number_of_coords(self):
         return len(self.positions)
+
     def convert_2d_to_3d(self, court_width=6.4, court_length=9.75, camera_distance=3.5):
         """
         Converts 2D coordinates to 3D based on squash court dimensions and camera position.
@@ -60,11 +69,13 @@ class Ball:
         Y = norm_y * court_length  # Y is along the length
 
         # Estimate Z (depth) using the court length and camera position
-        Z = camera_distance + Y  # Camera is behind the back wall, so depth decreases as Y increases
+        Z = (
+            camera_distance + Y
+        )  # Camera is behind the back wall, so depth decreases as Y increases
 
         return [X, Y, Z]
-    
-    def convert_to_meters(self, x,y,z,pxw, pxh):
-        x=int(2*pxw/3)
-        z=int(0.95*pxh)
-        return [x,y,z]
+
+    def convert_to_meters(self, x, y, z, pxw, pxh):
+        x = int(2 * pxw / 3)
+        z = int(0.95 * pxh)
+        return [x, y, z]

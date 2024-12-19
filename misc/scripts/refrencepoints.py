@@ -1,6 +1,8 @@
 import cv2
 import json
 import os
+
+
 def get_refrence_points(frame_width, frame_height, path):
     # Mouse callback function to capture click events
     def click_event(event, x, y, flags, params):
@@ -59,5 +61,3 @@ def get_refrence_points(frame_width, frame_height, path):
 
         cv2.destroyAllWindows()
         return refrence_points
-
-

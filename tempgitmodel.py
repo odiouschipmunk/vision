@@ -1,6 +1,5 @@
 import os
 from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import SystemMessage, UserMessage
 from azure.core.credentials import AzureKeyCredential
 from transformers import GPT2Tokenizer
 
@@ -14,13 +13,14 @@ client = ChatCompletionsClient(
     credential=AzureKeyCredential(token),
 )
 import json
-squash_data=json.load(open("output/final.json"))
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+
+squash_data = json.load(open("output/final.json"))
+tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 messages = [
     "You are a squash coach reading through big data. Tell me exactly what both players are doing based on the following json data.",
     f"{squash_data}",
-    "How exactly do you know? Use specific data points from the data."
+    "How exactly do you know? Use specific data points from the data.",
 ]
 
 total_tokens = sum(len(tokenizer.encode(message)) for message in messages)
@@ -32,7 +32,7 @@ total_tokens = sum(len(tokenizer.encode(message)) for message in messages)
 #         UserMessage(content=f"{squash_data}"),
 #         UserMessage(content="How exactly do you know? Use specific data points from the data.")
 #     ],
-    
+
 #     temperature=1.0,
 #     top_p=1.0,
 #     max_tokens=4000,

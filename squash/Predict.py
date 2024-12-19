@@ -1,4 +1,6 @@
 import random
+
+
 def predict_next_position(pos1, pos2, frame_width, frame_height, error_margin=5):
     """
     Predict the next ball position based on the past two positions with an area of error.

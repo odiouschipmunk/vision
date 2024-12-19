@@ -1,6 +1,6 @@
-import numpy as np
 import torch
 from ultralytics.engine.results import Results, Boxes
+
 
 def inference_slicing(frame, model, num_slices=4):
     """
@@ -29,7 +29,7 @@ def inference_slicing(frame, model, num_slices=4):
     # Merge detections
     all_boxes = []
     for y_offset, detection in detections:
-        if hasattr(detection, 'boxes') and detection.boxes is not None:
+        if hasattr(detection, "boxes") and detection.boxes is not None:
             boxes = detection.boxes
             # Adjust box coordinates to the original frame
             boxes.xyxy[:, [1, 3]] += y_offset
@@ -47,12 +47,13 @@ def inference_slicing(frame, model, num_slices=4):
         merged_boxes = None
 
     # Create a final detection result
-    final_detection = Results(orig_img=frame, path='', names=model.names)
+    final_detection = Results(orig_img=frame, path="", names=model.names)
     final_detection.boxes = merged_boxes
     final_detection.orig_shape = frame.shape
 
     # Return a list containing the final_detection to match your code structure
     return [final_detection]
+
 
 # Usage in your Functions.py
 # merged_result = inference_slicing(frame, ballmodel)

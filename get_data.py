@@ -1,14 +1,25 @@
 import time
+
 start = time.time()
 from dotenv import load_dotenv
+
 load_dotenv()
-import cv2, csv, time, csvanalyze, logging, math, numpy as np, matplotlib, tensorflow as tf
+import cv2
+import csv
+import time
+import csvanalyze
+import logging
+import math
+import numpy as np
+import matplotlib
+import tensorflow as tf
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
+
 matplotlib.use("Agg")
-print(f'time to import everything: {time.time()-start}')
+print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
 
@@ -662,18 +673,23 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     1,
                 )
             print(f"finished writing frame {frame_count}")
-            player1rlworldpos=player2rlworldpos=[]
+            player1rlworldpos = player2rlworldpos = []
             try:
                 for position in players.get(1).get_latest_pose().xyn[0]:
-                    player1rlworldpos.append(Functions.pixel_to_3d(position, homography, reference_points_3d))
+                    player1rlworldpos.append(
+                        Functions.pixel_to_3d(position, homography, reference_points_3d)
+                    )
                 for position in players.get(2).get_latest_pose().xyn[0]:
-                    player2rlworldpos.append(Functions.pixel_to_3d(position, homography, reference_points_3d))
+                    player2rlworldpos.append(
+                        Functions.pixel_to_3d(position, homography, reference_points_3d)
+                    )
                 Functions.plot_coords(player1rlworldpos)
             except Exception as e:
                 print(f"error: {e}")
                 pass
-            
+
             print(f"player 1 rlworld pos: {player1rlworldpos}")
+
             def csvwrite():
                 with open("output/final.csv", "a") as f:
                     csvwriter = csv.writer(f)

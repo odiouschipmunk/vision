@@ -10,16 +10,18 @@ class Player:
     def get_latest_pose(self):
         # Return the latest pose data
         return self.poses[-1] if self.poses else None
-    
+
     def get_poses(self):
         # Return all the pose data
         return self.poses
+
     def get_last_x_poses(self, x):
         # Return the last x pose data
-        if len(self.poses)>x:
+        if len(self.poses) > x:
             return self.poses[-x]
         else:
             return None
+
     def get_last_x_positions(self, x):
         # Return the last x pose data
         return self.poses[-x:] if len(self.poses) >= x else self.poses

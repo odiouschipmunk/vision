@@ -1,7 +1,10 @@
 import cv2
 import json
 import os
+
 reference_points = []
+
+
 def get_reference_points(path, frame_width, frame_height):
     # Mouse callback function to capture click events
     def click_event(event, x, y, flags, params):
@@ -33,16 +36,16 @@ def get_reference_points(path, frame_width, frame_height):
         print(
             "No reference points file found. Please click on the court to set reference points."
         )
-        frame_count=1
+        frame_count = 1
         cap2 = cv2.VideoCapture(path)
-        frame1=None
+        frame1 = None
         while cap2.isOpened():
-            success, frame=cap2.read()
+            success, frame = cap2.read()
             if not success:
                 break
-            frame_count+=1
-            if frame_count==100:
-                frame1=frame
+            frame_count += 1
+            if frame_count == 100:
+                frame1 = frame
                 break
         frame1 = cv2.resize(frame1, (frame_width, frame_height))
         cv2.imshow("Court", frame1)

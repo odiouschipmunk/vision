@@ -1,4 +1,16 @@
-import cv2, math, time, csv, csvanalyze, matplotlib, json, os, clip, torch, numpy as np, tensorflow as tf, logging
+import cv2
+import math
+import time
+import csv
+import csvanalyze
+import matplotlib
+import json
+import os
+import clip
+import torch
+import numpy as np
+import tensorflow as tf
+import logging
 
 from ultralytics import YOLO
 from matplotlib import pyplot as plt
@@ -788,8 +800,6 @@ def get_reference_points(path, frame_width, frame_height):
             elif key == ord("q"):
                 cv2.destroyAllWindows()
                 return reference_points
-
-
 
 
 def create_norfair_tracker():
@@ -1946,8 +1956,6 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 
 
-
-
 def classify_shot(past_ball_pos, court_width=640, court_height=360):
     """
     Classifies shots based on trajectory angles and court position
@@ -2067,7 +2075,6 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     v2 = (x2 - x1, y2 - y1)
 
     def compute_angle(v1, v2):
-
         dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
         mag1 = (v1[0] ** 2 + v1[1] ** 2) ** 0.5
         mag2 = (v2[0] ** 2 + v2[1] ** 2) ** 0.5
@@ -2121,8 +2128,6 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
         # Update input sequence
         input_seq = np.concatenate((input_seq[:, 1:, :], pred.reshape(1, 1, 2)), axis=1)
     return predictions
-
-
 
 
 def input_model(csvdata):

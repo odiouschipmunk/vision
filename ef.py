@@ -1,14 +1,25 @@
 import time
+
 start = time.time()
 from dotenv import load_dotenv
+
 load_dotenv()
-import cv2, csv, time, csvanalyze, logging, math, numpy as np, matplotlib, tensorflow as tf
+import cv2
+import csv
+import time
+import csvanalyze
+import logging
+import math
+import numpy as np
+import matplotlib
+import tensorflow as tf
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
+
 matplotlib.use("Agg")
-print(f'time to import everything: {time.time()-start}')
+print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
 
@@ -636,8 +647,13 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
-            rlball=Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)
+            rlball = Functions.pixel_to_3d(
+                [past_ball_pos[-1][0], past_ball_pos[-1][1]],
+                homography,
+                reference_points_3d,
+            )
             print(f"finished writing frame {frame_count}")
+
             def csvwrite():
                 with open("output/final.csv", "a") as f:
                     csvwriter = csv.writer(f)

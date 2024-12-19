@@ -1,4 +1,4 @@
-'''
+"""
 import torch
 import cv2
 import os
@@ -57,7 +57,7 @@ def apply_augmentation(frame):
 def apply_augmentation_to_folder(input_folder, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    
+
     for image_file in os.listdir(input_folder):
         if image_file.endswith(('.jpg', '.jpeg', '.png')):
             image_path = os.path.join(input_folder, image_file)
@@ -225,7 +225,7 @@ for video_file in os.listdir(video_folder):
     if video_file.endswith(".mp4"):
         results=model(source=video_folder+"/"+video_file, show=True, conf=0.5, save=True)
 
-        
+
 
 
 
@@ -263,14 +263,14 @@ for video_file in os.listdir(video_folder):
     if video_file.endswith(".mp4"):
         results=segmodel(source=video_folder+"/"+video_file, show=True, conf=0.685, save=True)
 
-        
 
-        
+
+
 
 
 to get squash ball
 
-    
+
 import cv2
 from ultralytics import YOLO
 import os
@@ -303,7 +303,7 @@ for video_file in os.listdir(video_folder):
                 cv2.imshow('Annotated Frame', annotated_frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
-            else:    
+            else:
                 break
 cap.release()
 cv2.destroyAllWindows()
@@ -311,10 +311,10 @@ cv2.destroyAllWindows()
 
 
 
-'''
-
+"""
 
 from ultralytics import YOLO
+
 # Load the trained model
-model = YOLO('datasets\\squash_ball\\train7\\weights\\best.pt')
-results = model(source='main-video.mp4', show=True, conf=0.3, save=True, stream=True)
+model = YOLO("datasets\\squash_ball\\train7\\weights\\best.pt")
+results = model(source="main-video.mp4", show=True, conf=0.3, save=True, stream=True)

@@ -2,7 +2,24 @@ import cv2
 from PIL import Image
 from squash import Functions
 from squash.Player import Player
-def framepose(pose_model, frame, otherTrackIds, updated, references1, references2, pixdiffs, players, frame_count, player_last_positions, frame_width, frame_height, annotated_frame, max_players=2):
+
+
+def framepose(
+    pose_model,
+    frame,
+    otherTrackIds,
+    updated,
+    references1,
+    references2,
+    pixdiffs,
+    players,
+    frame_count,
+    player_last_positions,
+    frame_width,
+    frame_height,
+    annotated_frame,
+    max_players=2,
+):
     track_results = pose_model.track(frame, persist=True, show=False)
 
     if (
@@ -23,7 +40,7 @@ def framepose(pose_model, frame, otherTrackIds, updated, references1, references
         for box, track_id, kp in zip(boxes, track_ids, keypoints):
             x, y, w, h = box
             player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
-            player_image = Image.fromarray(player_crop)
+            Image.fromarray(player_crop)
             # embeddings=get_image_embeddings(player_image)
             Functions.sum_pixels_in_bbox(frame, [x, y, w, h])
             if not Functions.find_match_2d_array(otherTrackIds, track_id):
@@ -135,7 +152,7 @@ def framepose(pose_model, frame, otherTrackIds, updated, references1, references
 
                 # if player1imagereference is None:
                 #     player1imagereference = player_image
-                    # player1referenceembeddings=embeddings
+                # player1referenceembeddings=embeddings
                 # bookmark for pixel differences and cosine similarity
                 """
                 if len(p2embeddings) > 1:
@@ -243,13 +260,9 @@ def framepose(pose_model, frame, otherTrackIds, updated, references1, references
                     x = int(x * frame_width)
                     y = int(y * frame_height)
                     if playerid == 1:
-                        cv2.circle(
-                            annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5
-                        )
+                        cv2.circle(annotated_frame, (int(x), int(y)), 3, (0, 0, 255), 5)
                     else:
-                        cv2.circle(
-                            annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5
-                        )
+                        cv2.circle(annotated_frame, (int(x), int(y)), 3, (255, 0, 0), 5)
                     if i == 16:
                         cv2.putText(
                             annotated_frame,
@@ -261,4 +274,18 @@ def framepose(pose_model, frame, otherTrackIds, updated, references1, references
                             3,
                         )
                     i += 1
-    return [pose_model, frame, otherTrackIds, updated, references1, references2, pixdiffs, players, frame_count, player_last_positions, frame_width, frame_height, annotated_frame]
+    return [
+        pose_model,
+        frame,
+        otherTrackIds,
+        updated,
+        references1,
+        references2,
+        pixdiffs,
+        players,
+        frame_count,
+        player_last_positions,
+        frame_width,
+        frame_height,
+        annotated_frame,
+    ]

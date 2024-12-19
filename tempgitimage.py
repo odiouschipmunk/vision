@@ -31,7 +31,8 @@ response = client.complete(
                     image_url=ImageUrl.load(
                         image_file="Screenshot 2024-11-03 094042.jpg",
                         image_format="jpg",
-                        detail=ImageDetailLevel.HIGH)
+                        detail=ImageDetailLevel.HIGH,
+                    )
                 ),
             ],
         ),

@@ -1,9 +1,14 @@
-import numpy as np, cv2, clip, torch, math
+import numpy as np
+import cv2
+import clip
+import torch
+import math
 from skimage.metrics import structural_similarity as ssim_metric
 from squash.Player import Player
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+
 
 def find_match_2d_array(array, x):
     for i in range(len(array)):
@@ -64,9 +69,10 @@ def find_last_one(array):
 
     return -1
 
+
 def cleanwrite():
     with open("output/ball.txt", "w") as f:
-            f.write("")
+        f.write("")
     with open("output/player1.txt", "w") as f:
         f.write("")
     with open("output/player2.txt", "w") as f:
@@ -86,12 +92,15 @@ def cleanwrite():
             "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type,Player 1 RL World Position,Player 2 RL World Position,Ball RL World Position\n"
         )
 
+
 def get_data(length):
-    #go through the data in the file output/final.csv and then return all the data in a list
-    for i in range(0,length):
-        with open('output/final.csv', 'r') as f:
-            data=f.read()
+    # go through the data in the file output/final.csv and then return all the data in a list
+    for i in range(0, length):
+        with open("output/final.csv", "r") as f:
+            data = f.read()
     return data
+
+
 def find_last_two(array):
     possibleis = []
     for i in range(len(array)):
@@ -297,9 +306,11 @@ def pixel_to_3d(pixel_point, H, rl_reference_points):
         round(interpolated_y, 3),
         round(interpolated_z, 3),
     ]
+
+
 # from squash.framepose import framepose
 
-'''
+"""
 import torch.nn.functional as F
 from torchreid.utils import FeatureExtractor
 feature_extractor = FeatureExtractor(
@@ -335,10 +346,10 @@ def appearance_reid(player_crop, known_players_features, threshold=0.7):
     else:
         return None, features
     
-'''
+"""
 
 
-'''
+"""
 HISTOGRAM:::
 import cv2
 import numpy as np
@@ -381,7 +392,9 @@ def appearance_reid(player_crop, known_players_histograms, threshold=0.7):
                 return pid, hist
         # If both IDs are taken but no match, default to the closest match
         return matched_player_id, hist
-'''
+"""
+
+
 def framepose(
     pose_model,
     frame,
@@ -398,7 +411,7 @@ def framepose(
     annotated_frame,
     max_players=2,
     occluded=False,
-    importantdata=[]
+    importantdata=[],
 ):
     global known_players_features
     try:
@@ -435,7 +448,7 @@ def framepose(
                 except Exception:
                     pass
             if len(track_ids) > 2:
-                print(f'track ids were greater than 2: {track_ids}')
+                print(f"track ids were greater than 2: {track_ids}")
                 return [
                     pose_model,
                     frame,
@@ -451,13 +464,13 @@ def framepose(
                     frame_height,
                     annotated_frame,
                     occluded,
-                    importantdata
+                    importantdata,
                 ]
-                
+
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
                 x, y, w, h = box
                 player_crop = frame[int(y) : int(y + h), int(x) : int(x + w)]
-                
+
                 if player_crop.size == 0:
                     continue
                 if not find_match_2d_array(other_track_ids, track_id):
@@ -492,18 +505,14 @@ def framepose(
                     print(f"could not find player id for track id {track_id}")
                     continue
                 if track_id == 1:
-                    references1.append(
-                        sum_pixels_in_bbox(frame, [x, y, w, h])
-                    )
+                    references1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     references1[-1]
                     sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
                         if len(pixdiffs) < 5:
                             pixdiffs.append(abs(references1[-1] - references2[-1]))
                 elif track_id == 2:
-                    references2.append(
-                        sum_pixels_in_bbox(frame, [x, y, w, h])
-                    )
+                    references2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     references2[-1]
                     sum_pixels_in_bbox(frame, [x, y, w, h])
                     if len(references1) > 1 and len(references2) > 1:
@@ -559,8 +568,8 @@ def framepose(
                                 7,
                             )
                         i += 1
-            #in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
-            importantdata=[]
+            # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
+            importantdata = []
         return [
             pose_model,
             frame,
@@ -576,10 +585,10 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
-            importantdata
+            importantdata,
         ]
     except Exception as e:
-        print(f'e: {e}')
+        print(f"e: {e}")
         return [
             pose_model,
             frame,
@@ -595,7 +604,7 @@ def framepose(
             frame_height,
             annotated_frame,
             occluded,
-            importantdata
+            importantdata,
         ]
 
 
@@ -623,7 +632,7 @@ def ballplayer_detections(
     players,
     player_last_positions,
     occluded,
-    importantdata
+    importantdata,
 ):
     try:
         highestconf = 0
@@ -640,11 +649,19 @@ def ballplayer_detections(
                 pos = positions[i]
                 # Draw circle with constant radius
                 radius = 5  # Adjust as needed
-                cv2.circle(annotated_frame, (pos[0], pos[1]), radius, (255, 255, 255), 2)
+                cv2.circle(
+                    annotated_frame, (pos[0], pos[1]), radius, (255, 255, 255), 2
+                )
                 # Draw line to next position
                 if i < len(positions) - 1:
                     next_pos = positions[i + 1]
-                    cv2.line(annotated_frame, (pos[0], pos[1]), (next_pos[0], next_pos[1]), (255, 255, 255), 2)
+                    cv2.line(
+                        annotated_frame,
+                        (pos[0], pos[1]),
+                        (next_pos[0], next_pos[1]),
+                        (255, 255, 255),
+                        2,
+                    )
         except Exception:
             pass
         for box in ball[0].boxes:
@@ -723,7 +740,7 @@ def ballplayer_detections(
             frame_height=frame_height,
             annotated_frame=annotated_frame,
             occluded=occluded,
-            importantdata=importantdata
+            importantdata=importantdata,
         )
         other_track_ids = framepose_result[2]
         updated = framepose_result[3]
@@ -734,12 +751,22 @@ def ballplayer_detections(
         player_last_positions = framepose_result[9]
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
-        importantdata=framepose_result[14]
-        #in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
+        importantdata = framepose_result[14]
+        # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
         importantdata.append(shot_type(past_ball_pos))
-        importantdata.append(math.hypot(avg_x - player_last_positions.get(1)[0], avg_y - player_last_positions.get(1)[1]))
-        importantdata.append(math.hypot(avg_x - player_last_positions.get(2)[0], avg_y - player_last_positions.get(2)[1]))
-        #print(f'idata: {importantdata}')
+        importantdata.append(
+            math.hypot(
+                avg_x - player_last_positions.get(1)[0],
+                avg_y - player_last_positions.get(1)[1],
+            )
+        )
+        importantdata.append(
+            math.hypot(
+                avg_x - player_last_positions.get(2)[0],
+                avg_y - player_last_positions.get(2)[1],
+            )
+        )
+        # print(f'idata: {importantdata}')
         del framepose_result
         return [
             frame,  # 0
@@ -783,18 +810,21 @@ def ballplayer_detections(
             importantdata,  # 17
         ]
 
+
 def reorganize_shots(alldata, min_sequence=5):
     if not alldata:
         return []
-    
+
     # Filter out None types and replace with "unknown"
-    cleaned_data = [[shot[0] if shot[0] is not None else "unknown"] + shot[1:] for shot in alldata]
-    
+    cleaned_data = [
+        [shot[0] if shot[0] is not None else "unknown"] + shot[1:] for shot in alldata
+    ]
+
     # Step 1: Group consecutive shots
     sequences = []
     current_type = cleaned_data[0][0]
     current_sequence = []
-    
+
     for shot in cleaned_data:
         if shot[0] == current_type:
             current_sequence.append(shot)
@@ -805,19 +835,19 @@ def reorganize_shots(alldata, min_sequence=5):
             current_sequence = [shot]
     if current_sequence:
         sequences.append((current_type, current_sequence))
-    
+
     # Step 2: Fix short sequences, especially for crosscourts
     i = 0
     while i < len(sequences):
         shot_type = sequences[i][0]
         if len(sequences[i][1]) < min_sequence and shot_type.lower() == "crosscourt":
             short_sequence = sequences[i][1]
-            
+
             # Look for same shot type in adjacent sequences
             borrowed_shots = []
-            
+
             # Check forward and backward for shots to borrow
-            for j in range(i+1, len(sequences)):
+            for j in range(i + 1, len(sequences)):
                 if sequences[j][0] == shot_type:
                     available = len(sequences[j][1])
                     needed = min_sequence - len(short_sequence) - len(borrowed_shots)
@@ -827,34 +857,45 @@ def reorganize_shots(alldata, min_sequence=5):
                         borrowed_shots.extend(borrowed)
                         if len(borrowed_shots) + len(short_sequence) >= min_sequence:
                             break
-            
+
             if len(borrowed_shots) + len(short_sequence) < min_sequence:
-                for j in range(i-1, -1, -1):
+                for j in range(i - 1, -1, -1):
                     if sequences[j][0] == shot_type:
                         available = len(sequences[j][1])
-                        needed = min_sequence - len(short_sequence) - len(borrowed_shots)
+                        needed = (
+                            min_sequence - len(short_sequence) - len(borrowed_shots)
+                        )
                         if available > min_sequence:
                             borrowed_prev = sequences[j][1][-needed:]
                             sequences[j] = (sequences[j][0], sequences[j][1][:-needed])
                             borrowed_shots = borrowed_prev + borrowed_shots
-                            if len(borrowed_shots) + len(short_sequence) >= min_sequence:
+                            if (
+                                len(borrowed_shots) + len(short_sequence)
+                                >= min_sequence
+                            ):
                                 break
-            
+
             # Update sequence with borrowed shots
             if len(borrowed_shots) + len(short_sequence) >= min_sequence:
                 sequences[i] = (shot_type, borrowed_shots + short_sequence)
             else:
                 # Merge with adjacent sequence if can't borrow enough
                 if i > 0:
-                    sequences[i-1] = (sequences[i-1][0], sequences[i-1][1] + short_sequence)
+                    sequences[i - 1] = (
+                        sequences[i - 1][0],
+                        sequences[i - 1][1] + short_sequence,
+                    )
                     sequences.pop(i)
                     i -= 1
                 elif i < len(sequences) - 1:
-                    sequences[i+1] = (sequences[i+1][0], short_sequence + sequences[i+1][1])
+                    sequences[i + 1] = (
+                        sequences[i + 1][0],
+                        short_sequence + sequences[i + 1][1],
+                    )
                     sequences.pop(i)
                     i -= 1
         i += 1
-    
+
     # Step 3: Format output
     result = []
     for shot_type, sequence in sequences:
@@ -862,9 +903,8 @@ def reorganize_shots(alldata, min_sequence=5):
         for shot in sequence:
             coords.extend([shot[1], shot[2]])
         result.append([shot_type, len(sequence), coords])
-    
-    return result
 
+    return result
 
 
 def apply_homography(H, points, inverse=False):
@@ -899,42 +939,48 @@ def apply_homography(H, points, inverse=False):
         raise ValueError(f"Error in apply_homography: {str(e)}")
 
 
-frame_height=360
-frame_width=640
+frame_height = 360
+frame_width = 640
+
+
 def shot_type(past_ball_pos, threshold=3):
-            # go through the past threshold number of past ball positions and see what kind of shot it is
-            # past_ball_pos ordered as [[x,y,frame_number], ...]
-            if len(past_ball_pos) < threshold:
-                return None
-            threshballpos = past_ball_pos[-threshold:]
-            # check for crosscourt or straight shots
-            xdiff = threshballpos[-1][0] - threshballpos[0][0]
-            ydiff = threshballpos[-1][1] - threshballpos[0][1]
-            typeofshot = ""
-            if xdiff < 50 and ydiff < 50:
-                typeofshot = "straight"
-            else:
-                typeofshot = "crosscourt"
-            # check how high the ball has moved
-            maxheight = 0
-            height = ""
-            for i in range(1, len(threshballpos)):
-                if threshballpos[i][1] > maxheight:
-                    maxheight = threshballpos[i][1]
-                    # print(f"{threshballpos[i]}")
-                    # print(f'maxheight: {maxheight}')
-                    # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
-            if maxheight < (frame_height) / 1.35:
-                height += "lob"
-                # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
-            else:
-                height += "drive"
-            return typeofshot + " " + height
+    # go through the past threshold number of past ball positions and see what kind of shot it is
+    # past_ball_pos ordered as [[x,y,frame_number], ...]
+    if len(past_ball_pos) < threshold:
+        return None
+    threshballpos = past_ball_pos[-threshold:]
+    # check for crosscourt or straight shots
+    xdiff = threshballpos[-1][0] - threshballpos[0][0]
+    ydiff = threshballpos[-1][1] - threshballpos[0][1]
+    typeofshot = ""
+    if xdiff < 50 and ydiff < 50:
+        typeofshot = "straight"
+    else:
+        typeofshot = "crosscourt"
+    # check how high the ball has moved
+    maxheight = 0
+    height = ""
+    for i in range(1, len(threshballpos)):
+        if threshballpos[i][1] > maxheight:
+            maxheight = threshballpos[i][1]
+            # print(f"{threshballpos[i]}")
+            # print(f'maxheight: {maxheight}')
+            # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
+    if maxheight < (frame_height) / 1.35:
+        height += "lob"
+        # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
+    else:
+        height += "drive"
+    return typeofshot + " " + height
+
+
 def is_camera_angle_switched(frame, reference_image, threshold=0.5):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
     score, _ = ssim_metric(reference_image_gray, frame_gray, full=True)
     return score < threshold
+
+
 def is_match_in_play(
     players,
     mainball,
@@ -1035,8 +1081,6 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 
 
-
-
 def classify_shot(past_ball_pos, court_width=640, court_height=360):
     """
     Classifies shots based on trajectory angles and court position
@@ -1045,16 +1089,16 @@ def classify_shot(past_ball_pos, court_width=640, court_height=360):
     try:
         if len(past_ball_pos) < 3:
             return ["straight", "drive", 0]
-        #shorten the past ball positions to the last 5
+        # shorten the past ball positions to the last 5
         if len(past_ball_pos) > 5:
             past_ball_pos = past_ball_pos[-5:]
         # Calculate angles between consecutive points
         angles = []
-        for i in range(len(past_ball_pos)-2):
+        for i in range(len(past_ball_pos) - 2):
             x1, y1, _ = past_ball_pos[i]
-            x2, y2, _ = past_ball_pos[i+1]
-            x3, y3, _ = past_ball_pos[i+2]
-            
+            x2, y2, _ = past_ball_pos[i + 1]
+            x3, y3, _ = past_ball_pos[i + 2]
+
             angle = calculate_angle(x1, y1, x2, y2, x3, y3)
             angles.append(angle)
 
@@ -1092,39 +1136,41 @@ def classify_shot(past_ball_pos, court_width=640, court_height=360):
     except Exception:
         return ["straight", "drive", 0]
 
+
 def calculate_angle(x1, y1, x2, y2, x3, y3):
     """
     Calculate angle between three points
     """
-    
+
     # Calculate vectors
     vector1 = [x2 - x1, y2 - y1]
     vector2 = [x3 - x2, y3 - y2]
-    
+
     # Calculate dot product
     dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
-    
+
     # Calculate magnitudes
-    mag1 = math.sqrt(vector1[0]**2 + vector1[1]**2)
-    mag2 = math.sqrt(vector2[0]**2 + vector2[1]**2)
-    
+    mag1 = math.sqrt(vector1[0] ** 2 + vector1[1] ** 2)
+    mag2 = math.sqrt(vector2[0] ** 2 + vector2[1] ** 2)
+
     # Calculate angle in degrees
     if mag1 * mag2 == 0:
         return 0
-    
+
     angle = math.degrees(math.acos(dot_product / (mag1 * mag2)))
     return angle
+
 
 def count_wall_hits(past_ball_pos, threshold=10):
     """
     Count number of wall hits based on direction changes
     """
     wall_hits = 0
-    for i in range(1, len(past_ball_pos)-1):
-        x1, y1, _ = past_ball_pos[i-1]
+    for i in range(1, len(past_ball_pos) - 1):
+        x1, y1, _ = past_ball_pos[i - 1]
         x2, y2, _ = past_ball_pos[i]
-        x3, y3, _ = past_ball_pos[i+1]
-        
+        x3, y3, _ = past_ball_pos[i + 1]
+
         if abs(x2 - x1) < threshold and abs(x3 - x2) < threshold:
             wall_hits += 1
     return wall_hits
@@ -1154,7 +1200,7 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     v2 = (x2 - x1, y2 - y1)
 
     def compute_angle(v1, v2):
-        #import math
+        # import math
 
         dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
         mag1 = (v1[0] ** 2 + v1[1] ** 2) ** 0.5
@@ -1172,8 +1218,6 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
         return True  # Sudden angle change, possible false positive
 
     return False
-
-
 
 
 def predict_next_pos(past_ball_pos, num_predictions=2):
@@ -1213,8 +1257,6 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
     return predictions
 
 
-
-
 def input_model(csvdata):
     model_name = "Qwen/Qwen2.5-1.5B-Instruct"
     model = AutoModelForCausalLM.from_pretrained(
@@ -1247,11 +1289,11 @@ def input_model(csvdata):
 
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-def plot_coords(coords_list):
 
+
+def plot_coords(coords_list):
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111, projection="3d")
 
     for coords in coords_list:
         x_coords, y_coords, z_coords = zip(*coords)
@@ -1261,8 +1303,8 @@ def plot_coords(coords_list):
     ax.set_ylim(0, 9.75)
     ax.set_zlim(0, 4.57)
 
-    ax.set_xlabel('X axis')
-    ax.set_ylabel('Y axis')
-    ax.set_zlabel('Z axis')
+    ax.set_xlabel("X axis")
+    ax.set_ylabel("Y axis")
+    ax.set_zlabel("Z axis")
 
     plt.show()

@@ -3,10 +3,11 @@ import os
 # Path to the folder containing the label files
 label_folder = "datasets\\test\\labels"
 
+
 # Function to process each label file and strip it down to YOLO format
 def strip_to_yolo_format(file_path):
     # Open the label file and read all lines
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         lines = f.readlines()
 
     # List to store corrected lines
@@ -19,12 +20,15 @@ def strip_to_yolo_format(file_path):
 
         # Only take the first 5 values (class id, x_center, y_center, width, height)
         if len(data) >= 5:
-            corrected_line = " ".join(data[:5]) + "\n"  # Join first 5 values and add newline
+            corrected_line = (
+                " ".join(data[:5]) + "\n"
+            )  # Join first 5 values and add newline
             corrected_lines.append(corrected_line)
 
     # Write the corrected lines back to the file
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.writelines(corrected_lines)
+
 
 # Iterate over all label files in the folder
 for label_file in os.listdir(label_folder):

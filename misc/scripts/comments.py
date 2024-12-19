@@ -1,13 +1,13 @@
-'''
+"""
     court and racket detection, can be put in any part of while cap is opened(cap.isOpened())
-    
+
     for box in court_results[0].boxes:
         coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
         x1temp, y1temp, x2temp, y2temp = coords
         label = courtmodel.names[int(box.cls)]
         confidence = float(box.conf)
         cv2.rectangle(annotated_frame, (int(x1temp), int(y1temp)), (int(x2temp), int(y2temp)), (255, 0, 0), 2)
-        cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10), 
+        cv2.putText(annotated_frame, f'{label} {confidence:.2f}', (int(x1temp), int(y1temp) - 10),
         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
         #print(f'{label} {confidence:.2f} GOT COURT')
 
@@ -26,15 +26,15 @@
                         p1top2=cosine_similarity(p1embeddings[-1], p2embeddings[-1])
                         cosinediffs.append(abs(p1refrence-p1top2))
                         avgcosinediff=sum(cosinediffs)/len(cosinediffs)
-                        
-                        print(f'average cosine difference: {avgcosinediff}')       
-                        print(f'highest cosine diff: {max(cosinediffs)}') 
+
+                        print(f'average cosine difference: {avgcosinediff}')
+                        print(f'highest cosine diff: {max(cosinediffs)}')
                         print(f'lowest cosine diff: {min(cosinediffs)}')
                         print(f'this is player 1, with a cosine similarity of {p1refrence} to its refrence image')
                         print(f'this is player 1, with a cosine similarity of {p1top2} to player 2 right now')
                         print(f'difference between p1 refrence and p2 right now: {abs(p1refrence-p1top2)}')
 
-                        
+
 
                         USE FOR COSINE SIMILARITY BOOKMARK
                         else:
@@ -97,4 +97,4 @@ pixel_point = np.array([x, y])
 real_world_point = transform_point(pixel_point, H)
 print(f"Real-world coordinates: {real_world_point}")
 
-'''
+"""
