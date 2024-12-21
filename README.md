@@ -1,5 +1,5 @@
 # Squash Match Analysis System
-
+![Squash Analysis Demo](https://github.com/odiouschipmunk/vision/blob/main/annotated2.gif)
 ## Overview
 An advanced machine learning tool for analyzing squash matches through computer vision and AI. The system tracks player movements, ball trajectories, and classifies shot types to provide detailed insights for players and coaches.
 
@@ -54,3 +54,4 @@ The system generates several types of output:
 For help and contributions, please contact:
 - Email: odiouschipmunk@gmail.com
 - Documentation: [Google Docs](https://docs.google.com/document/d/1egeolMCFvLH1VurDKju9ZjA_MYELRHi1MeEyeTkoAA0/)
+
