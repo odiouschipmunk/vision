@@ -1,4 +1,4 @@
-*.mp4
+main.mp4
 venv
 roboflowmodels
 uploads
@@ -12,13 +12,11 @@ black_ball_videos
 datasets
 *.zip
 github_token.txt
-output
 importantoutput
 output(25k)
 output_for_website
 all_main_1_output
 30fps1920
-output
 positions(10k)
 trained-models
 runs
@@ -29,3 +27,15 @@ __pycache__
 .env
 *.pyc
 !main_laptop.mp4
+annotated.mp4
+annotated_web.mp4
+cropped_2_email.mp4
+cropped_email_video.mp4
+!*.png
+main2.mp4
+main3.mp4
+static_video_full.mp4
+still_video_blackball_cropped.mp4
+to_email.mp4
+balltracking.mp4
+important.mp4
