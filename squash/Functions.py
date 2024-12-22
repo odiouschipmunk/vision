@@ -8,15 +8,42 @@ from squash.Player import Player
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+import ast
+from concurrent.futures import ThreadPoolExecutor
+import torch.cuda as cuda
 
+# Global variables for models to avoid reloading
+_clip_model = None
+_clip_preprocess = None
+
+def initialize_clip_model():
+    """Initialize CLIP model with GPU and half precision"""
+    global _clip_model, _clip_preprocess
+    if _clip_model is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        _clip_model, _clip_preprocess = clip.load("ViT-B/32", device=device)
+        if device == "cuda":
+            _clip_model = _clip_model.half()  # Use half precision
+        _clip_model.eval()  # Set to evaluation mode
+    return _clip_model, _clip_preprocess
 
 def find_match_2d_array(array, x):
-    for i in range(len(array)):
-        if array[i][0] == x:
-            return True
-    return False
+    # Convert to numpy array for faster operations
+    if not isinstance(array, np.ndarray):
+        array = np.array(array)
+    return np.any(array[:, 0] == x)
 
+def drawmap(lx, ly, rx, ry, map):
+    # Vectorized bounds checking
+    coords = np.array([[lx, ly], [rx, ry]])
+    coords[:, 0] = np.clip(coords[:, 0], 0, map.shape[1] - 1)
+    coords[:, 1] = np.clip(coords[:, 1], 0, map.shape[0] - 1)
+    
+    # Update map in one operation
+    map[coords[:, 1].astype(int), coords[:, 0].astype(int)] += 1
 
+@torch.no_grad()  # Disable gradient computation for inference
+def get_image_embeddings(image, batch_size=32):
 def drawmap(lx, ly, rx, ry, map):
     # Update heatmap at the ankle positions
     lx = min(max(lx, 0), map.shape[1] - 1)  # Bound lx to [0, width-1]
@@ -89,7 +116,7 @@ def cleanwrite():
         f.write("[")
     with open("output/final.csv", "w") as f:
         f.write(
-            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type,Player 1 RL World Position,Player 2 RL World Position,Ball RL World Position\n"
+            "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type,Player 1 RL World Position,Player 2 RL World Position,Ball RL World Position,Who Hit the Ball\n"
         )
 
 
@@ -754,20 +781,25 @@ def ballplayer_detections(
         importantdata = framepose_result[14]
         # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
         importantdata.append(shot_type(past_ball_pos))
+        
         importantdata.append(
             math.hypot(
-                avg_x - player_last_positions.get(1)[0],
-                avg_y - player_last_positions.get(1)[1],
+                avg_x - get_player_average_position(player_last_positions.get(1))[0],
+                avg_y - get_player_average_position(player_last_positions.get(1))[1],
             )
         )
         importantdata.append(
             math.hypot(
-                avg_x - player_last_positions.get(2)[0],
-                avg_y - player_last_positions.get(2)[1],
+                avg_x - get_player_average_position(player_last_positions.get(2))[0],
+                avg_y - get_player_average_position(player_last_positions.get(2))[1],
             )
         )
-        # print(f'idata: {importantdata}')
-        del framepose_result
+        #print(f'idata: {importantdata}')
+        who_hit=0
+        if importantdata[1]>importantdata[2]:
+            who_hit=1
+        else:
+            who_hit=2
         return [
             frame,  # 0
             frame_count,  # 1
@@ -787,6 +819,7 @@ def ballplayer_detections(
             player_last_positions,  # 15
             occluded,  # 16
             importantdata,  # 17
+            who_hit,  # 18
         ]
     except Exception:
         return [
@@ -808,6 +841,7 @@ def ballplayer_detections(
             player_last_positions,  # 15
             occluded,  # 16
             importantdata,  # 17
+            who_hit,  # 18
         ]
 
 
@@ -1375,3 +1409,36 @@ def plot_coords(coords_list):
     ax.set_zlabel("Z axis")
 
     plt.show()
+
+
+def get_player_average_position(player_keypoints):
+    """
+    Calculate average position from player keypoints, excluding [0,0] coordinates
+    Args:
+        player_keypoints: List of keypoint coordinates
+    Returns:
+        [avg_x, avg_y] or None if no valid positions
+    """
+    try:
+        if not player_keypoints:
+            return None
+            
+        # Convert string representation to list if needed
+        if isinstance(player_keypoints, str):
+            player_keypoints = ast.literal_eval(player_keypoints)
+            
+        # Filter out [0,0] coordinates
+        valid_positions = [pos for pos in player_keypoints if pos != [0, 0]]
+        
+        if not valid_positions:
+            return None
+            
+        # Calculate average x and y
+        avg_x = sum(pos[0] for pos in valid_positions) / len(valid_positions)
+        avg_y = sum(pos[1] for pos in valid_positions) / len(valid_positions)
+        
+        return [avg_x, avg_y]
+        
+    except Exception as e:
+        print(f"Error calculating average position: {str(e)}")
+        return None
