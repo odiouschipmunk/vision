@@ -9,41 +9,15 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 import ast
-from concurrent.futures import ThreadPoolExecutor
-import torch.cuda as cuda
 
-# Global variables for models to avoid reloading
-_clip_model = None
-_clip_preprocess = None
-
-def initialize_clip_model():
-    """Initialize CLIP model with GPU and half precision"""
-    global _clip_model, _clip_preprocess
-    if _clip_model is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        _clip_model, _clip_preprocess = clip.load("ViT-B/32", device=device)
-        if device == "cuda":
-            _clip_model = _clip_model.half()  # Use half precision
-        _clip_model.eval()  # Set to evaluation mode
-    return _clip_model, _clip_preprocess
 
 def find_match_2d_array(array, x):
-    # Convert to numpy array for faster operations
-    if not isinstance(array, np.ndarray):
-        array = np.array(array)
-    return np.any(array[:, 0] == x)
+    for i in range(len(array)):
+        if array[i][0] == x:
+            return True
+    return False
 
-def drawmap(lx, ly, rx, ry, map):
-    # Vectorized bounds checking
-    coords = np.array([[lx, ly], [rx, ry]])
-    coords[:, 0] = np.clip(coords[:, 0], 0, map.shape[1] - 1)
-    coords[:, 1] = np.clip(coords[:, 1], 0, map.shape[0] - 1)
-    
-    # Update map in one operation
-    map[coords[:, 1].astype(int), coords[:, 0].astype(int)] += 1
 
-@torch.no_grad()  # Disable gradient computation for inference
-def get_image_embeddings(image, batch_size=32):
 def drawmap(lx, ly, rx, ry, map):
     # Update heatmap at the ankle positions
     lx = min(max(lx, 0), map.shape[1] - 1)  # Bound lx to [0, width-1]
@@ -779,27 +753,8 @@ def ballplayer_detections(
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
         importantdata = framepose_result[14]
-        # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
-        importantdata.append(shot_type(past_ball_pos))
-        
-        importantdata.append(
-            math.hypot(
-                avg_x - get_player_average_position(player_last_positions.get(1))[0],
-                avg_y - get_player_average_position(player_last_positions.get(1))[1],
-            )
-        )
-        importantdata.append(
-            math.hypot(
-                avg_x - get_player_average_position(player_last_positions.get(2))[0],
-                avg_y - get_player_average_position(player_last_positions.get(2))[1],
-            )
-        )
-        #print(f'idata: {importantdata}')
-        who_hit=0
-        if importantdata[1]>importantdata[2]:
-            who_hit=1
-        else:
-            who_hit=2
+
+        who_hit = determine_ball_hit(players, past_ball_pos, frame_width, frame_height)
         return [
             frame,  # 0
             frame_count,  # 1
@@ -1410,35 +1365,76 @@ def plot_coords(coords_list):
 
     plt.show()
 
-
-def get_player_average_position(player_keypoints):
+def determine_ball_hit(players, past_ball_pos, frame_width, frame_height, proximity_threshold=50):
     """
-    Calculate average position from player keypoints, excluding [0,0] coordinates
-    Args:
-        player_keypoints: List of keypoint coordinates
-    Returns:
-        [avg_x, avg_y] or None if no valid positions
+    Determine which player hit the ball based on proximity and trajectory changes.
+    Uses average of all valid keypoints for more accurate player position.
     """
+    if len(past_ball_pos) < 3 or not players.get(1) or not players.get(2):
+        return 0
+        
+    # Get the most recent ball positions
+    current_pos = past_ball_pos[-1]
+    prev_pos = past_ball_pos[-2]
+    
+    # Calculate ball direction change
+    ball_direction_changed = False
+    if len(past_ball_pos) >= 3:
+        prev_prev_pos = past_ball_pos[-3]
+        vec1 = (prev_pos[0] - prev_prev_pos[0], prev_pos[1] - prev_prev_pos[1])
+        vec2 = (current_pos[0] - prev_pos[0], current_pos[1] - prev_pos[1])
+        
+        # Calculate angle between vectors
+        dot_product = vec1[0] * vec2[0] + vec1[1] * vec2[1]
+        mag1 = math.sqrt(vec1[0]**2 + vec1[1]**2)
+        mag2 = math.sqrt(vec2[0]**2 + vec2[1]**2)
+        
+        if mag1 > 0 and mag2 > 0:
+            cos_angle = dot_product / (mag1 * mag2)
+            cos_angle = max(-1, min(1, cos_angle))  # Ensure value is between -1 and 1
+            angle = math.degrees(math.acos(cos_angle))
+            ball_direction_changed = angle > 30  # Consider significant direction change
+    
     try:
-        if not player_keypoints:
-            return None
+        # Calculate average position for each player excluding [0,0] keypoints
+        def get_avg_player_pos(player):
+            keypoints = player.get_latest_pose().xyn[0]
+            valid_points = []
             
-        # Convert string representation to list if needed
-        if isinstance(player_keypoints, str):
-            player_keypoints = ast.literal_eval(player_keypoints)
+            for kp in keypoints:
+                # Check if keypoint is not [0,0]
+                if not (kp[0] == 0 and kp[1] == 0):
+                    x = int(kp[0] * frame_width)
+                    y = int(kp[1] * frame_height)
+                    valid_points.append((x, y))
             
-        # Filter out [0,0] coordinates
-        valid_positions = [pos for pos in player_keypoints if pos != [0, 0]]
+            if not valid_points:
+                return None
+                
+            avg_x = sum(p[0] for p in valid_points) / len(valid_points)
+            avg_y = sum(p[1] for p in valid_points) / len(valid_points)
+            return (avg_x, avg_y)
         
-        if not valid_positions:
-            return None
+        p1_pos = get_avg_player_pos(players[1])
+        p2_pos = get_avg_player_pos(players[2])
+        
+        if p1_pos is None or p2_pos is None:
+            return 0
             
-        # Calculate average x and y
-        avg_x = sum(pos[0] for pos in valid_positions) / len(valid_positions)
-        avg_y = sum(pos[1] for pos in valid_positions) / len(valid_positions)
+        # Calculate distances to ball
+        p1_distance = math.hypot(p1_pos[0] - current_pos[0], p1_pos[1] - current_pos[1])
+        p2_distance = math.hypot(p2_pos[0] - current_pos[0], p2_pos[1] - current_pos[1])
         
-        return [avg_x, avg_y]
-        
+        # If ball direction changed and a player is close enough
+        if p1_distance<p2_distance:
+            return 1
+        elif p2_distance<p1_distance:
+            return 2
+
+                
     except Exception as e:
-        print(f"Error calculating average position: {str(e)}")
-        return None
+        print('error in determine_ball_hit')
+        print(e)
+        return 0
+        
+    return 0  # Wall hit or unknown

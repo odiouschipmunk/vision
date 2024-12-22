@@ -235,15 +235,8 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             player_last_positions = detections_result[15]
             detections_result[16]
             idata = detections_result[17]
-            who_hit=detections_result[18]
-            player1_hit=False
-            player2_hit=False
-            if who_hit==1:
-                player1_hit=True
-                player2_hit=False
-            elif who_hit==2:
-                player1_hit=False
-                player2_hit=True
+            who_hit = detections_result[18]
+            #print(f'who_hit: {who_hit}')
             if idata:
                 alldata.append(idata)
             # print(f"occluded: {occluded}")
@@ -677,19 +670,19 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         running_frame,
                         players.get(1).get_latest_pose().xyn[0].tolist(),
                         players.get(2).get_latest_pose().xyn[0].tolist(),
-                        [mainball.getloc()[0]/frame_width,mainball.getloc()[1]/frame_height],
+                        mainball.getloc(),
                         shot,
                         rlworldp1,
                         rlworldp2,
                         rlball,
                         f'{who_hit} hit the ball'
                     ]
-                    print(data)
+                    #print(data)
                     csvwriter.writerow(data)
 
             # print(past_ball_pos)
             if past_ball_pos is not None:
-                text = f"ball in rlworld: {Functions.pixel_to_3d([past_ball_pos[-1][0]/frame_width,past_ball_pos[-1][1]/frame_height], homography, reference_points_3d)}"
+                text = f"ball in rlworld: {Functions.pixel_to_3d([past_ball_pos[-1][0],past_ball_pos[-1][1]], homography, reference_points_3d)}"
                 cv2.putText(
                     annotated_frame,
                     text,
