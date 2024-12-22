@@ -23,7 +23,7 @@ print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
 
-def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
+def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
         csvstart = 0

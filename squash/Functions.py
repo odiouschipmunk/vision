@@ -1081,99 +1081,166 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 
 
-def classify_shot(past_ball_pos, court_width=640, court_height=360):
+def classify_shot(past_ball_pos, court_width=640, court_height=360, previous_shot=None):
     """
-    Classifies shots based on trajectory angles and court position
-    Returns [direction, shot_type, wall_hits]
+    Highly precise shot classification focusing on straight and crosscourt drives
+    Args:
+        past_ball_pos: List of ball positions [(x, y, frame), ...]
+        court_width: Width of court in pixels
+        court_height: Height of court in pixels
+        previous_shot: Previous shot classification for context
+    Returns:
+        [direction, shot_type, wall_hits, displacement_x]
     """
     try:
         if len(past_ball_pos) < 3:
-            return ["straight", "drive", 0]
-        # shorten the past ball positions to the last 5
-        if len(past_ball_pos) > 5:
-            past_ball_pos = past_ball_pos[-5:]
-        # Calculate angles between consecutive points
-        angles = []
-        for i in range(len(past_ball_pos) - 2):
-            x1, y1, _ = past_ball_pos[i]
-            x2, y2, _ = past_ball_pos[i + 1]
-            x3, y3, _ = past_ball_pos[i + 2]
+            return ["straight", "drive", 0, 0]
+            
+        # Use more positions for better trajectory analysis
+        if len(past_ball_pos) > 15:  # Increased from 10 to 15 for more precision
+            past_ball_pos = past_ball_pos[-15:]
+            
+        # Calculate trajectory metrics
+        horizontal_changes = []
+        velocities = []
+        trajectory_points = []
+        
+        for i in range(len(past_ball_pos) - 1):
+            x1, y1, t1 = past_ball_pos[i]
+            x2, y2, t2 = past_ball_pos[i + 1]
+            
+            # Track horizontal movement
+            horizontal_changes.append(x2 - x1)
+            
+            # Calculate velocity
+            if t2 != t1:
+                velocity = math.sqrt((x2 - x1)**2 + (y2 - y1)**2) / (t2 - t1)
+                velocities.append(velocity)
+            
+            # Store trajectory points for analysis
+            trajectory_points.append((x1, y1))
+        trajectory_points.append((past_ball_pos[-1][0], past_ball_pos[-1][1]))
 
-            angle = calculate_angle(x1, y1, x2, y2, x3, y3)
-            angles.append(angle)
-
-        # Calculate horizontal displacement
+        # Calculate key positions
         start_x = past_ball_pos[0][0]
         end_x = past_ball_pos[-1][0]
-        displacement = abs(end_x - start_x) / court_width
-
+        start_y = past_ball_pos[0][1]
+        end_y = past_ball_pos[-1][1]
+        
+        # Calculate court regions with tighter boundaries
+        mid_court = court_width / 2
+        quarter_court = court_width / 4
+        three_quarter_court = (court_width * 3) / 4
+        
+        # Calculate displacement metrics
+        displacement_x = (end_x - start_x) / court_width
+        abs_displacement_x = abs(displacement_x)
+        
         # Initialize variables
         direction = "straight"
         shot_type = "drive"
-        wall_hits = count_wall_hits(past_ball_pos)
-
-        # Classify direction based on displacement and angles
-        if displacement > 0.4:
-            direction = "wide_crosscourt"
-        elif displacement > 0.25:
-            direction = "crosscourt"
-        elif displacement > 0.15:
-            direction = "slight_crosscourt"
-        elif displacement < 0.1:
-            direction = "tight_straight"
+        wall_hits = count_wall_hits(past_ball_pos, threshold=12)  # Reduced threshold for more sensitivity
+        
+        # Enhanced crosscourt detection
+        crosses_court = False
+        trajectory_crossings = 0
+        last_side = "left" if start_x < mid_court else "right"
+        
+        # Analyze entire trajectory for court crossings
+        for point in trajectory_points:
+            current_side = "left" if point[0] < mid_court else "right"
+            if current_side != last_side:
+                trajectory_crossings += 1
+                last_side = current_side
+        
+        # Determine if shot crosses court based on both endpoints and trajectory
+        crosses_court = (
+            (start_x < mid_court and end_x > mid_court) or
+            (start_x > mid_court and end_x < mid_court) or
+            trajectory_crossings > 0
+        )
+        
+        # Calculate trajectory consistency
+        horizontal_consistency = np.std(horizontal_changes) if len(horizontal_changes) > 0 else 0
+        
+        # Precise direction classification
+        if crosses_court:
+            # Strong crosscourt indicators
+            if (
+                (start_x < quarter_court and end_x > three_quarter_court) or
+                (start_x > three_quarter_court and end_x < quarter_court)
+            ):
+                direction = "wide_crosscourt"
+            # Moderate crosscourt
+            elif abs_displacement_x > 0.35 and horizontal_consistency < 20:
+                direction = "crosscourt"
+            # Slight crosscourt with consistent trajectory
+            elif abs_displacement_x > 0.2 and horizontal_consistency < 15:
+                direction = "slight_crosscourt"
+            else:
+                direction = "straight"  # Default to straight if crosscourt criteria not met
         else:
-            direction = "straight"
+            # Very tight straight drive
+            if abs_displacement_x < 0.1 and horizontal_consistency < 10:
+                direction = "tight_straight"
+            # Standard straight drive
+            elif abs_displacement_x < 0.2 and horizontal_consistency < 15:
+                direction = "straight"
+            # Slight angle but still straight
+            else:
+                direction = "straight"
+        
+        # Consistency check with previous shot
+        if previous_shot and previous_shot[0] == direction:
+            # If consecutive shots have very similar characteristics
+            if abs(displacement_x - previous_shot[3]) < 0.08:  # Tightened threshold
+                direction = previous_shot[0]
+        
+        # Return detailed shot information
+        return [direction, shot_type, wall_hits, displacement_x]
 
-        # Classify shot type based on vertical movement
-        avg_angle = sum(angles) / len(angles)
-        if avg_angle > 60:
-            shot_type = "lob"
-        else:
-            shot_type = "drive"
+    except Exception as e:
+        print(f"Error in shot classification: {str(e)}")
+        return ["straight", "drive", 0, 0]
 
-        return [direction, shot_type, wall_hits]
-
-    except Exception:
-        return ["straight", "drive", 0]
-
-
-def calculate_angle(x1, y1, x2, y2, x3, y3):
+def count_wall_hits(past_ball_pos, threshold=12):
     """
-    Calculate angle between three points
+    Enhanced wall hit detection with improved accuracy and lower threshold
     """
+    try:
+        wall_hits = 0
+        direction_changes = 0
+        last_direction = None
+        
+        for i in range(1, len(past_ball_pos) - 1):
+            x1, y1, _ = past_ball_pos[i - 1]
+            x2, y2, _ = past_ball_pos[i]
+            x3, y3, _ = past_ball_pos[i + 1]
 
-    # Calculate vectors
-    vector1 = [x2 - x1, y2 - y1]
-    vector2 = [x3 - x2, y3 - y2]
-
-    # Calculate dot product
-    dot_product = vector1[0] * vector2[0] + vector1[1] * vector2[1]
-
-    # Calculate magnitudes
-    mag1 = math.sqrt(vector1[0] ** 2 + vector1[1] ** 2)
-    mag2 = math.sqrt(vector2[0] ** 2 + vector2[1] ** 2)
-
-    # Calculate angle in degrees
-    if mag1 * mag2 == 0:
+            # Calculate direction vectors with more precision
+            dir1 = x2 - x1
+            dir2 = x3 - x2
+            
+            # More sensitive direction change detection
+            if abs(dir1) > threshold:
+                current_direction = 1 if dir1 > 0 else -1
+                if last_direction is not None and current_direction != last_direction:
+                    # Check if direction change is significant enough
+                    if abs(dir1) > threshold * 1.2:  # Additional threshold check
+                        direction_changes += 1
+                last_direction = current_direction
+            
+            # Count wall hits with stricter criteria
+            if direction_changes >= 2:
+                wall_hits += 1
+                direction_changes = 0
+                last_direction = None
+                
+        return wall_hits
+        
+    except Exception as e:
+        print(f"Error counting wall hits: {str(e)}")
         return 0
-
-    angle = math.degrees(math.acos(dot_product / (mag1 * mag2)))
-    return angle
-
-
-def count_wall_hits(past_ball_pos, threshold=10):
-    """
-    Count number of wall hits based on direction changes
-    """
-    wall_hits = 0
-    for i in range(1, len(past_ball_pos) - 1):
-        x1, y1, _ = past_ball_pos[i - 1]
-        x2, y2, _ = past_ball_pos[i]
-        x3, y3, _ = past_ball_pos[i + 1]
-
-        if abs(x2 - x1) < threshold and abs(x3 - x2) < threshold:
-            wall_hits += 1
-    return wall_hits
 
 
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
