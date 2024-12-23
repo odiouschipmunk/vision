@@ -236,7 +236,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             detections_result[16]
             idata = detections_result[17]
             who_hit = detections_result[18]
-            #print(f'who_hit: {who_hit}')
+            # print(f'who_hit: {who_hit}')
             if idata:
                 alldata.append(idata)
             # print(f"occluded: {occluded}")
@@ -675,9 +675,9 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         rlworldp1,
                         rlworldp2,
                         rlball,
-                        f'{who_hit} hit the ball'
+                        f"{who_hit} hit the ball",
                     ]
-                    #print(data)
+                    # print(data)
                     csvwriter.writerow(data)
 
             # print(past_ball_pos)

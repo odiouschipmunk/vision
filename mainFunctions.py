@@ -251,5 +251,3 @@ def visualize_3d_animation(reference_points_3d, player1_positions, player2_posit
     plt.show()
 
     return anim
-
-
