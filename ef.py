@@ -12,13 +12,15 @@ import logging
 import math
 import numpy as np
 import matplotlib
+# Set the backend to TkAgg for interactive plotting
+matplotlib.use('TkAgg')
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
 
-matplotlib.use("Agg")
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
@@ -413,21 +415,25 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         (255, 255, 255),
                         1,
                     )
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(p1distancesfromT, color="blue", label="P1 Distance from T")
-                    plt.plot(p2distancesfromT, color="red", label="P2 Distance from T")
+                    # Create a live updating plot window
+                    plt.figure(2)  # Use figure 2 for the distance plot (figure 1 is the video)
+                    plt.clf()  # Clear the current figure
+                    plt.plot(p1distancesfromT, color="red", label="P1 Distance from T")
+                    plt.plot(p2distancesfromT, color="blue", label="P2 Distance from T")
 
                     # Add labels and title
                     plt.xlabel("Time (frames)")
-                    plt.ylabel("Distance from T")
+                    plt.ylabel("Distance from T(pixels)")
                     plt.title("Distance from T over Time")
                     plt.legend()
+                    plt.grid(True)
+
+                    # Update the plot window
+                    plt.draw()
+                    plt.pause(0.0001)  # Small pause to allow the window to update
 
                     # Save the plot to a file
                     plt.savefig("output/distance_from_t_over_time.png")
-
-                    # Close the plot to free up memory
-                    plt.close()
 
             # Display the annotated frame
             try:
