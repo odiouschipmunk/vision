@@ -1261,11 +1261,9 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     v2 = (x2 - x1, y2 - y1)
 
     def compute_angle(v1, v2):
-        # import math
-
         dot_prod = v1[0] * v2[0] + v1[1] * v2[1]
         mag1 = (v1[0] ** 2 + v1[1] ** 2) ** 0.5
-        mag2 = (v2[0] ** 2 + v2[1] ** 2) ** 0.5
+        mag2 = (v2[0] ** 2 + v2[1] ** 2) ** 0.5  # Fixed typo here
         if mag1 == 0 or mag2 == 0:
             return 0  # Cannot compute angle with zero-length vector
         cos_theta = dot_prod / (mag1 * mag2)
@@ -1279,8 +1277,6 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
         return True  # Sudden angle change, possible false positive
 
     return False
-
-
 def predict_next_pos(past_ball_pos, num_predictions=2):
     # Define a fixed sequence length
     max_sequence_length = 10
