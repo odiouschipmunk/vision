@@ -89,7 +89,7 @@ natsort==8.4.0
 nest-asyncio==1.6.0
 networkx==3.4.2
 nltk==3.9.1
-norfair @ git+https://github.com/tryolabs/norfair.git@ac9c00b917329e292a64d64bd6be32eafc849594
+norfair>=2.2.0
 numba==0.60.0
 numpy==1.26.4
 nvidia-ml-py==12.560.30
