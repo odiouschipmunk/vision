@@ -5,7 +5,7 @@ import torch
 import math
 from skimage.metrics import structural_similarity as ssim_metric
 from squash.Player import Player
-from transformers import AutoModelForCausalLM, AutoTokenizer
+#from transformers import AutoModelForCausalLM, AutoTokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
@@ -50,6 +50,74 @@ def cosine_similarity(embedding1, embedding2):
         return 0  # Return a similarity of 0 if one of the embeddings is invalid
 
     return dot_product / (norm1 * norm2)
+def visualize_court_positions(player1_pos, player2_pos, pixel_reference, real_reference, court_scale=100):
+    """
+    Create a top-down visualization of player positions on a squash court.
+    
+    Args:
+        player1_pos (list): [x,y] pixel coordinates of player 1
+        player2_pos (list): [x,y] pixel coordinates of player 2
+        pixel_reference (list): List of [x,y] pixel reference points
+        real_reference (list): List of [x,y,z] real-world reference points in meters
+        court_scale (int): Pixels per meter for visualization
+        
+    Returns:
+        np.ndarray: Court visualization image
+    """
+    # Standard squash court dimensions in meters
+    COURT_LENGTH = 9.75
+    COURT_WIDTH = 6.4
+    
+    # Create blank canvas with white background
+    canvas_height = int(COURT_LENGTH * court_scale)
+    canvas_width = int(COURT_WIDTH * court_scale)
+    court = np.ones((canvas_height, canvas_width, 3), dtype=np.uint8) * 255
+    
+    # Draw court lines
+    # Main court outline
+    cv2.rectangle(court, (0, 0), (canvas_width-1, canvas_height-1), (0,0,0), 2)
+    
+    # Service line
+    service_line_y = int(5.49 * court_scale)
+    cv2.line(court, (0, service_line_y), (canvas_width, service_line_y), (0,0,0), 2)
+    
+    # Short line
+    short_line_y = int(4.26 * court_scale)
+    cv2.line(court, (0, short_line_y), (canvas_width, short_line_y), (0,0,0), 2)
+    
+    # Half court line
+    half_court_x = int(COURT_WIDTH/2 * court_scale)
+    cv2.line(court, (half_court_x, short_line_y), (half_court_x, canvas_height), (0,0,0), 2)
+    
+    # Calculate homography matrix
+    pixel_reference_np = np.array(pixel_reference, dtype=np.float32)
+    real_reference_np = np.array([(p[0], p[1]) for p in real_reference], dtype=np.float32)
+    H, _ = cv2.findHomography(pixel_reference_np, real_reference_np)
+    
+    # Transform player positions to real-world coordinates
+    players = [player1_pos, player2_pos]
+    colors = [(0,0,255), (255,0,0)]  # Red for player 1, Blue for player 2
+    
+    for player_pos, color in zip(players, colors):
+        # Convert to homogeneous coordinates
+        player_pixel = np.array([player_pos[0], player_pos[1], 1])
+        
+        # Apply homography
+        player_real = np.dot(H, player_pixel)
+        player_real /= player_real[2]
+        
+        # Convert to court coordinates
+        court_x = int(player_real[0] * court_scale)
+        court_y = int(player_real[1] * court_scale)
+        
+        # Draw player on court
+        cv2.circle(court, (court_x, court_y), 10, color, -1)
+        
+    # Add legend
+    cv2.putText(court, "Player 1", (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+    cv2.putText(court, "Player 2", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+    
+    return court
 
 
 def sum_pixels_in_bbox(frame, bbox):
@@ -1316,35 +1384,7 @@ def predict_next_pos(past_ball_pos, num_predictions=2):
     return predictions
 
 
-def input_model(csvdata):
-    model_name = "Qwen/Qwen2.5-1.5B-Instruct"
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, torch_dtype="auto", device_map="auto"
-    )
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    messages = [
-        {
-            "role": "system",
-            "content": 'You are a squash coach. You are to read through this csv data structured in the format: "Frame count,Player 1 Keypoints,Player 2 Keypoints,Ball Position,Shot Type" and provide a response that summarizes what happened',
-        },
-        {
-            "role": "user",
-            "content": f"Here is an example response: In frame 66, Player 1 is positioned in the back right quarter of the court, while Player 2 is in the front left quarter. Player 1 hits a crosscourt drive, and the ball was successfully hit, bouncing off 1 wall. Here is the data, reply back in the same way as the example: {csvdata}",
-        },
-    ]
-    text = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
-    )
-    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
-    generated_ids = model.generate(**model_inputs, max_new_tokens=4096)
-    generated_ids = [
-        output_ids[len(input_ids) :]
-        for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-    ]
-
-    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    return response
 
 
 import matplotlib.pyplot as plt
