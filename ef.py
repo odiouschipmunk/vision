@@ -1,9 +1,6 @@
 import time
 
 start = time.time()
-from dotenv import load_dotenv
-
-load_dotenv()
 import cv2
 import csv
 import time
