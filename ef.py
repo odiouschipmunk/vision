@@ -12,8 +12,9 @@ import logging
 import math
 import numpy as np
 import matplotlib
+
 # Set the backend to TkAgg for interactive plotting
-matplotlib.use('TkAgg')
+matplotlib.use("TkAgg")
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from ultralytics import YOLO
@@ -416,7 +417,9 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         1,
                     )
                     # Create a live updating plot window
-                    plt.figure(2)  # Use figure 2 for the distance plot (figure 1 is the video)
+                    plt.figure(
+                        2
+                    )  # Use figure 2 for the distance plot (figure 1 is the video)
                     plt.clf()  # Clear the current figure
                     plt.plot(p1distancesfromT, color="red", label="P1 Distance from T")
                     plt.plot(p2distancesfromT, color="blue", label="P2 Distance from T")

@@ -8,7 +8,6 @@ from squash.Player import Player
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
-from .norfair_tracking import setup_keypoint_tracking, convert_norfair_to_yolo
 
 
 def find_match_2d_array(array, x):
@@ -413,77 +412,9 @@ def framepose(
     max_players=2,
     occluded=False,
     importantdata=[],
-    use_norfair=True  # New parameter to toggle Norfair tracking
 ):
     global known_players_features
     try:
-        if use_norfair:
-            # Use Norfair tracking
-            if not hasattr(framepose, 'norfair_tracker'):
-                framepose.norfair_tracker = setup_keypoint_tracking(pose_model)
-            
-            tracked_objects, annotated_frame = framepose.norfair_tracker(frame)
-            
-            # Convert Norfair results to YOLO format for compatibility
-            track_results = convert_norfair_to_yolo(tracked_objects, frame_width, frame_height)
-            
-            # Update player tracking with Norfair results
-            if track_results:
-                for result in track_results:
-                    track_id = result['track_id']
-                    keypoints = result['keypoints']
-                    bbox = result['bbox']
-                    
-                    # Map track_id to player_id (1 or 2)
-                    if not find_match_2d_array(other_track_ids, track_id):
-                        if updated[0][1] > updated[1][1]:
-                            if len(references2) > 1:
-                                other_track_ids.append([track_id, 2])
-                        else:
-                            other_track_ids.append([track_id, 1])
-                    
-                    # Get player ID
-                    playerid = 1 if track_id == 1 else 2
-                    
-                    # Update player info
-                    if playerid in players:
-                        players[playerid].add_pose(keypoints)
-                        player_last_positions[playerid] = (bbox[0], bbox[1])
-                        if playerid == 1:
-                            updated[0][0] = True
-                            updated[0][1] = frame_count
-                        else:
-                            updated[1][0] = True
-                            updated[1][1] = frame_count
-                    elif len(players) < max_players:
-                        players[playerid] = Player(player_id=playerid)
-                        player_last_positions[playerid] = (bbox[0], bbox[1])
-                        if playerid == 1:
-                            updated[0][0] = True
-                            updated[0][1] = frame_count
-                        else:
-                            updated[1][0] = True
-                            updated[1][1] = frame_count
-            
-            return [
-                pose_model,
-                frame,
-                other_track_ids,
-                updated,
-                references1,
-                references2,
-                pixdiffs,
-                players,
-                frame_count,
-                player_last_positions,
-                frame_width,
-                frame_height,
-                annotated_frame,
-                occluded,
-                importantdata,
-            ]
-        
-        # Original YOLO tracking code
         track_results = pose_model.track(frame, persist=True, show=False)
         if (
             track_results
@@ -1346,6 +1277,8 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
         return True  # Sudden angle change, possible false positive
 
     return False
+
+
 def predict_next_pos(past_ball_pos, num_predictions=2):
     # Define a fixed sequence length
     max_sequence_length = 10

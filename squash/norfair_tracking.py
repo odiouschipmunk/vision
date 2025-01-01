@@ -8,15 +8,16 @@ PAST_DETECTIONS_LENGTH = 10  # Number of past detections to consider
 HIT_COUNTER_MAX = 10  # Maximum number of frames to keep track
 MIN_DETECTED_FRAMES = 3  # Minimum frames before considering it a valid track
 
+
 def setup_keypoint_tracking(pose_model=None):
     """
     Initialize Norfair tracker with custom distance function
     """
     distance_function = create_keypoints_voting_distance(
         keypoint_distance_threshold=DISTANCE_THRESHOLD,
-        detection_threshold=0.5  # Minimum confidence score to consider a keypoint
+        detection_threshold=0.5,  # Minimum confidence score to consider a keypoint
     )
-    
+
     tracker = Tracker(
         distance_function=distance_function,
         distance_threshold=DISTANCE_THRESHOLD,
@@ -24,49 +25,50 @@ def setup_keypoint_tracking(pose_model=None):
         hit_counter_max=HIT_COUNTER_MAX,
         initialization_delay=MIN_DETECTED_FRAMES,
     )
-    
+
     def track_poses(frame):
         # Get pose detections from YOLO model
         results = pose_model(frame)
-        
+
         if not results or not hasattr(results[0], "keypoints"):
             return [], frame
-            
+
         keypoints = results[0].keypoints.cpu().numpy()
         boxes = results[0].boxes.xywh.cpu()
-        
+
         # Convert YOLO detections to Norfair format
         detections = []
         for kps, box in zip(keypoints, boxes):
             if kps.shape[0] == 0:
                 continue
-                
+
             # Extract keypoint coordinates and confidences
             # YOLO keypoints are in format [N, 17, 3] where N is number of detections
             # Each keypoint has (x, y, confidence)
             kp_data = kps[0].data  # Get first detection's keypoints
             points = kp_data[:, :2]  # Get x,y coordinates (17, 2)
-            scores = kp_data[:, 2]   # Get confidence scores (17,)
-            
+            scores = kp_data[:, 2]  # Get confidence scores (17,)
+
             # Create Detection object with correct shape
             detections.append(Detection(points=points, scores=scores))
-        
+
         # Update tracker
         tracked_objects = tracker.update(detections=detections)
-        
+
         # Draw tracked poses
         annotated_frame = frame.copy()
         draw_tracked_objects(
-            annotated_frame, 
+            annotated_frame,
             tracked_objects,
             id_size=2,
             id_thickness=2,
-            color_by_id=True
+            color_by_id=True,
         )
-        
+
         return tracked_objects, annotated_frame
-        
+
     return track_poses
+
 
 def convert_norfair_to_yolo(tracked_objects, frame_width, frame_height):
     """
@@ -76,26 +78,26 @@ def convert_norfair_to_yolo(tracked_objects, frame_width, frame_height):
     for obj in tracked_objects:
         if not obj.last_detection:
             continue
-            
+
         # Convert points back to YOLO format
         points = obj.last_detection.points  # Shape is (17, 2)
         confidences = obj.last_detection.scores  # Shape is (17,)
-        
+
         # Calculate bounding box from keypoints
         x_min, y_min = np.min(points, axis=0)
         x_max, y_max = np.max(points, axis=0)
         width = x_max - x_min
         height = y_max - y_min
-        
+
         # Create result in YOLO format
         result = {
-            'track_id': obj.id,
-            'keypoints': points,
-            'confidences': confidences,
-            'bbox': [x_min, y_min, width, height],
-            'frame_width': frame_width,
-            'frame_height': frame_height
+            "track_id": obj.id,
+            "keypoints": points,
+            "confidences": confidences,
+            "bbox": [x_min, y_min, width, height],
+            "frame_width": frame_width,
+            "frame_height": frame_height,
         }
         converted_results.append(result)
-        
-    return converted_results 
+
+    return converted_results

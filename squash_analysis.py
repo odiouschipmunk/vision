@@ -9,25 +9,28 @@ from functools import lru_cache
 OUTPUT_DIR = "output_final"  # Define output directory as a constant
 CACHE_DIR = "static/cache"  # Directory for cached visualizations
 
+
 def ensure_directories():
     """Create output and cache directories if they don't exist"""
     for directory in [OUTPUT_DIR, CACHE_DIR]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
+
 @lru_cache(maxsize=1)
 def load_match_data(csv_path):
     """Load and preprocess match data from CSV"""
     return pd.read_csv(csv_path)
 
+
 def plot_3d_court():
     """Create a 3D squash court visualization"""
     cache_path = os.path.join(CACHE_DIR, "court_3d.png")
-    
+
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
         return
-        
+
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection="3d")
 
@@ -62,21 +65,22 @@ def plot_3d_court():
     ax.set_xlabel("Width (m)")
     ax.set_ylabel("Length (m)")
     ax.set_zlabel("Height (m)")
-    
+
     # Save to cache
     plt.savefig(cache_path)
     plt.close()
 
     return ax
 
+
 def visualize_3d_positions(df):
     """Create 3D visualization of player positions and ball trajectory"""
     cache_path = os.path.join(CACHE_DIR, "../static/3d_match_visualization.png")
-    
+
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
         return
-        
+
     ax = plot_3d_court()
 
     # Plot player positions
@@ -139,6 +143,7 @@ def visualize_3d_positions(df):
     plt.savefig(cache_path)
     plt.close()
 
+
 def visualize_shot_trajectories(df):
     """Create 3D visualization of shot trajectories by type"""
     # Group shots by type
@@ -147,9 +152,11 @@ def visualize_shot_trajectories(df):
     for shot_type in shot_types:
         if pd.isna(shot_type):
             continue
-            
-        cache_path = os.path.join(CACHE_DIR, f'3d_trajectory_{shot_type.lower().replace(" ", "_")}.png')
-        
+
+        cache_path = os.path.join(
+            CACHE_DIR, f'3d_trajectory_{shot_type.lower().replace(" ", "_")}.png'
+        )
+
         # If cached visualization exists, skip
         if os.path.exists(cache_path):
             continue
@@ -192,14 +199,17 @@ def visualize_shot_trajectories(df):
         plt.savefig(cache_path)
         plt.close()
 
+
 def create_3d_heatmap(df, player_column, title):
     """Create 3D heatmap of player positions"""
-    cache_path = os.path.join(CACHE_DIR, f'3d_heatmap_{title.lower().replace(" ", "_")}.png')
-    
+    cache_path = os.path.join(
+        CACHE_DIR, f'3d_heatmap_{title.lower().replace(" ", "_")}.png'
+    )
+
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
         return
-        
+
     ax = plot_3d_court()
 
     positions = []
@@ -227,10 +237,11 @@ def create_3d_heatmap(df, player_column, title):
     plt.savefig(cache_path)
     plt.close()
 
+
 def analyze_shot_distribution(df):
     """Analyze and visualize shot distribution"""
     cache_path = os.path.join(CACHE_DIR, "shot_distribution.png")
-    
+
     # Count shot types
     shot_counts = Counter(df["Shot Type"].dropna())
 
@@ -244,14 +255,17 @@ def analyze_shot_distribution(df):
 
     return dict(shot_counts)
 
+
 def create_court_heatmap(df, player_column, title):
     """Create 2D heatmap of player positions on court"""
-    cache_path = os.path.join(CACHE_DIR, f'{title.lower().replace(" ", "_")}_heatmap.png')
-    
+    cache_path = os.path.join(
+        CACHE_DIR, f'{title.lower().replace(" ", "_")}_heatmap.png'
+    )
+
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
         return
-        
+
     positions = []
     for pos in df[player_column]:
         try:
@@ -279,10 +293,11 @@ def create_court_heatmap(df, player_column, title):
         plt.savefig(cache_path)
         plt.close()
 
+
 def analyze_t_position_distance(df):
     """Analyze and visualize players' distance from T position"""
     cache_path = os.path.join(CACHE_DIR, "t_position_distance.png")
-    
+
     # T position in real-world coordinates (meters)
     t_position = np.array([3.2, 4.57, 0])
 
@@ -302,8 +317,12 @@ def analyze_t_position_distance(df):
     # Create plot if not cached
     if not os.path.exists(cache_path):
         plt.figure(figsize=(12, 6))
-        plt.plot(df["Frame count"], df["P1_T_Distance"], "b-", label="Player 1", alpha=0.7)
-        plt.plot(df["Frame count"], df["P2_T_Distance"], "r-", label="Player 2", alpha=0.7)
+        plt.plot(
+            df["Frame count"], df["P1_T_Distance"], "b-", label="Player 1", alpha=0.7
+        )
+        plt.plot(
+            df["Frame count"], df["P2_T_Distance"], "r-", label="Player 2", alpha=0.7
+        )
         plt.title("Distance from T Position Over Time")
         plt.xlabel("Frame")
         plt.ylabel("Distance (meters)")
@@ -318,10 +337,11 @@ def analyze_t_position_distance(df):
 
     return avg_p1, avg_p2
 
+
 def analyze_shot_success(df):
     """Analyze success rate of different shot types"""
     cache_path = os.path.join(CACHE_DIR, "shot_success_rate.png")
-    
+
     shot_success = {}
 
     for shot_type in df["Shot Type"].unique():
@@ -353,6 +373,7 @@ def analyze_shot_success(df):
         plt.close()
 
     return shot_success
+
 
 def generate_match_report(csv_path):
     """Generate comprehensive match analysis report"""
@@ -405,6 +426,7 @@ def generate_match_report(csv_path):
         f.write(report)
 
     return report
+
 
 if __name__ == "__main__":
     report = generate_match_report("output/final.csv")
