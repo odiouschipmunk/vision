@@ -822,7 +822,7 @@ def ballplayer_detections(
         occluded = framepose_result[13]
         importantdata = framepose_result[14]
 
-        who_hit = determine_ball_hit(players, past_ball_pos, frame_width, frame_height)
+        who_hit = determine_ball_hit(players, past_ball_pos)
         return [
             frame,  # 0
             frame_count,  # 1
@@ -1040,15 +1040,18 @@ def is_camera_angle_switched(frame, reference_image, threshold=0.5):
 
 def is_match_in_play(
     players,
-    mainball,
+    pastballpos,
     movement_threshold=0.2 * frame_width,
     hit=0.15 * frame_height,
+    ballthreshold=5,
+    ball_angle_thresh=50,
+    ball_velocity_thresh=3,
 ):
-    if players.get(1) is None or players.get(2) is None or mainball is None:
+    if players.get(1) is None or players.get(2) is None or pastballpos is None:
         return False
     try:
         lastplayer1pos = []
-
+        threshold=ballthreshold
         lastplayer2pos = []
         lastballpos = []
         ball_hit = player_move = False
@@ -1077,10 +1080,7 @@ def is_match_in_play(
                 players.get(2).get_last_x_poses(1).xyn[0][16][1] * frame_height,
             ]
         )
-        for i in range(1, mainball.number_of_coords()):
-            if mainball.get_last_x_pos(i) is not mainball.get_last_x_pos(i - 1):
-                lastballpos.append(mainball.get_last_x_pos(i))
-
+        
         # print(f'lastplayer1pos: {lastplayer1pos}')
         lastplayer1distance = math.hypot(
             lastplayer1pos[0][0] - lastplayer1pos[1][0],
@@ -1090,34 +1090,63 @@ def is_match_in_play(
             lastplayer2pos[0][0] - lastplayer2pos[1][0],
             lastplayer2pos[0][1] - lastplayer2pos[1][1],
         )
-        # print(f'lastplayer1distance: {lastplayer1distance}')
-        # print(f'lastplayer2distance: {lastplayer2distance}')
         # given that thge ankle position is the 16th and the 17th keypoint, we can check for lunges like so:
         # if the player's ankle moves by more than 5 pixels in the last 5 frames, then the player has lunged
         # if the player has lunged, then the match is in play
 
-        # print(f'last ball pos: {lastballpos}')
-        balldistance = math.hypot(
-            lastballpos[0][0] - lastballpos[1][0],
-            lastballpos[0][1] - lastballpos[1][1],
-        )
-        # print(f'balldistance: {balldistance}')
-        if balldistance >= hit:
-            ball_hit = True
-        # print(f'last player pos: {lastplayerpos}')
-        # print(f'last ball pos: {lastballpos}')
-        # print(f'player lunged: {player_move}')
+        #pastballpos = [[x, y, frame_number], ...]
+        #go through the past threshold number of past ball positions and see if it was hit based on trajectory and angle patterns
+        
+        # Analyze ball trajectory for hit detection
+        if len(pastballpos) >= threshold:
+            recent_positions = pastballpos[-threshold:]
+            
+            # Calculate angles between consecutive segments
+            angles = []
+            velocities = []
+            
+            for i in range(len(recent_positions)-2):
+                p1 = recent_positions[i]
+                p2 = recent_positions[i+1] 
+                p3 = recent_positions[i+2]
+                
+                # Calculate vectors between consecutive points
+                v1 = [p2[0]-p1[0], p2[1]-p1[1]]
+                v2 = [p3[0]-p2[0], p3[1]-p2[1]]
+                
+                # Calculate angle between vectors
+                dot_product = v1[0]*v2[0] + v1[1]*v2[1]
+                mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
+                mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
+                
+                if mag1 > 0 and mag2 > 0:
+                    cos_angle = dot_product/(mag1*mag2)
+                    cos_angle = max(-1, min(1, cos_angle))
+                    angle = math.degrees(math.acos(cos_angle))
+                    angles.append(angle)
+                    
+                    # Calculate velocity between points
+                    time_diff = p2[2] - p1[2]
+                    if time_diff > 0:
+                        velocity = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2) / time_diff
+                        velocities.append(velocity)
+
+            # Check for sudden angle changes and velocity spikes
+            if angles and velocities:
+                max_angle_change = max(angles)
+                avg_velocity = sum(velocities)/len(velocities)
+                
+                if max_angle_change > ball_angle_thresh and avg_velocity > ball_velocity_thresh:
+                    ball_hit = True
+
         if (
             lastplayer1distance >= movement_threshold
             or lastplayer2distance >= movement_threshold
         ):
             player_move = True
-        # print(f'ball hit: {ball_hit}')
         return [player_move, ball_hit]
     except Exception:
-        # print(
-        #     f"got exception in is_match_in_play: {e}, line was {e.__traceback__.tb_lineno}"
-        # )
+        print(f'got an exception in is_match_in_play')
         return False
 
 
@@ -1411,7 +1440,7 @@ def plot_coords(coords_list):
 
 
 def determine_ball_hit(
-    players, past_ball_pos, frame_width, frame_height, proximity_threshold=50
+    players, past_ball_pos, proximity_threshold=50
 ):
     """
     Determine which player hit the ball based on proximity and trajectory changes.

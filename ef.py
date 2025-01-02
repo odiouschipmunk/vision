@@ -190,7 +190,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     (0, 255, 0),
                     2,
                 )
-            print("loaded models")
             # frame, frame_height, frame_width, frame_count, annotated_frame, ballmodel, pose_model, mainball, ball, ballmap, past_ball_pos, ball_false_pos, running_frame
             # framepose_result=framepose.framepose(pose_model=pose_model, frame=frame, otherTrackIds=otherTrackIds, updated=updated, references1=references1, references2=references2, pixdiffs=pixdiffs, players=players, frame_count=frame_count, player_last_positions=player_last_positions, frame_width=frame_width, frame_height=frame_height, annotated_frame=annotated_frame)
             detections_result = Functions.ballplayer_detections(
@@ -242,7 +241,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             # print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
-            match_in_play = Functions.is_match_in_play(players, mainball)
+            match_in_play = Functions.is_match_in_play(players, past_ball_pos)
             type_of_shot = Functions.classify_shot(past_ball_pos=past_ball_pos)
             try:
                 Functions.reorganize_shots(alldata)
@@ -660,7 +659,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 homography,
                 reference_points_3d,
             )
-            print(f"finished writing frame {frame_count}")
+            
 
             def csvwrite():
                 with open("output/final.csv", "a") as f:
