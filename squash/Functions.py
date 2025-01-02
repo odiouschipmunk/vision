@@ -675,7 +675,8 @@ def framepose(
             importantdata,
         ]
 
-
+from sahi.utils.cv import read_image_as_pil
+from sahi.predict import get_sliced_prediction, predict
 # from squash import inferenceslicing
 # from squash import deepsortframepose
 def ballplayer_detections(
