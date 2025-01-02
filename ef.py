@@ -243,6 +243,10 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
             match_in_play = Functions.is_match_in_play(players, past_ball_pos)
             type_of_shot = Functions.classify_shot(past_ball_pos=past_ball_pos)
+            if match_in_play is not False:
+                ball_hit = match_in_play[1]
+            else:
+                ball_hit = False
             try:
                 Functions.reorganize_shots(alldata)
                 # print(f"organized data: {organizeddata}")
@@ -262,15 +266,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 )
                 cv2.putText(
                     annotated_frame,
-                    f"player legs far apart: {str(match_in_play[0])}",
-                    (10, frame_height - 120),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,
-                    (255, 255, 255),
-                    1,
-                )
-                cv2.putText(
-                    annotated_frame,
                     f"shot type: {type_of_shot}",
                     (10, frame_height - 140),
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -278,21 +273,8 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     (255, 255, 255),
                     1,
                 )
-            # Save the heatmap
-            # print(players)
-            # print(players.get(1).get_latest_pose())
-            # print(players.get(2).get_latest_pose())
-
-            # print(len(players))
-
             # Display ankle positions of both players
             if players.get(1) and players.get(2) is not None:
-                # print('line 263')
-                # print(f'players: {players}')
-                # print(f'players 1: {players.get(1)}')
-                # print(f'players 2: {players.get(2)}')
-                # print(f'players 1 latest pose: {players.get(1).get_latest_pose()}')
-                # print(f'players 2 latest pose: {players.get(2).get_latest_pose()}')
                 if (
                     players.get(1).get_latest_pose()
                     or players.get(2).get_latest_pose() is not None
@@ -716,7 +698,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
 
-            print(f"finished frame {frame_count}")
+            #print(f"finished frame {frame_count}")
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 

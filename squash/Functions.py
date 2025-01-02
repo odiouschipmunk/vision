@@ -496,7 +496,7 @@ def framepose(
             set(track_ids)
             # Update or add players for currently visible track IDs
             # note that this only works with occluded players < 2, still working on it :(
-            print(f"number of players found: {len(track_ids)}")
+            #print(f"number of players found: {len(track_ids)}")
             # occluded as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             if len(track_ids) < 2:
                 print(player_last_positions)
