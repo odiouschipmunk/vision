@@ -1,0 +1,38 @@
+Match Analysis Report
+===================
+
+1. Shot Distribution
+-------------------
+tight_straight drive: 177 shots (57.3%)
+tight_straight lob: 5 shots (1.6%)
+crosscourt drive: 58 shots (18.8%)
+wide_crosscourt drive: 6 shots (1.9%)
+slight_crosscourt drive: 36 shots (11.7%)
+slight_crosscourt lob: 2 shots (0.6%)
+straight drive: 15 shots (4.9%)
+wide_crosscourt lob: 10 shots (3.2%)
+
+2. Shot Success Rates
+-------------------
+tight_straight drive: 100.0%
+tight_straight lob: 100.0%
+crosscourt drive: 100.0%
+wide_crosscourt drive: 100.0%
+slight_crosscourt drive: 100.0%
+slight_crosscourt lob: 100.0%
+straight drive: 100.0%
+wide_crosscourt lob: 100.0%
+
+3. Average Distance from T Position
+--------------------------------
+Player 1: 0.89 meters
+Player 2: 0.79 meters
+
+4. Visualization Files Generated
+-----------------------------
+- 3D match visualization (3d_match_visualization.png)
+- Shot trajectories by type (3d_trajectory_*.png)
+- Player position heatmaps (3d_heatmap_*.png)
+- Shot distribution pie chart (shot_distribution.png)
+- T position distance graph (t_position_distance.png)
+- Shot success rate bar chart (shot_success_rate.png)

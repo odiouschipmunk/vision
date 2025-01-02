@@ -1,9 +1,6 @@
 import time
 
 start = time.time()
-from dotenv import load_dotenv
-
-load_dotenv()
 import cv2
 import csv
 import time
@@ -12,13 +9,16 @@ import logging
 import math
 import numpy as np
 import matplotlib
+
+# Set the backend to TkAgg for interactive plotting
+matplotlib.use("TkAgg")
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
 from squash.Ball import Ball
 
-matplotlib.use("Agg")
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
@@ -190,7 +190,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                     (0, 255, 0),
                     2,
                 )
-            print("loaded models")
             # frame, frame_height, frame_width, frame_count, annotated_frame, ballmodel, pose_model, mainball, ball, ballmap, past_ball_pos, ball_false_pos, running_frame
             # framepose_result=framepose.framepose(pose_model=pose_model, frame=frame, otherTrackIds=otherTrackIds, updated=updated, references1=references1, references2=references2, pixdiffs=pixdiffs, players=players, frame_count=frame_count, player_last_positions=player_last_positions, frame_width=frame_width, frame_height=frame_height, annotated_frame=annotated_frame)
             detections_result = Functions.ballplayer_detections(
@@ -235,12 +234,14 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             player_last_positions = detections_result[15]
             detections_result[16]
             idata = detections_result[17]
+            who_hit = detections_result[18]
+            # print(f'who_hit: {who_hit}')
             if idata:
                 alldata.append(idata)
             # print(f"occluded: {occluded}")
             # occluded structured as [[players_found, last_pos_p1, last_pos_p2, frame_number]...]
             # print(f'is match in play: {is_match_in_play(players, mainball)}')
-            match_in_play = Functions.is_match_in_play(players, mainball)
+            match_in_play = Functions.is_match_in_play(players, past_ball_pos)
             type_of_shot = Functions.classify_shot(past_ball_pos=past_ball_pos)
             try:
                 Functions.reorganize_shots(alldata)
@@ -411,21 +412,27 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         (255, 255, 255),
                         1,
                     )
-                    plt.figure(figsize=(10, 6))
-                    plt.plot(p1distancesfromT, color="blue", label="P1 Distance from T")
-                    plt.plot(p2distancesfromT, color="red", label="P2 Distance from T")
+                    # Create a live updating plot window
+                    plt.figure(
+                        2
+                    )  # Use figure 2 for the distance plot (figure 1 is the video)
+                    plt.clf()  # Clear the current figure
+                    plt.plot(p1distancesfromT, color="red", label="P1 Distance from T")
+                    plt.plot(p2distancesfromT, color="blue", label="P2 Distance from T")
 
                     # Add labels and title
                     plt.xlabel("Time (frames)")
-                    plt.ylabel("Distance from T")
+                    plt.ylabel("Distance from T(pixels)")
                     plt.title("Distance from T over Time")
                     plt.legend()
+                    plt.grid(True)
+
+                    # Update the plot window
+                    plt.draw()
+                    plt.pause(0.0001)  # Small pause to allow the window to update
 
                     # Save the plot to a file
                     plt.savefig("output/distance_from_t_over_time.png")
-
-                    # Close the plot to free up memory
-                    plt.close()
 
             # Display the annotated frame
             try:
@@ -652,7 +659,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 homography,
                 reference_points_3d,
             )
-            print(f"finished writing frame {frame_count}")
+            
 
             def csvwrite():
                 with open("output/final.csv", "a") as f:
@@ -673,8 +680,9 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         rlworldp1,
                         rlworldp2,
                         rlball,
+                        f"{who_hit} hit the ball",
                     ]
-                    print(data)
+                    # print(data)
                     csvwriter.writerow(data)
 
             # print(past_ball_pos)
