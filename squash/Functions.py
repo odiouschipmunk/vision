@@ -480,6 +480,7 @@ def framepose(
     max_players=2,
     occluded=False,
     importantdata=[],
+    embeddings=[],
 ):
     global known_players_features
     try:
@@ -533,6 +534,7 @@ def framepose(
                     annotated_frame,
                     occluded,
                     importantdata,
+                    embeddings,
                 ]
 
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
@@ -552,6 +554,9 @@ def framepose(
                         print(f"added track id {track_id} to player 1")
                 # if updated[0], then that means that player 1 was updated last
                 # bc of this, we can assume that the next player is player 2
+                player_crop_pil = read_image_as_pil(player_crop)
+                current_embeddings=generate_reference(player_crop=player_crop_pil)
+                
                 if track_id == 1:
                     playerid = 1
                 elif track_id == 2:
@@ -572,6 +577,12 @@ def framepose(
                 else:
                     print(f"could not find player id for track id {track_id}")
                     continue
+                if len(embeddings[1])>0 and len(embeddings[0])>0 and track_id!=1 and track_id!=2:
+                    print(f'track id is : {track_id}')
+                    print(f'player id is : {playerid}')
+                    temp_playerid=find_what_player(embeddings[0],embeddings[1],current_embeddings)
+                    print(f'player is most likely: {temp_playerid}')
+                    playerid=temp_playerid
                 if track_id == 1:
                     references1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
                     references1[-1]
@@ -586,6 +597,22 @@ def framepose(
                     if len(references1) > 1 and len(references2) > 1:
                         if len(pixdiffs) < 5:
                             pixdiffs.append(abs(references1[-1] - references2[-1]))
+                            
+                
+                #given that the first track ids(1 and 2) are always right
+                if track_id==1:
+                    player1_crop=frame[int(y):int(y+h),int(x):int(x+w)]
+                    #convert to PIL image
+                    player1_crop_pil=read_image_as_pil(player1_crop)
+                    player1embeddings=generate_reference(player1_crop_pil)
+                    embeddings[0]=player1embeddings
+                if track_id==2:
+                    player2_crop=frame[int(y):int(y+h),int(x):int(x+w)]
+                    #convert to PIL image
+                    player2_crop_pil=read_image_as_pil(player2_crop)
+                    player2embeddings=generate_reference(player2_crop_pil)
+                    embeddings[1]=player2embeddings
+                
                 # If player is already tracked, update their info
                 if playerid in players:
                     players[playerid].add_pose(kp)
@@ -635,6 +662,16 @@ def framepose(
                                 (255, 255, 255),
                                 7,
                             )
+                        if i==10:
+                            cv2.putText(
+                                annotated_frame,
+                                f"{track_id}",
+                                (int(x), int(y)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.5,
+                                (255, 255, 255),
+                                2,
+                            )
                         i += 1
             # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
             importantdata = []
@@ -654,9 +691,11 @@ def framepose(
             annotated_frame,
             occluded,
             importantdata,
+            embeddings
         ]
     except Exception as e:
-        print(f"e: {e}")
+        print(f"framepose error: {e}")
+        print(f'line was {e.__traceback__.tb_lineno}')
         return [
             pose_model,
             frame,
@@ -673,10 +712,18 @@ def framepose(
             annotated_frame,
             occluded,
             importantdata,
+            embeddings
         ]
 
+
+def find_what_player(player1ref, player2ref, currentref):
+    p1sim=compare_embeddings(player1ref, currentref)
+    p2sim=compare_embeddings(player2ref, currentref)
+    if p1sim>p2sim:
+        return 1
+    else:
+        return 2
 from sahi.utils.cv import read_image_as_pil
-from sahi.predict import get_sliced_prediction, predict
 # from squash import inferenceslicing
 # from squash import deepsortframepose
 def ballplayer_detections(
@@ -702,6 +749,7 @@ def ballplayer_detections(
     player_last_positions,
     occluded,
     importantdata,
+    embeddings=[[],[]]
 ):
     try:
         highestconf = 0
@@ -810,6 +858,7 @@ def ballplayer_detections(
             annotated_frame=annotated_frame,
             occluded=occluded,
             importantdata=importantdata,
+            embeddings=embeddings
         )
         other_track_ids = framepose_result[2]
         updated = framepose_result[3]
@@ -821,7 +870,7 @@ def ballplayer_detections(
         annotated_frame = framepose_result[12]
         occluded = framepose_result[13]
         importantdata = framepose_result[14]
-
+        embeddings = framepose_result[15]
         who_hit = determine_ball_hit(players, past_ball_pos)
         return [
             frame,  # 0
@@ -843,8 +892,10 @@ def ballplayer_detections(
             occluded,  # 16
             importantdata,  # 17
             who_hit,  # 18
+            embeddings # 19
         ]
-    except Exception:
+    except Exception as e:
+        print(f'error in ballplayer_detections: {e}')
         return [
             frame,  # 0
             frame_count,  # 1
@@ -865,9 +916,54 @@ def ballplayer_detections(
             occluded,  # 16
             importantdata,  # 17
             who_hit,  # 18
+            embeddings # 19
         ]
+#given a player crop, generate embeddings for the player as to differentiate between players
+from torchvision import models, transforms
+from PIL import Image
+model=models.resnet50(pretrained=True)
+model.eval()
+preprocess=transforms.Compose([
+    transforms.Resize((224,224)),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+])
+def generate_reference(player_crop):
+    try:
+        input_tensor=preprocess(player_crop)
+        input_batch=input_tensor.unsqueeze(0) #create a mini batch
+        with torch.no_grad():
+            embedding=model(input_batch)
+        return embedding.squeeze()
+    except Exception as e:
+        print(f'error getting reference embeddings; {e}')
+        return None
+    
+import torch.nn.functional as F
+def compare_embeddings(e1, e2):
+    try:
+        similarity=F.cosine_similarity(e1.unsqueeze(0), e2.unsqueeze(0))
+        return similarity.item()
+    except Exception as e:
+        print(f'error comparing embeddings; {e}')
+        return 0.0
 
-
+def find_most_familiar(target, reference):
+    #find most similar player from reference embeddings
+    max_similarity=-1
+    most_similar_player=None
+    #reference embeddings as [[embeddings1], [embeddings2]]
+    #ref[0]==player1
+    #ref[1]==player2
+    for i, ref in enumerate(reference):
+        similarity=compare_embeddings(target, ref)
+        if similarity>max_similarity:
+            max_similarity=similarity
+            most_similar_player=i+1
+    return most_similar_player, max_similarity
 def reorganize_shots(alldata, min_sequence=5):
     if not alldata:
         return []

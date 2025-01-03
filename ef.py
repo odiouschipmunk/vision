@@ -395,26 +395,26 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                         1,
                     )
                     # Create a live updating plot window
-                    plt.figure(
-                        2
-                    )  # Use figure 2 for the distance plot (figure 1 is the video)
-                    plt.clf()  # Clear the current figure
-                    plt.plot(p1distancesfromT, color="red", label="P1 Distance from T")
-                    plt.plot(p2distancesfromT, color="blue", label="P2 Distance from T")
+                    # plt.figure(
+                    #     2
+                    # )  # Use figure 2 for the distance plot (figure 1 is the video)
+                    # plt.clf()  # Clear the current figure
+                    # plt.plot(p1distancesfromT, color="red", label="P1 Distance from T")
+                    # plt.plot(p2distancesfromT, color="blue", label="P2 Distance from T")
 
-                    # Add labels and title
-                    plt.xlabel("Time (frames)")
-                    plt.ylabel("Distance from T(pixels)")
-                    plt.title("Distance from T over Time")
-                    plt.legend()
-                    plt.grid(True)
+                    # # Add labels and title
+                    # plt.xlabel("Time (frames)")
+                    # plt.ylabel("Distance from T(pixels)")
+                    # plt.title("Distance from T over Time")
+                    # plt.legend()
+                    # plt.grid(True)
 
-                    # Update the plot window
-                    plt.draw()
-                    plt.pause(0.0001)  # Small pause to allow the window to update
+                    # # Update the plot window
+                    # plt.draw()
+                    # plt.pause(0.0001)  # Small pause to allow the window to update
 
-                    # Save the plot to a file
-                    plt.savefig("output/distance_from_t_over_time.png")
+                    # # Save the plot to a file
+                    # plt.savefig("output/distance_from_t_over_time.png")
 
             # Display the annotated frame
             try:
