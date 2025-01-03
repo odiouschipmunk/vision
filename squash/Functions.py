@@ -555,7 +555,7 @@ def framepose(
                 # if updated[0], then that means that player 1 was updated last
                 # bc of this, we can assume that the next player is player 2
                 player_crop_pil = read_image_as_pil(player_crop)
-                current_embeddings=generate_reference(player_crop=player_crop_pil)
+                current_embeddings=generate_embeddings(player_crop=player_crop_pil)
                 
                 if track_id == 1:
                     playerid = 1
@@ -580,38 +580,22 @@ def framepose(
                 if len(embeddings[1])>0 and len(embeddings[0])>0 and track_id!=1 and track_id!=2:
                     print(f'track id is : {track_id}')
                     print(f'player id is : {playerid}')
-                    temp_playerid=find_what_player(embeddings[0],embeddings[1],current_embeddings)
-                    print(f'player is most likely: {temp_playerid}')
+                    temp_playerid, tempconf=find_what_player(embeddings[0],embeddings[1],current_embeddings)
+                    print(f'player is most likely: {temp_playerid} with confidence {tempconf}')
+                    print(f'len of embeddings: {len(embeddings[0])} and {len(embeddings[1])}')
                     playerid=temp_playerid
-                if track_id == 1:
-                    references1.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
-                    references1[-1]
-                    sum_pixels_in_bbox(frame, [x, y, w, h])
-                    if len(references1) > 1 and len(references2) > 1:
-                        if len(pixdiffs) < 5:
-                            pixdiffs.append(abs(references1[-1] - references2[-1]))
-                elif track_id == 2:
-                    references2.append(sum_pixels_in_bbox(frame, [x, y, w, h]))
-                    references2[-1]
-                    sum_pixels_in_bbox(frame, [x, y, w, h])
-                    if len(references1) > 1 and len(references2) > 1:
-                        if len(pixdiffs) < 5:
-                            pixdiffs.append(abs(references1[-1] - references2[-1]))
-                            
-                
                 #given that the first track ids(1 and 2) are always right
                 if track_id==1:
                     player1_crop=frame[int(y):int(y+h),int(x):int(x+w)]
                     #convert to PIL image
                     player1_crop_pil=read_image_as_pil(player1_crop)
-                    player1embeddings=generate_reference(player1_crop_pil)
-                    embeddings[0]=player1embeddings
+                    player1embeddings=generate_embeddings(player1_crop_pil)
+                    embeddings[0].append(player1embeddings)
                 if track_id==2:
                     player2_crop=frame[int(y):int(y+h),int(x):int(x+w)]
-                    #convert to PIL image
                     player2_crop_pil=read_image_as_pil(player2_crop)
-                    player2embeddings=generate_reference(player2_crop_pil)
-                    embeddings[1]=player2embeddings
+                    player2embeddings=generate_embeddings(player2_crop_pil)
+                    embeddings[1].append(player2embeddings)
                 
                 # If player is already tracked, update their info
                 if playerid in players:
@@ -716,13 +700,7 @@ def framepose(
         ]
 
 
-def find_what_player(player1ref, player2ref, currentref):
-    p1sim=compare_embeddings(player1ref, currentref)
-    p2sim=compare_embeddings(player2ref, currentref)
-    if p1sim>p2sim:
-        return 1
-    else:
-        return 2
+
 from sahi.utils.cv import read_image_as_pil
 # from squash import inferenceslicing
 # from squash import deepsortframepose
@@ -931,7 +909,22 @@ preprocess=transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )
 ])
-def generate_reference(player_crop):
+
+def find_what_player(player1refs, player2refs, currentref):
+    p1avgsim=0
+    p2avgsim=0
+    for ref in player1refs:
+        p1avgsim+=compare_embeddings(ref, currentref)
+    for ref in player2refs:
+        p2avgsim+=compare_embeddings(ref, currentref)
+    p1avgsim/=len(player1refs)
+    p2avgsim/=len(player2refs)
+    if p1avgsim>p2avgsim:
+        return 1, p1avgsim
+    else:
+        return 2, p2avgsim
+    
+def generate_embeddings(player_crop):
     try:
         input_tensor=preprocess(player_crop)
         input_batch=input_tensor.unsqueeze(0) #create a mini batch
