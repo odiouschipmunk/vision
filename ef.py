@@ -47,7 +47,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
         Functions.cleanwrite()
         pose_model = YOLO("models/yolo11n-pose.pt")
         ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
-
         print("loaded models")
         ballvideopath = "output/balltracking.mp4"
         cap = cv2.VideoCapture(path)
@@ -176,7 +175,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 #     f"difference between current ref and court ref: {abs(courtref - currentref)}"
                 # )
                 continue
-
+            
             ball = ballmodel(frame)
             detections.append(ball)
 
@@ -198,7 +197,6 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 frame_width=frame_width,
                 frame_count=frame_count,
                 annotated_frame=annotated_frame,
-                ballmodel=ballmodel,
                 pose_model=pose_model,
                 mainball=mainball,
                 ball=ball,

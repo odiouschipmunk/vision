@@ -6,8 +6,6 @@ import math
 from skimage.metrics import structural_similarity as ssim_metric
 from squash.Player import Player
 #from transformers import AutoModelForCausalLM, AutoTokenizer
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
 
 
 def find_match_2d_array(array, x):
@@ -585,6 +583,7 @@ def framepose(
                     print(f'len of embeddings: {len(embeddings[0])} and {len(embeddings[1])}')
                     playerid=temp_playerid
                 #given that the first track ids(1 and 2) are always right
+                """
                 if track_id==1:
                     player1_crop=frame[int(y):int(y+h),int(x):int(x+w)]
                     #convert to PIL image
@@ -596,7 +595,7 @@ def framepose(
                     player2_crop_pil=read_image_as_pil(player2_crop)
                     player2embeddings=generate_embeddings(player2_crop_pil)
                     embeddings[1].append(player2embeddings)
-                
+                """
                 # If player is already tracked, update their info
                 if playerid in players:
                     players[playerid].add_pose(kp)
@@ -699,9 +698,19 @@ def framepose(
             embeddings
         ]
 
-
-
+from sahi import AutoDetectionModel
+from sahi.predict import get_sliced_prediction
 from sahi.utils.cv import read_image_as_pil
+from ultralytics import YOLO
+ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
+
+sahi_ball_model=AutoDetectionModel.from_pretrained(
+    model_type='yolov8',
+    model=ballmodel,
+    confidence_threshold=0.35,
+    device='cuda' if torch.cuda.is_available() else 'cpu'
+)
+
 # from squash import inferenceslicing
 # from squash import deepsortframepose
 def ballplayer_detections(
@@ -710,7 +719,6 @@ def ballplayer_detections(
     frame_width,
     frame_count,
     annotated_frame,
-    ballmodel,
     pose_model,
     mainball,
     ball,
@@ -734,45 +742,38 @@ def ballplayer_detections(
         x1 = x2 = y1 = y2 = 0
         # Ball detection
         ball = ballmodel(frame)
+        sahi_result=get_sliced_prediction(
+            frame,
+            detection_model=sahi_ball_model,
+            slice_height=256,
+            slice_width=256,
+        )
         label = ""
         try:
-            # Get the last 10 positions
             start_idx = max(0, len(past_ball_pos) - 10)
             positions = past_ball_pos[start_idx:]
-            # Loop through positions
             for i in range(len(positions)):
                 pos = positions[i]
-                # Draw circle with constant radius
-                radius = 5  # Adjust as needed
-                cv2.circle(
-                    annotated_frame, (pos[0], pos[1]), radius, (255, 255, 255), 2
-                )
-                # Draw line to next position
+                radius = 5
+                cv2.circle(annotated_frame, (pos[0], pos[1]), radius, (255, 255, 255), 2)
                 if i < len(positions) - 1:
                     next_pos = positions[i + 1]
-                    cv2.line(
-                        annotated_frame,
-                        (pos[0], pos[1]),
-                        (next_pos[0], next_pos[1]),
-                        (255, 255, 255),
-                        2,
-                    )
+                    cv2.line(annotated_frame, (pos[0], pos[1]), 
+                            (next_pos[0], next_pos[1]), (255, 255, 255), 2)
         except Exception:
             pass
-        for box in ball[0].boxes:
-            coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
-            x1temp, y1temp, x2temp, y2temp = coords
-            label = ballmodel.names[int(box.cls)]
-            confidence = float(box.conf)  # Convert tensor to float
-            int((x1temp + x2temp) / 2)
-            int((y1temp + y2temp) / 2)
+        label=''
+        x1=x2=y1=y2=0
+        for object_prediction in sahi_result.object_prediction_list:
+            if object_prediction.category.name == 'squash_ball_general':
+                confidence = object_prediction.score.value
+                bbox = object_prediction.bbox
 
-            if confidence > highestconf:
-                highestconf = confidence
-                x1 = x1temp
-                y1 = y1temp
-                x2 = x2temp
-                y2 = y2temp
+                if confidence > highestconf:
+                    highestconf = confidence
+                    x1, y1, x2, y2 = bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
+                    label = 'white squash ball'
+        
 
         cv2.rectangle(
             annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2
@@ -897,10 +898,12 @@ def ballplayer_detections(
             embeddings # 19
         ]
 #given a player crop, generate embeddings for the player as to differentiate between players
-from torchvision import models, transforms
-from PIL import Image
-model=models.resnet50(pretrained=True)
+from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+from torchvision import transforms
+model = efficientnet_b0(weights=EfficientNet_B0_Weights.DEFAULT)
 model.eval()
+from PIL import Image
+
 preprocess=transforms.Compose([
     transforms.Resize((224,224)),
     transforms.ToTensor(),
@@ -920,8 +923,10 @@ def find_what_player(player1refs, player2refs, currentref):
     p1avgsim/=len(player1refs)
     p2avgsim/=len(player2refs)
     if p1avgsim>p2avgsim:
+        print(f'player 1 avg sim: {p1avgsim} while player 2 avg sim: {p2avgsim}')
         return 1, p1avgsim
     else:
+        print(f'player 2 avg sim: {p1avgsim} while player 1 avg sim: {p2avgsim}')
         return 2, p2avgsim
     
 def generate_embeddings(player_crop):
@@ -944,19 +949,6 @@ def compare_embeddings(e1, e2):
         print(f'error comparing embeddings; {e}')
         return 0.0
 
-def find_most_familiar(target, reference):
-    #find most similar player from reference embeddings
-    max_similarity=-1
-    most_similar_player=None
-    #reference embeddings as [[embeddings1], [embeddings2]]
-    #ref[0]==player1
-    #ref[1]==player2
-    for i, ref in enumerate(reference):
-        similarity=compare_embeddings(target, ref)
-        if similarity>max_similarity:
-            max_similarity=similarity
-            most_similar_player=i+1
-    return most_similar_player, max_similarity
 def reorganize_shots(alldata, min_sequence=5):
     if not alldata:
         return []
@@ -1466,41 +1458,41 @@ def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45):
     return False
 
 
-def predict_next_pos(past_ball_pos, num_predictions=2):
-    # Define a fixed sequence length
-    max_sequence_length = 10
+# def predict_next_pos(past_ball_pos, num_predictions=2):
+#     # Define a fixed sequence length
+#     max_sequence_length = 10
 
-    # Prepare the positions array
-    data = np.array(past_ball_pos)
-    positions = data[:, :2]  # Extract x and y coordinates
+#     # Prepare the positions array
+#     data = np.array(past_ball_pos)
+#     positions = data[:, :2]  # Extract x and y coordinates
 
-    # Ensure positions array has the fixed sequence length
-    if positions.shape[0] < max_sequence_length:
-        padding = np.zeros((max_sequence_length - positions.shape[0], 2))
-        positions = np.vstack((padding, positions))
-    else:
-        positions = positions[-max_sequence_length:]
+#     # Ensure positions array has the fixed sequence length
+#     if positions.shape[0] < max_sequence_length:
+#         padding = np.zeros((max_sequence_length - positions.shape[0], 2))
+#         positions = np.vstack((padding, positions))
+#     else:
+#         positions = positions[-max_sequence_length:]
 
-    # Prepare input for LSTM
-    X_input = positions.reshape((1, max_sequence_length, 2))
+#     # Prepare input for LSTM
+#     X_input = positions.reshape((1, max_sequence_length, 2))
 
-    # Define LSTM model
-    model = Sequential()
-    model.add(LSTM(50, activation="relu", input_shape=(max_sequence_length, 2)))
-    model.add(Dense(2))
+#     # Define LSTM model
+#     model = Sequential()
+#     model.add(LSTM(50, activation="relu", input_shape=(max_sequence_length, 2)))
+#     model.add(Dense(2))
 
-    # Load pre-trained model weights if available
-    # model.load_weights('path_to_weights.h5')
+#     # Load pre-trained model weights if available
+#     # model.load_weights('path_to_weights.h5')
 
-    predictions = []
-    input_seq = X_input.copy()
-    for _ in range(num_predictions):
-        pred = model.predict(input_seq, verbose=0)
-        predictions.append(pred[0])
+#     predictions = []
+#     input_seq = X_input.copy()
+#     for _ in range(num_predictions):
+#         pred = model.predict(input_seq, verbose=0)
+#         predictions.append(pred[0])
 
-        # Update input sequence
-        input_seq = np.concatenate((input_seq[:, 1:, :], pred.reshape(1, 1, 2)), axis=1)
-    return predictions
+#         # Update input sequence
+#         input_seq = np.concatenate((input_seq[:, 1:, :], pred.reshape(1, 1, 2)), axis=1)
+#     return predictions
 
 
 
