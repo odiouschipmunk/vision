@@ -481,6 +481,7 @@ def framepose(
     occluded=False,
     importantdata=[],
     embeddings=[],
+    plast=[[],[]]
 ):
     global known_players_features
     try:
@@ -535,6 +536,7 @@ def framepose(
                     occluded,
                     importantdata,
                     embeddings,
+                    plast
                 ]
 
             for box, track_id, kp in zip(boxes, track_ids, keypoints):
@@ -622,6 +624,7 @@ def framepose(
                         updated[1][1] = frame_count
                     print(f"Player {playerid} added.")
                 # putting player keypoints on the frame
+                #p1pos=[]
                 for keypoint in kp:
                     # print(keypoint.xyn[0])
                     i = 0
@@ -658,6 +661,7 @@ def framepose(
                                 2,
                             )
                         i += 1
+            
             # in the form of [ball shot type, player1 proximity to the ball, player2 proximity to the ball, ]
             importantdata = []
         return [
@@ -676,7 +680,8 @@ def framepose(
             annotated_frame,
             occluded,
             importantdata,
-            embeddings
+            embeddings,
+            plast
         ]
     except Exception as e:
         print(f"framepose error: {e}")
@@ -697,7 +702,8 @@ def framepose(
             annotated_frame,
             occluded,
             importantdata,
-            embeddings
+            embeddings,
+            plast
         ]
 
 

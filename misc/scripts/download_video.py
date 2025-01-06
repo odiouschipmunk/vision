@@ -2,7 +2,7 @@ from pytubefix import YouTube
 import os
 
 # Define the path to the file containing YouTube links
-file_path = "misc\\scripts\\full-games.txt"
+file_path = "full-games.txt"
 
 # Check if the file exists
 if not os.path.exists(file_path):
