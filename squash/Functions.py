@@ -1592,3 +1592,85 @@ def determine_ball_hit(
         return 0
 
     return 0  # Wall hit or unknown
+
+
+def create_court(court_width=400, court_height=610):
+    # Create a blank image
+    court = np.zeros((court_height, court_width, 3), np.uint8)
+    t_point=(int(court_width/2), int(0.5579487*court_height))
+    left_service_box_end=(0, int(0.5579487*court_height))
+    right_service_box_end=(int(court_width), int(0.5579487*court_height))
+    left_service_box_start=(int(0.25*court_width), int(0.5579487*court_height))
+    right_service_box_start=(int(0.75*court_width), int(0.5579487*court_height))
+    left_service_box_low=(int(0.25*court_width), int(0.7220512*court_height))
+    right_service_box_low=(int(0.75*court_width), int(0.7220512*court_height))
+    left_service_box_low_end=(0, int(0.7220512*court_height))
+    right_service_box_low_end=(int(court_width), int(0.7220512*court_height))
+    points=[t_point, left_service_box_end, right_service_box_end, left_service_box_start, right_service_box_start, left_service_box_low, right_service_box_low, left_service_box_low_end, right_service_box_low_end]
+    #plot all points
+    for point in points:
+        cv2.circle(court, point, 5, (255, 255, 255), -1)
+    #between service boxes
+    cv2.line(court, left_service_box_end, right_service_box_end, (255, 255, 255), 2)
+    #between t point and middle low
+    cv2.line(court, t_point, (int(court_width/2), court_height), (255, 255, 255), 2)
+    #between low service boxes
+    #cv2.line(court, left_service_box_low_end, right_service_box_low_end, (255, 255, 255), 2)
+    #betwwen service boxes and low service boxes
+    cv2.line(court, left_service_box_end, left_service_box_low_end, (255, 255, 255), 2)
+    cv2.line(court, right_service_box_end, right_service_box_low_end, (255, 255, 255), 2)
+    cv2.line(court, left_service_box_start, left_service_box_low, (255, 255, 255), 2)
+    cv2.line(court, right_service_box_start, right_service_box_low, (255, 255, 255), 2)
+    cv2.line(court, left_service_box_low_end, left_service_box_low, (255, 255, 255), 2)
+    cv2.line(court, right_service_box_low_end, right_service_box_low, (255, 255, 255), 2)
+    return court
+
+def visualize_court():
+    court = create_court()
+    cv2.imshow('Squash Court', court)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def plot_on_court(court, p1, p2):
+    #draw p1 in red and p2 in blue
+    cv2.circle(court, p1, 5, (0, 0, 255), -1)
+    cv2.circle(court, p2, 5, (255, 0, 0), -1)
+    return court
+
+def generate_2d_homography(reference_points_px, reference_points_3d):
+    """
+    generate a homography matrix for 2d to 2d mapping(for the top down court view)
+    """
+    try:
+        # Convert to numpy arrays
+        reference_points_px = np.array(reference_points_px, dtype=np.float32)
+        reference_points_3d = np.array(reference_points_3d, dtype=np.float32)
+
+        # Calculate homography matrix
+        H, _ = cv2.findHomography(reference_points_px, reference_points_3d)
+
+        return H
+
+    except Exception as e:
+        print(f"Error generating 2D homography: {str(e)}")
+        return None
+
+def to_court_px(player1pos, player2pos, homography):
+    """
+    given player positions in the frame, convert to top down court positions
+    """
+    try:
+        # Convert to numpy arrays
+        player1pos = np.array(player1pos, dtype=np.float32)
+        player2pos = np.array(player2pos, dtype=np.float32)
+
+        # Apply homography transformation
+        player1_court = cv2.perspectiveTransform(player1pos.reshape(-1, 1, 2), homography)
+        player2_court = cv2.perspectiveTransform(player2pos.reshape(-1, 1, 2), homography)
+
+        return player1_court, player2_court
+
+    except Exception as e:
+        print(f"Error converting to court positions: {str(e)}")
+        return None, None
+    

@@ -23,7 +23,7 @@ print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
 
-def main(path="main.mp4", frame_width=640, frame_height=360):
+def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
         csvstart = 0
@@ -117,7 +117,8 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
         homography = Functions.generate_homography(
             reference_points, reference_points_3d
         )
-
+        court_view=Functions.create_court()
+        #Functions.visualize_court()
         np.zeros((frame_height, frame_width), dtype=np.float32)
         np.zeros((frame_height, frame_width), dtype=np.float32)
         heatmap_overlay_path = "output/white.png"
@@ -197,6 +198,7 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 frame_width=frame_width,
                 frame_count=frame_count,
                 annotated_frame=annotated_frame,
+                ballmodel=ballmodel,
                 pose_model=pose_model,
                 mainball=mainball,
                 ball=ball,
