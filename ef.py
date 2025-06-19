@@ -26,6 +26,10 @@ from squash.Ball import Ball
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 from torchvision import transforms
 
+# Import autonomous coaching system
+from autonomous_coaching import collect_coaching_data, generate_coaching_report
+import json
+
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
@@ -1187,6 +1191,85 @@ def to_court_px(player1pos, player2pos, homography):
         return None, None
 
 
+def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_in_play, frame_count):
+    """
+    Collect comprehensive data for autonomous coaching analysis
+    """
+    coaching_data = {
+        'frame': frame_count,
+        'timestamp': time.time(),
+        'shot_type': type_of_shot,
+        'player_who_hit': who_hit,
+        'match_active': match_in_play is not False,
+        'ball_hit_detected': match_in_play[1] if match_in_play is not False else False,
+        'player_movement': match_in_play[0] if match_in_play is not False else False,
+    }
+    
+    # Add player position analysis
+    if players.get(1) and players.get(2):
+        try:
+            # Get player positions (using ankle keypoints - 15, 16)
+            p1_pose = players[1].get_latest_pose()
+            p2_pose = players[2].get_latest_pose()
+            
+            if p1_pose and p2_pose:
+                # Player 1 positions
+                p1_left_ankle = p1_pose.xyn[0][15] if len(p1_pose.xyn[0]) > 15 else [0, 0]
+                p1_right_ankle = p1_pose.xyn[0][16] if len(p1_pose.xyn[0]) > 16 else [0, 0]
+                
+                # Player 2 positions  
+                p2_left_ankle = p2_pose.xyn[0][15] if len(p2_pose.xyn[0]) > 15 else [0, 0]
+                p2_right_ankle = p2_pose.xyn[0][16] if len(p2_pose.xyn[0]) > 16 else [0, 0]
+                
+                coaching_data.update({
+                    'player1_position': {
+                        'left_ankle': [float(p1_left_ankle[0]), float(p1_left_ankle[1])],
+                        'right_ankle': [float(p1_right_ankle[0]), float(p1_right_ankle[1])]
+                    },
+                    'player2_position': {
+                        'left_ankle': [float(p2_left_ankle[0]), float(p2_left_ankle[1])],
+                        'right_ankle': [float(p2_right_ankle[0]), float(p2_right_ankle[1])]
+                    }
+                })
+        except Exception as e:
+            print(f"Error collecting player position data: {e}")
+    
+    # Add ball trajectory analysis
+    if past_ball_pos and len(past_ball_pos) > 0:
+        coaching_data.update({
+            'ball_position': [float(past_ball_pos[-1][0]), float(past_ball_pos[-1][1])],
+            'ball_trajectory_length': len(past_ball_pos),
+            'ball_speed': calculate_ball_speed(past_ball_pos) if len(past_ball_pos) > 1 else 0
+        })
+    
+    return coaching_data
+
+def calculate_ball_speed(ball_positions):
+    """Calculate average ball speed from recent positions"""
+    if len(ball_positions) < 2:
+        return 0
+    
+    try:
+        recent_positions = ball_positions[-5:] if len(ball_positions) >= 5 else ball_positions
+        total_distance = 0
+        total_time = 0
+        
+        for i in range(1, len(recent_positions)):
+            x1, y1, t1 = recent_positions[i-1]
+            x2, y2, t2 = recent_positions[i]
+            
+            distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+            time_diff = t2 - t1
+            
+            if time_diff > 0:
+                total_distance += distance
+                total_time += time_diff
+        
+        return total_distance / total_time if total_time > 0 else 0
+    except Exception:
+        return 0
+
+
 def main(path="main.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
@@ -1307,13 +1390,16 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
             if not success:
                 break
 
-            frame = cv2.resize(frame, (frame_width, frame_height))
-            # force it to go to lowestx-->highestx and then lowesty-->highesty
-            frame_count += 1
+                frame = cv2.resize(frame, (frame_width, frame_height))
+                annotated_frame = frame.copy()
+                ball = [0, 0]  # Initialize ball position
+                
+                # force it to go to lowestx-->righstx and then lowesty-->rightery
+                frame_count += 1
 
-            if len(references1) != 0 and len(references2) != 0:
-                sum(references1) / len(references1)
-                sum(references2) / len(references2)
+                if len(references1) != 0 and len(references2) != 0:
+                    sum(references1) / len(references1)
+                    sum(references2) / len(references2)
 
             running_frame += 1
             if running_frame == 1:
@@ -1324,15 +1410,43 @@ def main(path="main.mp4", frame_width=640, frame_height=360):
                 )
                 referenceimage = frame
 
-            if is_camera_angle_switched(frame, referenceimage, threshold=0.5):
-                continue
+                if is_camera_angle_switched(frame, referenceimage, threshold=0.5):
+                    continue
 
             currentref = int(
                 sum_pixels_in_bbox(frame, [0, 0, frame_width, frame_height])
             )
-
-            if abs(courtref - currentref) > courtref * 0.6:
-                # print("most likely not original camera frame")
+                currentref = int(
+                    sum_pixels_in_bbox(frame, [0, 0, frame_width, frame_height])
+                )
+                
+                # Continue with the main processing loop
+                detections_result = Functions.ballplayer_detections(
+                    frame=frame,
+                    frame_height=frame_height,
+                    frame_width=frame_width,
+                    frame_count=frame_count,
+                    annotated_frame=annotated_frame,
+                    ballmodel=ballmodel,
+                    pose_model=pose_model,
+                    mainball=mainball,
+                    ball=ball,
+                    ballmap=ballmap,
+                    past_ball_pos=past_ball_pos,
+                    ball_false_pos=ball_false_pos,
+                    running_frame=running_frame,
+                    other_track_ids=otherTrackIds,
+                    updated=updated,
+                    references1=references1,
+                    references2=references2,
+                    pixdiffs=pixdiffs,
+                    players=players,
+                    player_last_positions=player_last_positions,
+                    occluded=False,
+                    importantdata=[],
+                    embeddings=embeddings,
+                    plast=plast,
+                )
                 # print("current ref: ", currentref)
                 # print("court ref: ", courtref)
                 # print(f"frame count: {frame_count}")
