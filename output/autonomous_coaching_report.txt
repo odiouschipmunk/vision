@@ -1,0 +1,14 @@
+AUTONOMOUS SQUASH COACHING ANALYSIS
+==================================================
+
+Analysis Date: 2025-06-20 17:16:21
+Video Analyzed: main.mp4
+Total Frames Processed: 1
+Enhanced Coaching Data Points: 0
+
+COACHING INSIGHTS:
+--------------------
+No match data available for analysis
+
+==================================================
+End of Analysis
