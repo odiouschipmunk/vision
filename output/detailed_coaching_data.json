@@ -1,9 +1,4070 @@
 {
   "match_metadata": {
-    "video_path": "main.mp4",
-    "total_frames": 1,
-    "analysis_date": "2025-06-20 17:16:21",
-    "total_data_points": 0
+    "video_path": "self1.mp4",
+    "total_frames": 80,
+    "analysis_date": "2025-06-27 13:10:19",
+    "total_data_points": 79
   },
-  "coaching_data": []
+  "coaching_data": [
+    {
+      "frame": 1,
+      "timestamp": 1751044120.273812,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 2,
+      "timestamp": 1751044120.5623617,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 3,
+      "timestamp": 1751044120.809424,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 4,
+      "timestamp": 1751044121.0655055,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 5,
+      "timestamp": 1751044121.3065317,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 6,
+      "timestamp": 1751044121.5590668,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 7,
+      "timestamp": 1751044121.7986674,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 8,
+      "timestamp": 1751044122.0307288,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 9,
+      "timestamp": 1751044122.2702873,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 10,
+      "timestamp": 1751044122.5103385,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 11,
+      "timestamp": 1751044122.7453926,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 12,
+      "timestamp": 1751044122.9849555,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 13,
+      "timestamp": 1751044123.2179904,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 14,
+      "timestamp": 1751044123.4510415,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 15,
+      "timestamp": 1751044123.690595,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4170498251914978,
+          0.6076833605766296
+        ],
+        "right_ankle": [
+          0.44617003202438354,
+          0.6052906513214111
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6290891766548157,
+          0.5488550066947937
+        ],
+        "right_ankle": [
+          0.6621336340904236,
+          0.5488266944885254
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 16,
+      "timestamp": 1751044123.9386573,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4163490831851959,
+          0.608160138130188
+        ],
+        "right_ankle": [
+          0.44604915380477905,
+          0.6059165000915527
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6284192800521851,
+          0.5499982833862305
+        ],
+        "right_ankle": [
+          0.6630631685256958,
+          0.549395740032196
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 17,
+      "timestamp": 1751044124.1962054,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4165442883968353,
+          0.6085745692253113
+        ],
+        "right_ankle": [
+          0.4466630518436432,
+          0.6063297986984253
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6294963359832764,
+          0.5499903559684753
+        ],
+        "right_ankle": [
+          0.6640001535415649,
+          0.5494428277015686
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 18,
+      "timestamp": 1751044124.4512973,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41611289978027344,
+          0.6087951064109802
+        ],
+        "right_ankle": [
+          0.44684553146362305,
+          0.6066144108772278
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6290010809898376,
+          0.5486129522323608
+        ],
+        "right_ankle": [
+          0.6644507646560669,
+          0.5496199131011963
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 19,
+      "timestamp": 1751044124.6818552,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41658711433410645,
+          0.6086137294769287
+        ],
+        "right_ankle": [
+          0.44671574234962463,
+          0.6064049005508423
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6314845085144043,
+          0.549049437046051
+        ],
+        "right_ankle": [
+          0.6640080213546753,
+          0.5494318008422852
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 20,
+      "timestamp": 1751044124.918323,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.415963739156723,
+          0.608880341053009
+        ],
+        "right_ankle": [
+          0.44642314314842224,
+          0.6067794561386108
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6299819350242615,
+          0.5518768429756165
+        ],
+        "right_ankle": [
+          0.6638497114181519,
+          0.5544442534446716
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 21,
+      "timestamp": 1751044125.1548715,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4158197045326233,
+          0.6105071306228638
+        ],
+        "right_ankle": [
+          0.4463212490081787,
+          0.6086650490760803
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6310998201370239,
+          0.5524581074714661
+        ],
+        "right_ankle": [
+          0.6641599535942078,
+          0.555585503578186
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 22,
+      "timestamp": 1751044125.3869026,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41596871614456177,
+          0.6089196801185608
+        ],
+        "right_ankle": [
+          0.4465412497520447,
+          0.6071485877037048
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6344347596168518,
+          0.5520447492599487
+        ],
+        "right_ankle": [
+          0.66388338804245,
+          0.5556076169013977
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 23,
+      "timestamp": 1751044125.632849,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4158760607242584,
+          0.6087365746498108
+        ],
+        "right_ankle": [
+          0.44661468267440796,
+          0.6066882610321045
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6359065771102905,
+          0.5517849922180176
+        ],
+        "right_ankle": [
+          0.6642290353775024,
+          0.5557878017425537
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 24,
+      "timestamp": 1751044125.860413,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41635432839393616,
+          0.6094710230827332
+        ],
+        "right_ankle": [
+          0.44686588644981384,
+          0.6073274612426758
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6317435503005981,
+          0.5524329543113708
+        ],
+        "right_ankle": [
+          0.6655923128128052,
+          0.5575515627861023
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 25,
+      "timestamp": 1751044126.1071365,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41392630338668823,
+          0.6114101409912109
+        ],
+        "right_ankle": [
+          0.4484747350215912,
+          0.6079452633857727
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6302088499069214,
+          0.5504679083824158
+        ],
+        "right_ankle": [
+          0.6600452661514282,
+          0.5544269680976868
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 26,
+      "timestamp": 1751044126.746307,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4144259989261627,
+          0.6108843684196472
+        ],
+        "right_ankle": [
+          0.4486890733242035,
+          0.607085645198822
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6292470693588257,
+          0.5488905906677246
+        ],
+        "right_ankle": [
+          0.6598063707351685,
+          0.5527655482292175
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 27,
+      "timestamp": 1751044127.2449052,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41487082839012146,
+          0.6110157370567322
+        ],
+        "right_ankle": [
+          0.4482892155647278,
+          0.6074263453483582
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6277093887329102,
+          0.5451303720474243
+        ],
+        "right_ankle": [
+          0.6599631309509277,
+          0.5487294793128967
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 28,
+      "timestamp": 1751044127.7415335,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4152982234954834,
+          0.6108235716819763
+        ],
+        "right_ankle": [
+          0.4475076198577881,
+          0.6076176166534424
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.627536416053772,
+          0.543524444103241
+        ],
+        "right_ankle": [
+          0.6599563360214233,
+          0.5477603673934937
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 29,
+      "timestamp": 1751044128.248118,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41467413306236267,
+          0.6115369200706482
+        ],
+        "right_ankle": [
+          0.44769230484962463,
+          0.6090195775032043
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6281241178512573,
+          0.5447600483894348
+        ],
+        "right_ankle": [
+          0.6594350934028625,
+          0.5494765639305115
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 30,
+      "timestamp": 1751044128.7487092,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41378897428512573,
+          0.611742377281189
+        ],
+        "right_ankle": [
+          0.4480364918708801,
+          0.6085405945777893
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.627568244934082,
+          0.5454354286193848
+        ],
+        "right_ankle": [
+          0.6593288779258728,
+          0.550883412361145
+        ]
+      },
+      "ball_tracking_confidence": 0.0,
+      "ball_tracking_state": "searching"
+    },
+    {
+      "frame": 31,
+      "timestamp": 1751044129.2628021,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41338419914245605,
+          0.6118398308753967
+        ],
+        "right_ankle": [
+          0.4485985338687897,
+          0.6088896989822388
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.628300130367279,
+          0.5456689596176147
+        ],
+        "right_ankle": [
+          0.6598032712936401,
+          0.5511874556541443
+        ]
+      },
+      "ball_position": [
+        442.0,
+        118.0
+      ],
+      "ball_trajectory_length": 1,
+      "ball_speed": 0,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 32,
+      "timestamp": 1751044129.760363,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41278892755508423,
+          0.611461341381073
+        ],
+        "right_ankle": [
+          0.44888681173324585,
+          0.6086065173149109
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6288079619407654,
+          0.5455099940299988
+        ],
+        "right_ankle": [
+          0.6599549055099487,
+          0.5511435866355896
+        ]
+      },
+      "ball_position": [
+        442.0,
+        118.0
+      ],
+      "ball_trajectory_length": 1,
+      "ball_speed": 0,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 33,
+      "timestamp": 1751044130.279957,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0
+      ],
+      "player_who_hit": 0,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4120050370693207,
+          0.6117972731590271
+        ],
+        "right_ankle": [
+          0.4489223062992096,
+          0.6092031598091125
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6291337609291077,
+          0.546260416507721
+        ],
+        "right_ankle": [
+          0.6601864099502563,
+          0.5528170466423035
+        ]
+      },
+      "ball_position": [
+        445.0,
+        114.0
+      ],
+      "ball_trajectory_length": 2,
+      "ball_speed": 2.5,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 34,
+      "timestamp": 1751044130.781589,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0,
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4122357964515686,
+          0.6124658584594727
+        ],
+        "right_ankle": [
+          0.449880450963974,
+          0.6087656021118164
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6282918453216553,
+          0.544954776763916
+        ],
+        "right_ankle": [
+          0.662446916103363,
+          0.5518669486045837
+        ]
+      },
+      "ball_position": [
+        446.0,
+        113.0
+      ],
+      "ball_trajectory_length": 3,
+      "ball_speed": 2.1380711874576983,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 35,
+      "timestamp": 1751044131.2731686,
+      "shot_type": [
+        "straight",
+        "drive",
+        0,
+        0,
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4119357466697693,
+          0.6135059595108032
+        ],
+        "right_ankle": [
+          0.4492022395133972,
+          0.6092669367790222
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6243179440498352,
+          0.541809618473053
+        ],
+        "right_ankle": [
+          0.6674503684043884,
+          0.5495282411575317
+        ]
+      },
+      "ball_position": [
+        446.0,
+        113.0
+      ],
+      "ball_trajectory_length": 3,
+      "ball_speed": 2.1380711874576983,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 36,
+      "timestamp": 1751044131.7915967,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0125,
+          "vertical_displacement": -0.013888888888888888,
+          "velocity_profile": {
+            "avg_velocity": 1.9714045207910316,
+            "max_velocity": 2.5,
+            "velocity_variance": 0.19689754873801601,
+            "velocity_trend": -0.5
+          },
+          "direction_changes": 0,
+          "court_coverage": {
+            "x_coverage": 0.0125,
+            "y_coverage": 0.013888888888888888,
+            "total_coverage": 0.00017361111111111112
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40935152769088745,
+          0.6121847033500671
+        ],
+        "right_ankle": [
+          0.4499610960483551,
+          0.6084840297698975
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6232458353042603,
+          0.5437479615211487
+        ],
+        "right_ankle": [
+          0.6690353155136108,
+          0.5513991117477417
+        ]
+      },
+      "ball_position": [
+        450.0,
+        113.0
+      ],
+      "ball_trajectory_length": 4,
+      "ball_speed": 2.082842712474619,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 37,
+      "timestamp": 1751044132.2711735,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0125,
+          "vertical_displacement": -0.013888888888888888,
+          "velocity_profile": {
+            "avg_velocity": 1.9714045207910316,
+            "max_velocity": 2.5,
+            "velocity_variance": 0.19689754873801601,
+            "velocity_trend": -0.5
+          },
+          "direction_changes": 0,
+          "court_coverage": {
+            "x_coverage": 0.0125,
+            "y_coverage": 0.013888888888888888,
+            "total_coverage": 0.00017361111111111112
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40913257002830505,
+          0.6127634048461914
+        ],
+        "right_ankle": [
+          0.4497857093811035,
+          0.6092835068702698
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6214405298233032,
+          0.5456678867340088
+        ],
+        "right_ankle": [
+          0.669549822807312,
+          0.5527681112289429
+        ]
+      },
+      "ball_position": [
+        450.0,
+        113.0
+      ],
+      "ball_trajectory_length": 4,
+      "ball_speed": 2.082842712474619,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 38,
+      "timestamp": 1751044132.7613559,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0125,
+          "vertical_displacement": -0.013888888888888888,
+          "velocity_profile": {
+            "avg_velocity": 1.9714045207910316,
+            "max_velocity": 2.5,
+            "velocity_variance": 0.19689754873801601,
+            "velocity_trend": -0.5
+          },
+          "direction_changes": 0,
+          "court_coverage": {
+            "x_coverage": 0.0125,
+            "y_coverage": 0.013888888888888888,
+            "total_coverage": 0.00017361111111111112
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4067141115665436,
+          0.6082775592803955
+        ],
+        "right_ankle": [
+          0.45000138878822327,
+          0.604509174823761
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6171935796737671,
+          0.5479527115821838
+        ],
+        "right_ankle": [
+          0.6702662706375122,
+          0.55448317527771
+        ]
+      },
+      "ball_position": [
+        450.0,
+        113.0
+      ],
+      "ball_trajectory_length": 4,
+      "ball_speed": 2.082842712474619,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 39,
+      "timestamp": 1751044133.253448,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.01875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.01875,
+          "vertical_displacement": 0.0,
+          "velocity_profile": {
+            "avg_velocity": 2.012147077046011,
+            "max_velocity": 2.5,
+            "velocity_variance": 0.15265302922408253,
+            "velocity_trend": -0.36562525418905034
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.01875,
+            "y_coverage": 0.013888888888888888,
+            "total_coverage": 0.00026041666666666666
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40786275267601013,
+          0.6090318560600281
+        ],
+        "right_ankle": [
+          0.45078927278518677,
+          0.604859471321106
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6163823008537292,
+          0.5485333800315857
+        ],
+        "right_ankle": [
+          0.668862521648407,
+          0.5556196570396423
+        ]
+      },
+      "ball_position": [
+        454.0,
+        118.0
+      ],
+      "ball_trajectory_length": 5,
+      "ball_speed": 2.102167224975743,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking"
+    },
+    {
+      "frame": 40,
+      "timestamp": 1751044133.7585874,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.01875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.01875,
+          "vertical_displacement": 0.008333333333333333,
+          "velocity_profile": {
+            "avg_velocity": 2.209717661636809,
+            "max_velocity": 3.0,
+            "velocity_variance": 0.27825896696146424,
+            "velocity_trend": 0.5
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.01875,
+            "y_coverage": 0.022222222222222223,
+            "total_coverage": 0.0004166666666666667
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40847334265708923,
+          0.6090987324714661
+        ],
+        "right_ankle": [
+          0.44961777329444885,
+          0.6045866012573242
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6152334809303284,
+          0.5481100678443909
+        ],
+        "right_ankle": [
+          0.6693365573883057,
+          0.5554588437080383
+        ]
+      },
+      "ball_position": [
+        454.0,
+        121.0
+      ],
+      "ball_trajectory_length": 6,
+      "ball_speed": 2.1167625428294206,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.5,
+        1.4142135623730951,
+        2.0,
+        2.1343747458109497,
+        3.0
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 41,
+      "timestamp": 1751044134.2496657,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.01875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.01875,
+          "vertical_displacement": 0.008333333333333333,
+          "velocity_profile": {
+            "avg_velocity": 2.209717661636809,
+            "max_velocity": 3.0,
+            "velocity_variance": 0.27825896696146424,
+            "velocity_trend": 0.5
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.01875,
+            "y_coverage": 0.022222222222222223,
+            "total_coverage": 0.0004166666666666667
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4089585840702057,
+          0.6072753667831421
+        ],
+        "right_ankle": [
+          0.44745317101478577,
+          0.6028556227684021
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6083611249923706,
+          0.5536068677902222
+        ],
+        "right_ankle": [
+          0.6676978468894958,
+          0.5624264478683472
+        ]
+      },
+      "ball_position": [
+        454.0,
+        121.0
+      ],
+      "ball_trajectory_length": 6,
+      "ball_speed": 2.1167625428294206,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.5,
+        1.4142135623730951,
+        2.0,
+        2.1343747458109497,
+        3.0
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 42,
+      "timestamp": 1751044134.7627728,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0234375,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0234375,
+          "vertical_displacement": 0.027777777777777776,
+          "velocity_profile": {
+            "avg_velocity": 2.4760791435193332,
+            "max_velocity": 3.8078865529319543,
+            "velocity_variance": 0.5866246676211584,
+            "velocity_trend": 1.3078865529319543
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.0234375,
+            "y_coverage": 0.041666666666666664,
+            "total_coverage": 0.0009765625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4115132689476013,
+          0.6120273470878601
+        ],
+        "right_ankle": [
+          0.4519055485725403,
+          0.608685314655304
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6078029870986938,
+          0.5554748773574829
+        ],
+        "right_ankle": [
+          0.6663810610771179,
+          0.5639035701751709
+        ]
+      },
+      "ball_position": [
+        457.0,
+        128.0
+      ],
+      "ball_trajectory_length": 7,
+      "ball_speed": 2.6273621679120946,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        1.4142135623730951,
+        2.0,
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 43,
+      "timestamp": 1751044135.2538269,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0234375,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0234375,
+          "vertical_displacement": 0.027777777777777776,
+          "velocity_profile": {
+            "avg_velocity": 2.4760791435193332,
+            "max_velocity": 3.8078865529319543,
+            "velocity_variance": 0.5866246676211584,
+            "velocity_trend": 1.3078865529319543
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.0234375,
+            "y_coverage": 0.041666666666666664,
+            "total_coverage": 0.0009765625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4109823703765869,
+          0.6083709001541138
+        ],
+        "right_ankle": [
+          0.4504354000091553,
+          0.6059192419052124
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6094623804092407,
+          0.5561100244522095
+        ],
+        "right_ankle": [
+          0.6656445860862732,
+          0.5653846263885498
+        ]
+      },
+      "ball_position": [
+        457.0,
+        128.0
+      ],
+      "ball_trajectory_length": 7,
+      "ball_speed": 2.6273621679120946,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        1.4142135623730951,
+        2.0,
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 44,
+      "timestamp": 1751044135.752128,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.0265625,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.0265625,
+          "vertical_displacement": 0.05277777777777778,
+          "velocity_profile": {
+            "avg_velocity": 2.7808924413946348,
+            "max_velocity": 4.6097722286464435,
+            "velocity_variance": 1.0602880230449823,
+            "velocity_trend": 2.1097722286464435
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.0265625,
+            "y_coverage": 0.06666666666666667,
+            "total_coverage": 0.0017708333333333332
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4109606146812439,
+          0.6151633858680725
+        ],
+        "right_ankle": [
+          0.4434661269187927,
+          0.6103312969207764
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6111969351768494,
+          0.5597870349884033
+        ],
+        "right_ankle": [
+          0.6648786664009094,
+          0.568450391292572
+        ]
+      },
+      "ball_position": [
+        459.0,
+        137.0
+      ],
+      "ball_trajectory_length": 8,
+      "ball_speed": 3.2798052250737055,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.0,
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 45,
+      "timestamp": 1751044136.26221,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.028125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.028125,
+          "vertical_displacement": 0.06666666666666667,
+          "velocity_profile": {
+            "avg_velocity": 3.0706583254194033,
+            "max_velocity": 5.0990195135927845,
+            "velocity_variance": 1.5155018929769495,
+            "velocity_trend": 2.5990195135927845
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.028125,
+            "y_coverage": 0.08055555555555556,
+            "total_coverage": 0.002265625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41500791907310486,
+          0.6132493615150452
+        ],
+        "right_ankle": [
+          0.43817442655563354,
+          0.6086990237236023
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6115989089012146,
+          0.5607163906097412
+        ],
+        "right_ankle": [
+          0.6669110655784607,
+          0.5676808953285217
+        ]
+      },
+      "ball_position": [
+        460.0,
+        142.0
+      ],
+      "ball_trajectory_length": 9,
+      "ball_speed": 4.15572284612493,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 46,
+      "timestamp": 1751044136.7542942,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.028125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.028125,
+          "vertical_displacement": 0.06666666666666667,
+          "velocity_profile": {
+            "avg_velocity": 3.0706583254194033,
+            "max_velocity": 5.0990195135927845,
+            "velocity_variance": 1.5155018929769495,
+            "velocity_trend": 2.5990195135927845
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.028125,
+            "y_coverage": 0.08055555555555556,
+            "total_coverage": 0.002265625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.41512632369995117,
+          0.6185846328735352
+        ],
+        "right_ankle": [
+          0.4348675608634949,
+          0.6151314377784729
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6165305376052856,
+          0.5527681708335876
+        ],
+        "right_ankle": [
+          0.6664729118347168,
+          0.5578579306602478
+        ]
+      },
+      "ball_position": [
+        460.0,
+        142.0
+      ],
+      "ball_trajectory_length": 9,
+      "ball_speed": 4.15572284612493,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 47,
+      "timestamp": 1751044137.2478938,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.028125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.028125,
+          "vertical_displacement": 0.06666666666666667,
+          "velocity_profile": {
+            "avg_velocity": 3.0706583254194033,
+            "max_velocity": 5.0990195135927845,
+            "velocity_variance": 1.5155018929769495,
+            "velocity_trend": 2.5990195135927845
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.028125,
+            "y_coverage": 0.08055555555555556,
+            "total_coverage": 0.002265625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.409636914730072,
+          0.6174607276916504
+        ],
+        "right_ankle": [
+          0.42866501212120056,
+          0.6149426102638245
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6134780049324036,
+          0.5603095293045044
+        ],
+        "right_ankle": [
+          0.6634889841079712,
+          0.564654529094696
+        ]
+      },
+      "ball_position": [
+        460.0,
+        142.0
+      ],
+      "ball_trajectory_length": 9,
+      "ball_speed": 4.15572284612493,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 48,
+      "timestamp": 1751044137.7365599,
+      "shot_type": [
+        "tight_straight",
+        "lob",
+        "medium",
+        0,
+        0.028125,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": 0.028125,
+          "vertical_displacement": 0.06666666666666667,
+          "velocity_profile": {
+            "avg_velocity": 3.0706583254194033,
+            "max_velocity": 5.0990195135927845,
+            "velocity_variance": 1.5155018929769495,
+            "velocity_trend": 2.5990195135927845
+          },
+          "direction_changes": 1,
+          "court_coverage": {
+            "x_coverage": 0.028125,
+            "y_coverage": 0.08055555555555556,
+            "total_coverage": 0.002265625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": false,
+      "ball_hit_detected": false,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40602436661720276,
+          0.6191656589508057
+        ],
+        "right_ankle": [
+          0.42567601799964905,
+          0.615899384021759
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6154521703720093,
+          0.557558000087738
+        ],
+        "right_ankle": [
+          0.6632784605026245,
+          0.5614588260650635
+        ]
+      },
+      "ball_position": [
+        460.0,
+        142.0
+      ],
+      "ball_trajectory_length": 9,
+      "ball_speed": 4.15572284612493,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        2.1343747458109497,
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 49,
+      "timestamp": 1751044138.2350733,
+      "shot_type": [
+        "straight",
+        "lob",
+        "medium",
+        0,
+        -0.1328125,
+        0.5,
+        {
+          "horizontal_displacement": -0.1328125,
+          "vertical_displacement": -0.06388888888888888,
+          "velocity_profile": {
+            "avg_velocity": 5.874379804699254,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 64.23394586075885,
+            "velocity_trend": 25.80415163893806
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.1609375,
+            "y_coverage": 0.13055555555555556,
+            "total_coverage": 0.02101128472222222
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.40010517835617065,
+          0.6245123147964478
+        ],
+        "right_ankle": [
+          0.422027051448822,
+          0.6219222545623779
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6017761826515198,
+          0.5637384057044983
+        ],
+        "right_ankle": [
+          0.6619225144386292,
+          0.5683238506317139
+        ]
+      },
+      "ball_position": [
+        357.0,
+        95.0
+      ],
+      "ball_trajectory_length": 10,
+      "ball_speed": 15.016771514722425,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        3.0,
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 50,
+      "timestamp": 1751044138.752299,
+      "shot_type": [
+        "straight",
+        "lob",
+        "soft",
+        0,
+        -0.1578125,
+        0.5,
+        {
+          "horizontal_displacement": -0.1578125,
+          "vertical_displacement": -0.08333333333333333,
+          "velocity_profile": {
+            "avg_velocity": 7.033366743886627,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 69.89980780154518,
+            "velocity_trend": 14.964249196572979
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.1859375,
+            "y_coverage": 0.15,
+            "total_coverage": 0.027890625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3949292004108429,
+          0.62114018201828
+        ],
+        "right_ankle": [
+          0.41582536697387695,
+          0.6189756393432617
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5968874096870422,
+          0.56304931640625
+        ],
+        "right_ankle": [
+          0.6572222709655762,
+          0.5671865344047546
+        ]
+      },
+      "ball_position": [
+        341.0,
+        88.0
+      ],
+      "ball_trajectory_length": 11,
+      "ball_speed": 18.124927465401363,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 51,
+      "timestamp": 1751044139.2343323,
+      "shot_type": [
+        "straight",
+        "lob",
+        "soft",
+        0,
+        -0.1578125,
+        0.5,
+        {
+          "horizontal_displacement": -0.1578125,
+          "vertical_displacement": -0.08333333333333333,
+          "velocity_profile": {
+            "avg_velocity": 7.033366743886627,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 69.89980780154518,
+            "velocity_trend": 14.964249196572979
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.1859375,
+            "y_coverage": 0.15,
+            "total_coverage": 0.027890625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3897377550601959,
+          0.6208463311195374
+        ],
+        "right_ankle": [
+          0.41350919008255005,
+          0.6198561787605286
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6011149287223816,
+          0.5557839870452881
+        ],
+        "right_ankle": [
+          0.6544813513755798,
+          0.5575411915779114
+        ]
+      },
+      "ball_position": [
+        341.0,
+        88.0
+      ],
+      "ball_trajectory_length": 11,
+      "ball_speed": 18.124927465401363,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 52,
+      "timestamp": 1751044139.7236483,
+      "shot_type": [
+        "straight",
+        "lob",
+        "soft",
+        0,
+        -0.1578125,
+        0.5,
+        {
+          "horizontal_displacement": -0.1578125,
+          "vertical_displacement": -0.08333333333333333,
+          "velocity_profile": {
+            "avg_velocity": 7.033366743886627,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 69.89980780154518,
+            "velocity_trend": 14.964249196572979
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.1859375,
+            "y_coverage": 0.15,
+            "total_coverage": 0.027890625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.38741475343704224,
+          0.6259890198707581
+        ],
+        "right_ankle": [
+          0.410399854183197,
+          0.6258693337440491
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.6034939289093018,
+          0.553804337978363
+        ],
+        "right_ankle": [
+          0.6466649770736694,
+          0.5513731837272644
+        ]
+      },
+      "ball_position": [
+        341.0,
+        88.0
+      ],
+      "ball_trajectory_length": 11,
+      "ball_speed": 18.124927465401363,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        3.8078865529319543,
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 53,
+      "timestamp": 1751044140.2166793,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.184375,
+        0.5,
+        {
+          "horizontal_displacement": -0.184375,
+          "vertical_displacement": -0.10833333333333334,
+          "velocity_profile": {
+            "avg_velocity": 6.976860193280913,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 63.57720972220008,
+            "velocity_trend": 3.9117946872237814
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.2125,
+            "y_coverage": 0.175,
+            "total_coverage": 0.0371875
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3834865689277649,
+          0.6253136396408081
+        ],
+        "right_ankle": [
+          0.41171249747276306,
+          0.6230725049972534
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.603657603263855,
+          0.5581463575363159
+        ],
+        "right_ankle": [
+          0.629449725151062,
+          0.556677520275116
+        ]
+      },
+      "ball_position": [
+        324.0,
+        79.0
+      ],
+      "ball_trajectory_length": 12,
+      "ball_speed": 17.22391770306548,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 54,
+      "timestamp": 1751044140.7105222,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.184375,
+        0.5,
+        {
+          "horizontal_displacement": -0.184375,
+          "vertical_displacement": -0.10833333333333334,
+          "velocity_profile": {
+            "avg_velocity": 6.976860193280913,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 63.57720972220008,
+            "velocity_trend": 3.9117946872237814
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.2125,
+            "y_coverage": 0.175,
+            "total_coverage": 0.0371875
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3693644404411316,
+          0.6589473485946655
+        ],
+        "right_ankle": [
+          0.4077944755554199,
+          0.6366271376609802
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5978901982307434,
+          0.5638802647590637
+        ],
+        "right_ankle": [
+          0.623104989528656,
+          0.562213122844696
+        ]
+      },
+      "ball_position": [
+        324.0,
+        79.0
+      ],
+      "ball_trajectory_length": 12,
+      "ball_speed": 17.22391770306548,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 55,
+      "timestamp": 1751044141.155842,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.184375,
+        0.5,
+        {
+          "horizontal_displacement": -0.184375,
+          "vertical_displacement": -0.10833333333333334,
+          "velocity_profile": {
+            "avg_velocity": 6.976860193280913,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 63.57720972220008,
+            "velocity_trend": 3.9117946872237814
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.2125,
+            "y_coverage": 0.175,
+            "total_coverage": 0.0371875
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.37728869915008545,
+          0.6533064246177673
+        ],
+        "right_ankle": [
+          0.3961683213710785,
+          0.6439722776412964
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5985274910926819,
+          0.5724943280220032
+        ],
+        "right_ankle": [
+          0.6035269498825073,
+          0.5685545206069946
+        ]
+      },
+      "ball_position": [
+        324.0,
+        79.0
+      ],
+      "ball_trajectory_length": 12,
+      "ball_speed": 17.22391770306548,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 56,
+      "timestamp": 1751044141.6569738,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.184375,
+        0.5,
+        {
+          "horizontal_displacement": -0.184375,
+          "vertical_displacement": -0.10833333333333334,
+          "velocity_profile": {
+            "avg_velocity": 6.976860193280913,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 63.57720972220008,
+            "velocity_trend": 3.9117946872237814
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.2125,
+            "y_coverage": 0.175,
+            "total_coverage": 0.0371875
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.37818261981010437,
+          0.6601918339729309
+        ],
+        "right_ankle": [
+          0.3865070939064026,
+          0.6506640315055847
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5994899868965149,
+          0.5631992816925049
+        ],
+        "right_ankle": [
+          0.6040152907371521,
+          0.5607726573944092
+        ]
+      },
+      "ball_position": [
+        324.0,
+        79.0
+      ],
+      "ball_trajectory_length": 12,
+      "ball_speed": 17.22391770306548,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 57,
+      "timestamp": 1751044142.1087587,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.184375,
+        0.5,
+        {
+          "horizontal_displacement": -0.184375,
+          "vertical_displacement": -0.10833333333333334,
+          "velocity_profile": {
+            "avg_velocity": 6.976860193280913,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 63.57720972220008,
+            "velocity_trend": 3.9117946872237814
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.2125,
+            "y_coverage": 0.175,
+            "total_coverage": 0.0371875
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.4015352129936218,
+          0.6563729047775269
+        ],
+        "right_ankle": [
+          0.35998713970184326,
+          0.6534743905067444
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5935834050178528,
+          0.5512606501579285
+        ],
+        "right_ankle": [
+          0.5954400300979614,
+          0.5489774942398071
+        ]
+      },
+      "ball_position": [
+        324.0,
+        79.0
+      ],
+      "ball_trajectory_length": 12,
+      "ball_speed": 17.22391770306548,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        4.6097722286464435,
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 58,
+      "timestamp": 1751044142.60595,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3434532582759857,
+          0.6728273034095764
+        ],
+        "right_ankle": [
+          0.4119113087654114,
+          0.6440961956977844
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.58576500415802,
+          0.5543317198753357
+        ],
+        "right_ankle": [
+          0.5925495028495789,
+          0.5503184795379639
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 59,
+      "timestamp": 1751044143.0725281,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.34464389085769653,
+          0.6875214576721191
+        ],
+        "right_ankle": [
+          0.3688383400440216,
+          0.6621583700180054
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5748841166496277,
+          0.5579503178596497
+        ],
+        "right_ankle": [
+          0.588778555393219,
+          0.5531295537948608
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 60,
+      "timestamp": 1751044143.5641348,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3428102135658264,
+          0.6914036870002747
+        ],
+        "right_ankle": [
+          0.3545364439487457,
+          0.6710584759712219
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5746714472770691,
+          0.5556226968765259
+        ],
+        "right_ankle": [
+          0.5768908262252808,
+          0.5503461956977844
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 61,
+      "timestamp": 1751044143.9943748,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3456640839576721,
+          0.6853786706924438
+        ],
+        "right_ankle": [
+          0.3474523723125458,
+          0.6722310185432434
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5610370635986328,
+          0.5581418871879578
+        ],
+        "right_ankle": [
+          0.5808689594268799,
+          0.5528737306594849
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 62,
+      "timestamp": 1751044144.477018,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.34350359439849854,
+          0.6797987222671509
+        ],
+        "right_ankle": [
+          0.347501665353775,
+          0.6650682687759399
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5543025135993958,
+          0.5554214119911194
+        ],
+        "right_ankle": [
+          0.5826981663703918,
+          0.5495537519454956
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 63,
+      "timestamp": 1751044144.9410837,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3346763253211975,
+          0.6865702271461487
+        ],
+        "right_ankle": [
+          0.34048694372177124,
+          0.6615175604820251
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5507972836494446,
+          0.553216278553009
+        ],
+        "right_ankle": [
+          0.5829257965087891,
+          0.5491363406181335
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 64,
+      "timestamp": 1751044145.4271255,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.32833003997802734,
+          0.6862927675247192
+        ],
+        "right_ankle": [
+          0.32971498370170593,
+          0.6700330972671509
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5537191033363342,
+          0.5601834654808044
+        ],
+        "right_ankle": [
+          0.5753442049026489,
+          0.5562452673912048
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 65,
+      "timestamp": 1751044145.9139326,
+      "shot_type": [
+        "slight_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.225,
+        0.5,
+        {
+          "horizontal_displacement": -0.225,
+          "vertical_displacement": -0.125,
+          "velocity_profile": {
+            "avg_velocity": 6.840177312645049,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 58.48461322046486,
+            "velocity_trend": 2.836665625650534
+          },
+          "direction_changes": 3,
+          "court_coverage": {
+            "x_coverage": 0.253125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.048515625
+          },
+          "wall_bounces": 0
+        },
+        "Player2_no_shot_detected"
+      ],
+      "player_who_hit": 2,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.31974363327026367,
+          0.673315167427063
+        ],
+        "right_ankle": [
+          0.3181906044483185,
+          0.6580302715301514
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5569056272506714,
+          0.5605353116989136
+        ],
+        "right_ankle": [
+          0.5636249780654907,
+          0.555108368396759
+        ]
+      },
+      "ball_position": [
+        298.0,
+        73.0
+      ],
+      "ball_trajectory_length": 13,
+      "ball_speed": 13.584582149403786,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.0990195135927845,
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 66,
+      "timestamp": 1751044146.4265783,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.31875,
+        0.7,
+        {
+          "horizontal_displacement": -0.31875,
+          "vertical_displacement": -0.10277777777777777,
+          "velocity_profile": {
+            "avg_velocity": 6.8960385174577965,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 54.023242509328206,
+            "velocity_trend": 5.066372975210778
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.346875,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.066484375
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.3101828694343567,
+          0.6835493445396423
+        ],
+        "right_ankle": [
+          0.3072817325592041,
+          0.6658799648284912
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5489708781242371,
+          0.561345100402832
+        ],
+        "right_ankle": [
+          0.5577630996704102,
+          0.5572518110275269
+        ]
+      },
+      "ball_position": [
+        238.0,
+        81.0
+      ],
+      "ball_trajectory_length": 14,
+      "ball_speed": 7.289055599304895,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534,
+        7.566372975210778
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 67,
+      "timestamp": 1751044146.9308364,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.31875,
+        0.7,
+        {
+          "horizontal_displacement": -0.31875,
+          "vertical_displacement": -0.10277777777777777,
+          "velocity_profile": {
+            "avg_velocity": 6.8960385174577965,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 54.023242509328206,
+            "velocity_trend": 5.066372975210778
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.346875,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.066484375
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2920129895210266,
+          0.6851398944854736
+        ],
+        "right_ankle": [
+          0.2968885600566864,
+          0.6698706150054932
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.549109697341919,
+          0.5594819188117981
+        ],
+        "right_ankle": [
+          0.5528606176376343,
+          0.5548669695854187
+        ]
+      },
+      "ball_position": [
+        238.0,
+        81.0
+      ],
+      "ball_trajectory_length": 14,
+      "ball_speed": 7.289055599304895,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        28.30415163893806,
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534,
+        7.566372975210778
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 68,
+      "timestamp": 1751044147.4486794,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.3515625,
+        0.7,
+        {
+          "horizontal_displacement": -0.3515625,
+          "vertical_displacement": -0.08055555555555556,
+          "velocity_profile": {
+            "avg_velocity": 7.206043089576676,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 51.41377632449756,
+            "velocity_trend": 8.736102527122116
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.3796875,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.0727734375
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2717660069465637,
+          0.7067375779151917
+        ],
+        "right_ankle": [
+          0.29192405939102173,
+          0.6725621223449707
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.547695517539978,
+          0.5578181147575378
+        ],
+        "right_ankle": [
+          0.5488299131393433,
+          0.5533201098442078
+        ]
+      },
+      "ball_position": [
+        217.0,
+        89.0
+      ],
+      "ball_trajectory_length": 15,
+      "ball_speed": 7.162327835880804,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        17.46424919657298,
+        6.411794687223781,
+        5.336665625650534,
+        7.566372975210778,
+        11.236102527122116
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 69,
+      "timestamp": 1751044147.9410172,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.36875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.36875,
+          "vertical_displacement": -0.06388888888888888,
+          "velocity_profile": {
+            "avg_velocity": 7.560971156014343,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 49.74982628903023,
+            "velocity_trend": 10.029964086141668
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.396875,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.07606770833333333
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.26791632175445557,
+          0.7077754735946655
+        ],
+        "right_ankle": [
+          0.29414859414100647,
+          0.6738957762718201
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5441056489944458,
+          0.5517247319221497
+        ],
+        "right_ankle": [
+          0.5466916561126709,
+          0.5477089881896973
+        ]
+      },
+      "ball_position": [
+        206.0,
+        95.0
+      ],
+      "ball_trajectory_length": 16,
+      "ball_speed": 7.638530066895299,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        6.411794687223781,
+        5.336665625650534,
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 70,
+      "timestamp": 1751044148.4541025,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.3859375,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.3859375,
+          "vertical_displacement": -0.04722222222222222,
+          "velocity_profile": {
+            "avg_velocity": 7.8715332141473,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 48.08719402524253,
+            "velocity_trend": 10.029964086141668
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.4140625,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.07936197916666667
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2675524353981018,
+          0.7049640417098999
+        ],
+        "right_ankle": [
+          0.29773029685020447,
+          0.6705017685890198
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5374008417129517,
+          0.5526041388511658
+        ],
+        "right_ankle": [
+          0.541928768157959,
+          0.548791766166687
+        ]
+      },
+      "ball_position": [
+        195.0,
+        101.0
+      ],
+      "ball_trajectory_length": 17,
+      "ball_speed": 9.005259752351149,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.336665625650534,
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 71,
+      "timestamp": 1751044148.9542758,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.3859375,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.3859375,
+          "vertical_displacement": -0.04722222222222222,
+          "velocity_profile": {
+            "avg_velocity": 7.8715332141473,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 48.08719402524253,
+            "velocity_trend": 10.029964086141668
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.4140625,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.07936197916666667
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2668774127960205,
+          0.7037271857261658
+        ],
+        "right_ankle": [
+          0.30125704407691956,
+          0.669402003288269
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.531296968460083,
+          0.5592716336250305
+        ],
+        "right_ankle": [
+          0.5365122556686401,
+          0.5557676553726196
+        ]
+      },
+      "ball_position": [
+        195.0,
+        101.0
+      ],
+      "ball_trajectory_length": 17,
+      "ball_speed": 9.005259752351149,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.336665625650534,
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 72,
+      "timestamp": 1751044149.4551952,
+      "shot_type": [
+        "angled_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.3859375,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.3859375,
+          "vertical_displacement": -0.04722222222222222,
+          "velocity_profile": {
+            "avg_velocity": 7.8715332141473,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 48.08719402524253,
+            "velocity_trend": 10.029964086141668
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.4140625,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.07936197916666667
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2652781903743744,
+          0.6962034702301025
+        ],
+        "right_ankle": [
+          0.29032787680625916,
+          0.6792281866073608
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5294628739356995,
+          0.5659501552581787
+        ],
+        "right_ankle": [
+          0.5314739942550659,
+          0.5622161030769348
+        ]
+      },
+      "ball_position": [
+        195.0,
+        101.0
+      ],
+      "ball_trajectory_length": 17,
+      "ball_speed": 9.005259752351149,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        5.336665625650534,
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 73,
+      "timestamp": 1751044149.9554887,
+      "shot_type": [
+        "crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.4546875,
+        0.7,
+        {
+          "horizontal_displacement": -0.4546875,
+          "vertical_displacement": 0.027777777777777776,
+          "velocity_profile": {
+            "avg_velocity": 8.420730044620228,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 50.0844100907936,
+            "velocity_trend": 14.707879332187076
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.4828125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.0925390625
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.26623475551605225,
+          0.6994002461433411
+        ],
+        "right_ankle": [
+          0.29619938135147095,
+          0.6826013922691345
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5126521587371826,
+          0.562904953956604
+        ],
+        "right_ankle": [
+          0.5353569984436035,
+          0.5600433349609375
+        ]
+      },
+      "ball_position": [
+        151.0,
+        128.0
+      ],
+      "ball_trajectory_length": 18,
+      "ball_speed": 14.165110174726973,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668,
+        17.207879332187076
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 74,
+      "timestamp": 1751044150.4544532,
+      "shot_type": [
+        "crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.4546875,
+        0.7,
+        {
+          "horizontal_displacement": -0.4546875,
+          "vertical_displacement": 0.027777777777777776,
+          "velocity_profile": {
+            "avg_velocity": 8.420730044620228,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 50.0844100907936,
+            "velocity_trend": 14.707879332187076
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.4828125,
+            "y_coverage": 0.19166666666666668,
+            "total_coverage": 0.0925390625
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2703375220298767,
+          0.6978066563606262
+        ],
+        "right_ankle": [
+          0.30200451612472534,
+          0.6821999549865723
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5141762495040894,
+          0.566024124622345
+        ],
+        "right_ankle": [
+          0.5274966359138489,
+          0.5634229183197021
+        ]
+      },
+      "ball_position": [
+        151.0,
+        128.0
+      ],
+      "ball_trajectory_length": 18,
+      "ball_speed": 14.165110174726973,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        7.566372975210778,
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668,
+        17.207879332187076
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 75,
+      "timestamp": 1751044150.9550822,
+      "shot_type": [
+        "wide_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.5015625,
+        0.7,
+        {
+          "horizontal_displacement": -0.5015625,
+          "vertical_displacement": 0.09166666666666666,
+          "velocity_profile": {
+            "avg_velocity": 9.002970496109983,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 53.06500990049416,
+            "velocity_trend": 16.4010581714358
+          },
+          "direction_changes": 4,
+          "court_coverage": {
+            "x_coverage": 0.5296875,
+            "y_coverage": 0.21666666666666667,
+            "total_coverage": 0.114765625
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.2713162899017334,
+          0.7024566531181335
+        ],
+        "right_ankle": [
+          0.3012692928314209,
+          0.6886957883834839
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.5058196783065796,
+          0.5735405683517456
+        ],
+        "right_ankle": [
+          0.5299440622329712,
+          0.5703173875808716
+        ]
+      },
+      "ball_position": [
+        121.0,
+        151.0
+      ],
+      "ball_trajectory_length": 19,
+      "ball_speed": 16.355097501673736,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        11.236102527122116,
+        12.529964086141668,
+        12.529964086141668,
+        17.207879332187076,
+        18.9010581714358
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 76,
+      "timestamp": 1751044151.4464948,
+      "shot_type": [
+        "crosscourt",
+        "lob",
+        "nick",
+        0,
+        -0.5,
+        0.7,
+        {
+          "horizontal_displacement": -0.5,
+          "vertical_displacement": 0.11666666666666667,
+          "velocity_profile": {
+            "avg_velocity": 9.005729161479847,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 50.27225162679663,
+            "velocity_trend": 6.555385138137417
+          },
+          "direction_changes": 5,
+          "court_coverage": {
+            "x_coverage": 0.5296875,
+            "y_coverage": 0.24166666666666667,
+            "total_coverage": 0.1280078125
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.27712899446487427,
+          0.7044084072113037
+        ],
+        "right_ankle": [
+          0.29820704460144043,
+          0.690413236618042
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.4983786940574646,
+          0.5753909349441528
+        ],
+        "right_ankle": [
+          0.5383636355400085,
+          0.5721715092658997
+        ]
+      },
+      "ball_position": [
+        122.0,
+        160.0
+      ],
+      "ball_trajectory_length": 20,
+      "ball_speed": 15.858729080530273,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        12.529964086141668,
+        12.529964086141668,
+        17.207879332187076,
+        18.9010581714358,
+        9.055385138137417
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 77,
+      "timestamp": 1751044151.956682,
+      "shot_type": [
+        "wide_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.5046875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.5046875,
+          "vertical_displacement": 0.15555555555555556,
+          "velocity_profile": {
+            "avg_velocity": 9.40046600358511,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 47.940858798481514,
+            "velocity_trend": 8.585786437626904
+          },
+          "direction_changes": 5,
+          "court_coverage": {
+            "x_coverage": 0.5296875,
+            "y_coverage": 0.26944444444444443,
+            "total_coverage": 0.14272135416666668
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.28201824426651,
+          0.7113189697265625
+        ],
+        "right_ankle": [
+          0.2924589514732361,
+          0.6980350017547607
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.4961225390434265,
+          0.5723574161529541
+        ],
+        "right_ankle": [
+          0.537825882434845,
+          0.5689833760261536
+        ]
+      },
+      "ball_position": [
+        122.0,
+        170.0
+      ],
+      "ball_trajectory_length": 21,
+      "ball_speed": 15.497305639652893,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        12.529964086141668,
+        17.207879332187076,
+        18.9010581714358,
+        9.055385138137417,
+        10.0
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 78,
+      "timestamp": 1751044152.4444842,
+      "shot_type": [
+        "wide_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.5046875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.5046875,
+          "vertical_displacement": 0.15555555555555556,
+          "velocity_profile": {
+            "avg_velocity": 9.40046600358511,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 47.940858798481514,
+            "velocity_trend": 8.585786437626904
+          },
+          "direction_changes": 5,
+          "court_coverage": {
+            "x_coverage": 0.5296875,
+            "y_coverage": 0.26944444444444443,
+            "total_coverage": 0.14272135416666668
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.27402278780937195,
+          0.7236189246177673
+        ],
+        "right_ankle": [
+          0.3034268319606781,
+          0.6998905539512634
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.4952184557914734,
+          0.5719544887542725
+        ],
+        "right_ankle": [
+          0.5373034477233887,
+          0.5683985948562622
+        ]
+      },
+      "ball_position": [
+        122.0,
+        170.0
+      ],
+      "ball_trajectory_length": 21,
+      "ball_speed": 15.497305639652893,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        12.529964086141668,
+        17.207879332187076,
+        18.9010581714358,
+        9.055385138137417,
+        10.0
+      ],
+      "wall_bounce_count": 0
+    },
+    {
+      "frame": 79,
+      "timestamp": 1751044152.971045,
+      "shot_type": [
+        "wide_crosscourt",
+        "lob",
+        "soft",
+        0,
+        -0.5046875,
+        0.8999999999999999,
+        {
+          "horizontal_displacement": -0.5046875,
+          "vertical_displacement": 0.15555555555555556,
+          "velocity_profile": {
+            "avg_velocity": 9.40046600358511,
+            "max_velocity": 28.30415163893806,
+            "velocity_variance": 47.940858798481514,
+            "velocity_trend": 8.585786437626904
+          },
+          "direction_changes": 5,
+          "court_coverage": {
+            "x_coverage": 0.5296875,
+            "y_coverage": 0.26944444444444443,
+            "total_coverage": 0.14272135416666668
+          },
+          "wall_bounces": 0
+        },
+        "Player1_no_shot_detected"
+      ],
+      "player_who_hit": 1,
+      "match_active": true,
+      "ball_hit_detected": true,
+      "player_movement": false,
+      "player1_position": {
+        "left_ankle": [
+          0.28899431228637695,
+          0.7322686910629272
+        ],
+        "right_ankle": [
+          0.2904965281486511,
+          0.709270715713501
+        ]
+      },
+      "player2_position": {
+        "left_ankle": [
+          0.4932463765144348,
+          0.5742743611335754
+        ],
+        "right_ankle": [
+          0.5362244844436646,
+          0.5701456069946289
+        ]
+      },
+      "ball_position": [
+        122.0,
+        170.0
+      ],
+      "ball_trajectory_length": 21,
+      "ball_speed": 15.497305639652893,
+      "ball_tracking_confidence": 1.0,
+      "ball_tracking_state": "tracking",
+      "ball_velocity_profile": [
+        12.529964086141668,
+        17.207879332187076,
+        18.9010581714358,
+        9.055385138137417,
+        10.0
+      ],
+      "wall_bounce_count": 0
+    }
+  ]
 }

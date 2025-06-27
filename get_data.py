@@ -13,6 +13,7 @@ import math
 import numpy as np
 import matplotlib
 import tensorflow as tf
+import torch  # Add PyTorch for GPU optimization
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
@@ -26,6 +27,19 @@ alldata = organizeddata = []
 def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
     try:
         print("imported all")
+        
+        # Configure TensorFlow to use GPU if available
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            try:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                print(f"🚀 TensorFlow using {len(gpus)} GPU(s)")
+            except RuntimeError as e:
+                print(f"GPU configuration error: {e}")
+        else:
+            print("📝 TensorFlow using CPU")
+        
         csvstart = 0
         end = csvstart + 100
         ball_predict = tf.keras.models.load_model(
@@ -45,8 +59,15 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
             return positions
 
         Functions.cleanwrite()
+        # GPU-optimized model loading
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"🚀 Using {device.upper()} for YOLO models")
+        
         pose_model = YOLO("models/yolo11n-pose.pt")
+        pose_model.to(device)  # Move to GPU if available
+        
         ballmodel = YOLO("trained-models\\g-ball2(white_latest).pt")
+        ballmodel.to(device)  # Move to GPU if available
 
         print("loaded models")
         ballvideopath = "output/balltracking.mp4"
@@ -738,12 +759,34 @@ def main(path="main_laptop.mp4", frame_width=640, frame_height=360):
                 except Exception as e:
                     print(f"error: {e}")
                     pass
+            # Add instructions to the frame
+            cv2.putText(
+                annotated_frame,
+                "Press 'r' to update reference points, 'q' to quit",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 0),
+                1,
+            )
             out.write(annotated_frame)
             cv2.imshow("Annotated Frame", annotated_frame)
 
             print(f"finished frame {frame_count}")
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
                 break
+            elif key == ord("r"):
+                print("Updating reference points...")
+                # Pause video and update reference points
+                reference_points = Referencepoints.update_reference_points(
+                    path=path, frame_width=frame_width, frame_height=frame_height, current_frame=frame
+                )
+                # Regenerate homography with new reference points
+                homography = Functions.generate_homography(
+                    reference_points, reference_points_3d
+                )
+                print("Reference points updated successfully!")
 
         cap.release()
         cv2.destroyAllWindows()

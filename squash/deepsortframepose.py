@@ -6,32 +6,50 @@ from torchvision import models, transforms
 from PIL import Image
 from squash.Player import Player
 
-# Initialize DeepSORT tracker with optimized parameters for squash
-tracker = DeepSort(
-    max_age=30,  # Reduced to handle fast movements better
-    n_init=15,  # Reduced to initialize tracks faster
-    max_cosine_distance=0.3,  # Increased to be more lenient with appearance changes
-    nn_budget=500,  # Added budget to maintain reliable tracking
-    override_track_class=None,
-    embedder="clip_ViT-B/16",
-    half=True,
-    bgr=True,
-    embedder_gpu=False,
-)
+# Global tracker variable to prevent multiple initializations
+tracker = None
+device = None
+device_name = None
+feature_extractor = None
+feature_transform = None
 
-# Initialize ResNet for appearance features with more robust feature extraction
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-feature_extractor = models.resnet50(pretrained=True).to(
-    device
-)  # Using ResNet50 for better features
-feature_extractor.eval()
-feature_transform = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
-)
+def initialize_tracker():
+    """Initialize DeepSORT tracker and feature extractor only once"""
+    global tracker, device, device_name, feature_extractor, feature_transform
+    
+    if tracker is None:
+        print("🔄 Initializing DeepSORT tracker (one-time setup)...")
+        
+        # Initialize DeepSORT tracker with optimized parameters for squash
+        tracker = DeepSort(
+            max_age=30,  # Reduced to handle fast movements better
+            n_init=15,  # Reduced to initialize tracks faster
+            max_cosine_distance=0.3,  # Increased to be more lenient with appearance changes
+            nn_budget=500,  # Added budget to maintain reliable tracking
+            override_track_class=None,
+            embedder="clip_ViT-B/16",
+            half=True,
+            bgr=True,
+            embedder_gpu=True if torch.cuda.is_available() else False,  # Enable GPU for embedder
+        )
+
+        # Initialize ResNet for appearance features with more robust feature extraction
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device_name = "GPU" if torch.cuda.is_available() else "CPU"
+        print(f"🚀 DeepSORT using {device_name} for feature extraction")
+
+        feature_extractor = models.resnet50(pretrained=True).to(device)  # Using ResNet50 for better features
+        feature_extractor.eval()
+        
+        feature_transform = transforms.Compose(
+            [
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+        
+        print("✅ DeepSORT tracker initialized successfully")
 
 # Track ID to Player ID mapping with confidence scores
 track_to_player = {}
@@ -120,22 +138,40 @@ def framepose(
     frame_height,
     annotated_frame,
     max_players=2,
+    occluded=False,
+    importantdata=[],
+    embeddings=[[], []],
+    plast=[[], []]
 ):
     try:
+        # Initialize tracker only once
+        initialize_tracker()
+        
         track_results = pose_model.track(frame, persist=True, show=False)
 
         if (
             track_results
             and hasattr(track_results[0], "keypoints")
             and track_results[0].keypoints is not None
+            and len(track_results) > 0
         ):
             boxes = track_results[0].boxes.xywh.cpu()
-            track_results[0].boxes.id.int().cpu().tolist()
+            track_ids = track_results[0].boxes.id.int().cpu().tolist() if track_results[0].boxes.id is not None else []
             keypoints = track_results[0].keypoints.cpu().numpy()
+
+            # Ensure we have matching numbers of boxes, track_ids, and keypoints
+            num_detections = min(len(boxes), len(keypoints))
+            if len(track_ids) > 0:
+                num_detections = min(num_detections, len(track_ids))
 
             # Validate and adjust bounding boxes
             valid_detections = []
-            for i, (box, kp) in enumerate(zip(boxes, keypoints)):
+            for i in range(num_detections):
+                if i >= len(boxes) or i >= len(keypoints):
+                    continue
+                    
+                box = boxes[i]
+                kp = keypoints[i]
                 # Use keypoints to improve bounding box
                 # print(f'kp: {kp[0].data[:, :, 2]}')  # Access the confidence scores
                 valid_points = kp[0].data[
@@ -161,8 +197,16 @@ def framepose(
             # Update tracks
             tracks = tracker.update_tracks(valid_detections, frame=frame)
 
-            # Process each track
-            for track, kp in zip(tracks, keypoints):
+            # Process each track with proper bounds checking
+            for track_idx, track in enumerate(tracks):
+                if not track.is_confirmed():
+                    continue
+                
+                # Make sure we have corresponding keypoints
+                if track_idx >= len(keypoints) or track_idx >= num_detections:
+                    continue
+                    
+                kp = keypoints[track_idx]
                 if not track.is_confirmed():
                     continue
 
@@ -178,17 +222,20 @@ def framepose(
                     elif len(track_to_player) == 1:
                         # Assign player 2 based on position relative to player 1
                         other_track_id = list(track_to_player.keys())[0]
-                        other_player_pos = player_last_positions[
-                            track_to_player[other_track_id]
-                        ]
-                        if x < other_player_pos[0]:  # Left player is player 1
-                            track_to_player[track_id] = (
-                                2 if track_to_player[other_track_id] == 1 else 1
-                            )
+                        other_player_id = track_to_player[other_track_id]
+                        if other_player_id in player_last_positions and len(player_last_positions[other_player_id]) >= 2:
+                            other_player_pos = player_last_positions[other_player_id]
+                            if x < other_player_pos[0]:  # Left player is player 1
+                                track_to_player[track_id] = (
+                                    2 if track_to_player[other_track_id] == 1 else 1
+                                )
+                            else:
+                                track_to_player[track_id] = (
+                                    1 if track_to_player[other_track_id] == 2 else 2
+                                )
                         else:
-                            track_to_player[track_id] = (
-                                1 if track_to_player[other_track_id] == 2 else 2
-                            )
+                            # Default assignment if no position history
+                            track_to_player[track_id] = 2
                     else:
                         # Use appearance and motion features for matching
                         feature = extract_features(frame, [x, y, w, h])
@@ -196,8 +243,8 @@ def framepose(
                         best_score = float("-inf")
 
                         for pid in [1, 2]:
-                            if pid in player_last_positions:
-                                px, py = player_last_positions[pid]
+                            if pid in player_last_positions and len(player_last_positions[pid]) >= 2:
+                                px, py = player_last_positions[pid][:2]  # Safe access to first two elements
                                 vx, vy = get_player_velocity(pid)
 
                                 # Predict position based on velocity
@@ -230,40 +277,56 @@ def framepose(
                 playerid = track_to_player[track_id]
                 update_player_position_history(playerid, (x, y))
 
-                # Update player info
+                # Update player info with proper error handling
                 if playerid in players:
-                    players[playerid].add_pose(kp)
+                    try:
+                        players[playerid].add_pose(kp)
+                    except (IndexError, AttributeError) as e:
+                        print(f"Error adding pose for player {playerid}: {e}")
                     player_last_positions[playerid] = (x, y)
-                    updated[playerid - 1][0] = True
-                    updated[playerid - 1][1] = frame_count
+                    if playerid - 1 < len(updated):
+                        updated[playerid - 1][0] = True
+                        updated[playerid - 1][1] = frame_count
                 elif len(players) < max_players:
                     players[playerid] = Player(player_id=playerid)
+                    try:
+                        players[playerid].add_pose(kp)
+                    except (IndexError, AttributeError) as e:
+                        print(f"Error adding pose for new player {playerid}: {e}")
                     player_last_positions[playerid] = (x, y)
-                    updated[playerid - 1][0] = True
-                    updated[playerid - 1][1] = frame_count
+                    if playerid - 1 < len(updated):
+                        updated[playerid - 1][0] = True
+                        updated[playerid - 1][1] = frame_count
 
                 # Draw visualizations
                 color = (0, 0, 255) if playerid == 1 else (255, 0, 0)
                 cv2.rectangle(annotated_frame, (x, y), (x + w, y + h), color, 2)
 
-                # Draw keypoints
-                for keypoint in kp:
-                    for i, k in enumerate(keypoint.xyn[0]):
-                        if (
-                            keypoint.conf[0][i] > 0.5
-                        ):  # Only draw high-confidence keypoints
-                            kx, ky = int(k[0] * frame_width), int(k[1] * frame_height)
-                            cv2.circle(annotated_frame, (kx, ky), 3, color, 5)
-                            if i == 16:  # Head keypoint
-                                cv2.putText(
-                                    annotated_frame,
-                                    f"P{playerid}",
-                                    (kx, ky),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    1.0,
-                                    color,
-                                    2,
-                                )
+                # Draw keypoints with error handling
+                try:
+                    if hasattr(kp, '__len__') and len(kp) > 0:
+                        for keypoint in kp:
+                            if hasattr(keypoint, 'xyn') and len(keypoint.xyn) > 0 and hasattr(keypoint, 'conf') and len(keypoint.conf) > 0:
+                                for i, k in enumerate(keypoint.xyn[0]):
+                                    if (
+                                        i < len(keypoint.conf[0]) and
+                                        keypoint.conf[0][i] > 0.5
+                                    ):  # Only draw high-confidence keypoints
+                                        kx, ky = int(k[0] * frame_width), int(k[1] * frame_height)
+                                        cv2.circle(annotated_frame, (kx, ky), 3, color, 5)
+                                        if i == 16:  # Head keypoint
+                                            cv2.putText(
+                                                annotated_frame,
+                                                f"P{playerid}",
+                                                (kx, ky),
+                                                cv2.FONT_HERSHEY_SIMPLEX,
+                                                1.0,
+                                                color,
+                                                2,
+                                            )
+                except (IndexError, AttributeError, TypeError) as e:
+                    print(f"Error drawing keypoints for player {playerid}: {e}")
+                    continue
 
         return [
             pose_model,
@@ -279,6 +342,10 @@ def framepose(
             frame_width,
             frame_height,
             annotated_frame,
+            occluded,
+            importantdata,
+            embeddings,
+            plast
         ]
 
     except Exception as e:
@@ -299,4 +366,8 @@ def framepose(
             frame_width,
             frame_height,
             annotated_frame,
+            occluded,
+            importantdata,
+            embeddings,
+            plast
         ]
