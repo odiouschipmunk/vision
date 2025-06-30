@@ -1,50 +1,51 @@
 AUTONOMOUS SQUASH COACHING ANALYSIS
 ==================================================
 
-Analysis Date: 2025-06-27 13:10:19
+Analysis Date: 2025-06-29 21:56:02
 Video Analyzed: self1.mp4
-Total Frames Processed: 80
-Enhanced Coaching Data Points: 79
+Total Frames Processed: 716
+Enhanced Coaching Data Points: 715
 
 COACHING INSIGHTS:
 --------------------
-**Technical Shot Analysis**
+Final analysis completed.
+Processing completed with 716 frames analyzed. Check output/ directory for results.
+Processing completed. Analyzed 716 frames.
 
-**Player1:**
-- **Straight Drive (straight_drive_0):** The most frequent shot type with 35 occurrences, suggesting a strong preference for this shot. However, the low shot variety score (7/10) indicates a lack of versatility.
-- **Tight Straight Lob Medium:** Occurred 13 times, showing some attempt at lobbing but not consistently effective.
-- **Slight Crosscourt Lob Soft:** Also occurred 13 times, indicating a consistent effort at crosscourt lobs but with limited success.
+🎯 Generating Enhanced Autonomous Coaching Analysis with Bounce Detection...
+🚀 Loading enhanced autonomous coaching model with GPU optimization...
+🔧 Coach compute device: cuda
+06/29/2025 21:53:58 - INFO - accelerate.utils.modeling -   We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading checkpoint shards: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:02<00:00,  1.24s/it]
+   💾 GPU memory optimized for coaching model
+✅ Enhanced coach model loaded on cuda
+C:\Users\default.DESKTOP-7FKFEEG\vision\.venv\Lib\site-packages\transformers\generation\utils.py:2479: UserWarning: You are calling .generate() with the `input_ids` being on a device type different than your model's device. `input_ids` is on cpu, whereas the model is on cuda. You may experience unexpected behaviors or slower generation. Please make sure that you have put `input_ids` to the correct device by calling for example input_ids = input_ids.to('cuda') before running `.generate()`.
+  warnings.warn(
+AI coaching generation error: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! (when checking argument for argument index in method wrapper_CUDA__index_select)
+✅ Enhanced coaching analysis completed!
+📋 Enhanced report saved: output/enhanced_autonomous_coaching_report.txt
+📊 Enhanced data saved: output/enhanced_coaching_data.json
+🏐 Ball bounces analyzed: GPU-accelerated detection active
 
-**Player2:**
-- Similar shot distribution as Player1, emphasizing the need for greater tactical variety.
+============================================================
+GENERATING AUTONOMOUS COACHING ANALYSIS...
+============================================================
+🚀 Loading enhanced autonomous coaching model with GPU optimization...
+🔧 Coach compute device: cuda
+06/29/2025 21:54:01 - INFO - accelerate.utils.modeling -   We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading checkpoint shards: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:01<00:00,  1.04it/s]
+06/29/2025 21:54:03 - WARNING - accelerate.big_modeling -   Some parameters are on the meta device because they were offloaded to the cpu.
+   💾 GPU memory optimized for coaching model
+✅ Enhanced coach model loaded on cuda
+Error generating coaching report: 'charmap' codec can't encode character '\U0001f3d0' in position 2623: character maps to <undefined>
+✓ Basic match data saved to: output/match_data_summary.json
+📝 Traditional coaching report also generated for compatibility.
 
-**Shot Patterns:**
-- **Direction Preference:** Predominantly straight shots (65.8%) with occasional crosscourt (34.2%). This suggests a balanced but predictable pattern.
-- **Height Preference:** Drives (44.3%) outnumber lobs (55.7%), which might be too reliant on the player's strength in straight shots rather than utilizing other shot types effectively.
-
-**Specific Improvement Areas:**
-
-1. **Versatility in Shot Types:**
-   - **Recommendation:** Incorporate more varied shot types into training sessions. Focus on developing and practicing crosscourt drives and soft lobs to enhance overall shot variety.
-   - **Timestamps:** Timestamps of these shots will help identify specific weaknesses and areas needing improvement.
-
-2. **Improving Lobs:**
-   - **Recommendation:** Target drills focusing on lobbing techniques, particularly soft lobs. Work on controlling the bounce and placement to create favorable opportunities.
-   - **Timestamps:** Review specific instances where lobs were attempted and failed to find their mark.
-
-3. **Consistency in Shot Execution:**
-   - **Recommendation:** Implement strict focus on maintaining consistent ball speed and trajectory during practice. Use video analysis to identify any inconsistencies and work on them systematically.
-   - **Timestamps:** Review footage to pinpoint exact moments when ball speed or trajectory deviates from desired patterns.
-
-**Movement Patterns Assessment**
-
-**Player1:**
-- **Court Coverage:** Limited court coverage, often remaining centrally positioned. This could lead to predictable movements and positioning issues.
-- **Mobility:** Low mobility, which limits the ability to quickly react to changing scenarios.
-- **Positioning:** Central positioning can sometimes put the player at a disadvantage if the opponent consistently attacks the middle.
-
-**Player2:**
-- Similar movement patterns to Player1, reinforcing the need for improved court coverage and
-
+🎉 ENHANCED PROCESSING COMPLETE!
 ==================================================
-End of Analysis
+📁 Check output/ directory for results:
+   • enhanced_autonomous_coaching_report.txt - Enhanced analysis
+   • enhanced_coaching_data.json - Detailed data with bounces
+   • annotated.mp4 - Video with bounce visualization
+   • Other traditional output files
+================================================== 

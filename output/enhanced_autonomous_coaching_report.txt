@@ -1,0 +1,7 @@
+
+
+Analysis Date: 2025-06-29 21:54:01
+Video Analyzed: self1.mp4
+Total Frames Processed: 716
+Enhanced Coaching Data Points: 715
+

@@ -1289,50 +1289,158 @@ def classify_shot_style(velocity_profile, wall_bounces, direction_changes, traje
 
 def detect_wall_bounces_advanced(trajectory, court_width, court_height):
     """
-    Advanced wall bounce detection using trajectory analysis with bounce position tracking
+    Advanced wall bounce detection with improved accuracy and physics-based validation.
+    Distinguishes between actual wall bounces and crosscourt/tactical shots.
     """
     bounces = 0
     bounce_positions = []
     
-    if len(trajectory) < 3:
+    if len(trajectory) < 5:  # Need more points for accurate analysis
         return bounces, bounce_positions
     
-    for i in range(1, len(trajectory) - 1):
-        x_prev, y_prev, _ = trajectory[i-1]
-        x_curr, y_curr, _ = trajectory[i]
-        x_next, y_next, _ = trajectory[i+1]
-        
-        # Calculate direction vectors
-        v1 = (x_curr - x_prev, y_curr - y_prev)
-        v2 = (x_next - x_curr, y_next - y_curr)
-        
-        # Check for sudden direction change (potential wall bounce)
-        if (abs(v1[0]) > 0 or abs(v1[1]) > 0) and (abs(v2[0]) > 0 or abs(v2[1]) > 0):
-            # Calculate angle between vectors
-            dot_product = v1[0]*v2[0] + v1[1]*v2[1]
-            mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
-            mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
+    # Define wall zones with different thresholds for different walls
+    wall_zones = {
+        'left': 25,     # Left wall proximity
+        'right': 25,    # Right wall proximity  
+        'top': 20,      # Top wall (front wall)
+        'bottom': 20    # Bottom wall (back wall)
+    }
+    
+    # Minimum requirements for bounce detection
+    min_speed_before = 3.0    # Minimum speed before potential bounce
+    min_angle_change = 45     # Minimum angle change for bounce
+    max_crosscourt_angle = 35 # Maximum angle for crosscourt differentiation
+    
+    for i in range(2, len(trajectory) - 2):
+        try:
+            # Get trajectory points for analysis
+            x_prev2, y_prev2, _ = trajectory[i-2]
+            x_prev, y_prev, _ = trajectory[i-1] 
+            x_curr, y_curr, _ = trajectory[i]
+            x_next, y_next, _ = trajectory[i+1]
+            x_next2, y_next2, _ = trajectory[i+2]
             
-            if mag1 > 0 and mag2 > 0:
-                cos_angle = dot_product / (mag1 * mag2)
+            # Calculate direction vectors with extended context
+            v_before = (x_curr - x_prev2, y_curr - y_prev2)
+            v_impact = (x_next - x_prev, y_next - y_prev)
+            v_after = (x_next2 - x_curr, y_next2 - y_curr)
+            
+            # Calculate speeds
+            speed_before = math.sqrt(v_before[0]**2 + v_before[1]**2)
+            speed_impact = math.sqrt(v_impact[0]**2 + v_impact[1]**2) 
+            speed_after = math.sqrt(v_after[0]**2 + v_after[1]**2)
+            
+            # Skip if insufficient movement
+            if speed_before < min_speed_before or speed_impact < 1.0:
+                continue
+            
+            # Check wall proximity with specific wall identification
+            wall_proximity = {}
+            wall_proximity['left'] = x_curr <= wall_zones['left']
+            wall_proximity['right'] = x_curr >= (court_width - wall_zones['right'])
+            wall_proximity['top'] = y_curr <= wall_zones['top']
+            wall_proximity['bottom'] = y_curr >= (court_height - wall_zones['bottom'])
+            
+            near_any_wall = any(wall_proximity.values())
+            
+            if not near_any_wall:
+                continue
+                
+            # Calculate angle changes with improved precision
+            if speed_before > 0 and speed_after > 0:
+                # Angle between incoming and outgoing vectors
+                dot_product = v_before[0]*v_after[0] + v_before[1]*v_after[1]
+                cos_angle = dot_product / (speed_before * speed_after)
                 cos_angle = max(-1, min(1, cos_angle))
-                angle = math.degrees(math.acos(cos_angle))
+                angle_change = math.degrees(math.acos(cos_angle))
                 
-                # Check if near wall and direction change is significant
-                near_wall = (x_curr < 30 or x_curr > court_width - 30 or 
-                        y_curr < 30 or y_curr > court_height - 30)
+                # Physics-based bounce validation
+                bounce_indicators = 0
+                bounce_confidence = 0.0
                 
-                if angle > 60 and near_wall:
+                # 1. Significant angle change (not just crosscourt)
+                if angle_change > min_angle_change:
+                    bounce_indicators += 1
+                    bounce_confidence += 0.3
+                    
+                    # Extra validation: crosscourt shots typically have gradual curves
+                    # Wall bounces have sharp, immediate direction changes
+                    if angle_change > 90:  # Very sharp angle change
+                        bounce_confidence += 0.3
+                
+                # 2. Speed change analysis (bounces often change speed)
+                speed_ratio = speed_after / speed_before if speed_before > 0 else 0
+                if 0.3 <= speed_ratio <= 0.8 or speed_ratio >= 1.3:  # Speed dampening or acceleration
+                    bounce_indicators += 1
+                    bounce_confidence += 0.2
+                
+                # 3. Wall-specific bounce patterns
+                if wall_proximity['left'] or wall_proximity['right']:
+                    # Side wall bounces: check for horizontal direction reversal
+                    if (v_before[0] > 0 and v_after[0] < 0) or (v_before[0] < 0 and v_after[0] > 0):
+                        bounce_indicators += 1
+                        bounce_confidence += 0.4
+                        
+                if wall_proximity['top'] or wall_proximity['bottom']:
+                    # Front/back wall bounces: check for vertical direction component changes
+                    if (v_before[1] > 0 and v_after[1] < 0) or (v_before[1] < 0 and v_after[1] > 0):
+                        bounce_indicators += 1  
+                        bounce_confidence += 0.4
+                
+                # 4. Crosscourt shot filtering
+                crosscourt_likelihood = 0.0
+                
+                # Crosscourt shots typically have:
+                # - Gradual direction changes over multiple frames
+                # - Consistent speed profiles
+                # - Angular changes that are more moderate
+                if 20 <= angle_change <= max_crosscourt_angle:
+                    crosscourt_likelihood += 0.3
+                    
+                if 0.8 <= speed_ratio <= 1.2:  # Consistent speed
+                    crosscourt_likelihood += 0.2
+                    
+                # Check if ball is moving away from walls (typical of crosscourt)
+                if not near_any_wall and i > 3:
+                    # Check trajectory over last few frames
+                    recent_positions = [(trajectory[j][0], trajectory[j][1]) for j in range(max(0, i-3), i+1)]
+                    if len(recent_positions) >= 3:
+                        # Check if moving towards center court
+                        center_x, center_y = court_width/2, court_height/2
+                        distances_to_center = [math.sqrt((x-center_x)**2 + (y-center_y)**2) for x, y in recent_positions]
+                        if len(distances_to_center) >= 2 and distances_to_center[-1] < distances_to_center[0]:
+                            crosscourt_likelihood += 0.3
+                
+                # 5. Final bounce decision with confidence threshold
+                is_bounce = (bounce_indicators >= 2 and 
+                           bounce_confidence >= 0.6 and 
+                           crosscourt_likelihood < 0.5 and
+                           near_any_wall)
+                
+                if is_bounce:
                     bounces += 1
                     bounce_positions.append((int(x_curr), int(y_curr)))
+                    
+                    # Debug info for tuning
+                    if bounces <= 3:  # Limit debug output
+                        wall_type = "Unknown"
+                        for wall, is_near in wall_proximity.items():
+                            if is_near:
+                                wall_type = wall
+                                break
+                        
+        except Exception as e:
+            # Continue processing even if one point fails
+            continue
     
     return bounces, bounce_positions
 
-def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=30.0, court_width=640, court_height=360):
+def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=45.0, court_width=640, court_height=360):
     """
-    Enhanced GPU-optimized ball bounce detection with improved accuracy and visual feedback
+    Enhanced GPU-optimized ball bounce detection with improved accuracy and crosscourt filtering.
+    Uses physics-based validation to distinguish between bounces and tactical shots.
     """
-    if len(trajectory) < 4:
+    if len(trajectory) < 5:
         return []
     
     # Use GPU if available
@@ -1344,72 +1452,115 @@ def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=
         
         bounce_positions = []
         
-        if len(positions) < 4:
+        if len(positions) < 5:
             return bounce_positions
         
         # Calculate velocities using GPU vectorization
         velocities = positions[1:] - positions[:-1]
         speeds = torch.norm(velocities, dim=1)
         
-        # Enhanced bounce detection with multiple criteria
-        if len(velocities) >= 2:
-            # Normalize velocities to get directions
-            normalized_velocities = torch.nn.functional.normalize(velocities + 1e-8, p=2, dim=1)
+        # Enhanced bounce detection with crosscourt filtering
+        if len(velocities) >= 4:
+            # Extended context for better analysis
+            extended_velocities = positions[2:] - positions[:-2]  # 2-frame span velocities
+            extended_speeds = torch.norm(extended_velocities, dim=1)
             
-            # Calculate dot products for consecutive direction vectors
+            # Normalize velocities to get directions
+            normalized_velocities = torch.nn.functional.normalize(extended_velocities + 1e-8, p=2, dim=1)
+            
+            # Calculate dot products for direction changes
             dot_products = torch.sum(normalized_velocities[:-1] * normalized_velocities[1:], dim=1)
             
-            # Calculate angles between consecutive direction vectors
+            # Calculate angles between direction vectors
             angles = torch.acos(torch.clamp(dot_products, -1.0, 1.0)) * 180.0 / math.pi
             
-            # Enhanced velocity analysis
-            velocity_changes = torch.abs(speeds[1:] - speeds[:-1])
+            # Enhanced velocity analysis with extended context
+            velocity_changes = torch.abs(extended_speeds[1:] - extended_speeds[:-1])
             
-            # Speed ratio analysis - dramatic speed changes indicate bounces
+            # Speed ratio analysis - for bounce physics
             speed_ratios = torch.zeros_like(velocity_changes)
-            mask = speeds[:-1] > 1e-6
-            speed_ratios[mask] = speeds[1:][mask] / speeds[:-1][mask]
+            mask = extended_speeds[:-1] > 1e-6
+            speed_ratios[mask] = extended_speeds[1:][mask] / extended_speeds[:-1][mask]
             
-            # Wall proximity check using GPU
+            # Wall proximity analysis with enhanced zones
+            wall_zones = {
+                'left': 25, 'right': 25, 'top': 20, 'bottom': 20
+            }
+            
             wall_proximity = torch.zeros(len(positions), dtype=torch.bool, device=device)
-            wall_margin = 40  # pixels from wall
             wall_proximity = (
-                (positions[:, 0] < wall_margin) |  # Left wall
-                (positions[:, 0] > court_width - wall_margin) |  # Right wall
-                (positions[:, 1] < wall_margin) |  # Top wall
-                (positions[:, 1] > court_height - wall_margin)   # Bottom wall
+                (positions[:, 0] < wall_zones['left']) |  # Left wall
+                (positions[:, 0] > court_width - wall_zones['right']) |  # Right wall
+                (positions[:, 1] < wall_zones['top']) |  # Top wall
+                (positions[:, 1] > court_height - wall_zones['bottom'])   # Bottom wall
             )
             
             # Enhanced bounce detection criteria
-            # 1. Significant angle change
+            # 1. Significant angle change (adjusted for crosscourt filtering)
             angle_bounces = angles > angle_threshold
             
-            # 2. Dramatic velocity change
+            # 2. Velocity change indicating impact
             velocity_bounces = velocity_changes > velocity_threshold
             
-            # 3. Speed ratio indicating impact (sudden deceleration or acceleration)
-            ratio_bounces = (speed_ratios < 0.4) | (speed_ratios > 2.5)
+            # 3. Speed ratio indicating bounce physics (dampening or acceleration)
+            ratio_bounces = (speed_ratios < 0.8) | (speed_ratios > 1.3)
             
-            # 4. Combine all criteria with wall proximity
-            bounce_mask = (angle_bounces | velocity_bounces | ratio_bounces)
+            # 4. Crosscourt shot filtering
+            crosscourt_angles = (angles >= 20) & (angles <= 35)  # Typical crosscourt angle range
+            consistent_speed = (speed_ratios >= 0.8) & (speed_ratios <= 1.2)
+            crosscourt_indicators = crosscourt_angles & consistent_speed
             
-            # Get bounce indices
-            bounce_indices = torch.where(bounce_mask)[0] + 1
+            # 5. Wall-specific direction reversal detection
+            wall_bounce_indicators = torch.zeros(len(angles), dtype=torch.bool, device=device)
             
-            # Additional validation: check wall proximity for each bounce
+            # Check for horizontal direction reversals near side walls
+            for i in range(len(extended_velocities) - 1):
+                pos_idx = i + 2  # Adjust for extended velocity indexing
+                if pos_idx < len(positions):
+                    # Side wall bounce: horizontal direction reversal
+                    if (wall_proximity[pos_idx] and 
+                        ((extended_velocities[i, 0] > 0 and extended_velocities[i+1, 0] < 0) or
+                         (extended_velocities[i, 0] < 0 and extended_velocities[i+1, 0] > 0))):
+                        wall_bounce_indicators[i] = True
+                    
+                    # Front/back wall bounce: vertical direction component change
+                    if (wall_proximity[pos_idx] and
+                        ((extended_velocities[i, 1] > 0 and extended_velocities[i+1, 1] < 0) or
+                         (extended_velocities[i, 1] < 0 and extended_velocities[i+1, 1] > 0))):
+                        wall_bounce_indicators[i] = True
+            
+            # Combine criteria with enhanced validation
+            bounce_confidence = torch.zeros_like(angles)
+            
+            # Angle change confidence
+            bounce_confidence += (angles > angle_threshold).float() * 0.3
+            bounce_confidence += (angles > 90).float() * 0.3  # Very sharp changes
+            
+            # Speed change confidence
+            bounce_confidence += velocity_bounces.float() * 0.2
+            bounce_confidence += ratio_bounces.float() * 0.2
+            
+            # Wall-specific bounce confidence
+            bounce_confidence += wall_bounce_indicators.float() * 0.4
+            
+            # Reduce confidence for crosscourt indicators
+            bounce_confidence -= crosscourt_indicators.float() * 0.4
+            
+            # Final bounce detection with high confidence threshold
+            bounce_mask = (bounce_confidence >= 0.6) & (angles > 30)  # Minimum angle for any bounce
+            
+            # Get bounce indices and validate with wall proximity
+            bounce_indices = torch.where(bounce_mask)[0] + 2  # Adjust for extended indexing
+            
             for idx in bounce_indices:
                 if idx < len(trajectory):
                     pos_idx = min(idx, len(wall_proximity) - 1)
-                    # Accept bounce if near wall OR has very strong signal
-                    strong_signal = (
-                        angles[min(idx-1, len(angles)-1)] > angle_threshold * 1.5 or
-                        velocity_changes[min(idx-1, len(velocity_changes)-1)] > velocity_threshold * 2
-                    )
                     
-                    if wall_proximity[pos_idx] or strong_signal:
+                    # Only accept bounces near walls with high confidence
+                    if wall_proximity[pos_idx] and bounce_confidence[idx-2] >= 0.6:
                         x, y = trajectory[idx][:2]
                         bounce_positions.append((int(x.cpu() if hasattr(x, 'cpu') else x), 
-                                            int(y.cpu() if hasattr(y, 'cpu') else y)))
+                                              int(y.cpu() if hasattr(y, 'cpu') else y)))
         
         return bounce_positions
         
@@ -1417,38 +1568,96 @@ def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=
         print(f"GPU bounce detection error: {e}, falling back to CPU")
         return detect_ball_bounces_cpu(trajectory, velocity_threshold, angle_threshold)
 
-def detect_ball_bounces_cpu(trajectory, velocity_threshold=3.0, angle_threshold=30.0):
-    """CPU fallback for bounce detection"""
+def detect_ball_bounces_cpu(trajectory, velocity_threshold=3.0, angle_threshold=45.0):
+    """
+    Enhanced CPU bounce detection with crosscourt filtering and physics-based validation
+    """
     bounce_positions = []
     
-    if len(trajectory) < 4:
+    if len(trajectory) < 5:
         return bounce_positions
     
-    for i in range(2, len(trajectory) - 1):
+    # Define court boundaries (assuming standard dimensions)
+    court_width, court_height = 640, 360
+    wall_zones = {'left': 25, 'right': 25, 'top': 20, 'bottom': 20}
+    
+    for i in range(2, len(trajectory) - 2):
         try:
-            p1, p2, p3 = trajectory[i-1], trajectory[i], trajectory[i+1]
+            # Extended context for better analysis
+            x_prev2, y_prev2, _ = trajectory[i-2]
+            x_prev, y_prev, _ = trajectory[i-1]
+            x_curr, y_curr, _ = trajectory[i]
+            x_next, y_next, _ = trajectory[i+1]
+            x_next2, y_next2, _ = trajectory[i+2]
             
-            # Calculate vectors
-            v1 = [p2[0] - p1[0], p2[1] - p1[1]]
-            v2 = [p3[0] - p2[0], p3[1] - p2[1]]
+            # Calculate extended direction vectors
+            v_before = (x_curr - x_prev2, y_curr - y_prev2)
+            v_after = (x_next2 - x_curr, y_next2 - y_curr)
             
             # Calculate speeds
-            speed1 = math.sqrt(v1[0]**2 + v1[1]**2)
-            speed2 = math.sqrt(v2[0]**2 + v2[1]**2)
+            speed_before = math.sqrt(v_before[0]**2 + v_before[1]**2)
+            speed_after = math.sqrt(v_after[0]**2 + v_after[1]**2)
+            
+            # Skip if insufficient movement
+            if speed_before < 2.0 or speed_after < 1.0:
+                continue
+            
+            # Check wall proximity
+            wall_proximity = {
+                'left': x_curr <= wall_zones['left'],
+                'right': x_curr >= (court_width - wall_zones['right']),
+                'top': y_curr <= wall_zones['top'],
+                'bottom': y_curr >= (court_height - wall_zones['bottom'])
+            }
+            
+            near_wall = any(wall_proximity.values())
+            if not near_wall:
+                continue
             
             # Calculate angle change
-            if speed1 > 0 and speed2 > 0:
-                dot_product = v1[0]*v2[0] + v1[1]*v2[1]
-                cos_angle = dot_product / (speed1 * speed2)
-                cos_angle = max(-1, min(1, cos_angle))
-                angle = math.degrees(math.acos(cos_angle))
-                
-                # Check for bounce indicators
-                speed_change = abs(speed2 - speed1)
-                
-                if angle > angle_threshold or speed_change > velocity_threshold:
-                    bounce_positions.append((int(p2[0]), int(p2[1])))
+            dot_product = v_before[0]*v_after[0] + v_before[1]*v_after[1]
+            cos_angle = dot_product / (speed_before * speed_after)
+            cos_angle = max(-1, min(1, cos_angle))
+            angle_change = math.degrees(math.acos(cos_angle))
+            
+            # Physics-based validation
+            bounce_confidence = 0.0
+            
+            # 1. Angle change analysis
+            if angle_change > angle_threshold:
+                bounce_confidence += 0.3
+                if angle_change > 90:  # Very sharp change
+                    bounce_confidence += 0.3
+            
+            # 2. Speed change analysis
+            speed_ratio = speed_after / speed_before if speed_before > 0 else 0
+            if 0.3 <= speed_ratio <= 0.8 or speed_ratio >= 1.3:
+                bounce_confidence += 0.2
+            
+            # 3. Wall-specific direction reversal
+            if wall_proximity['left'] or wall_proximity['right']:
+                # Horizontal direction reversal
+                if (v_before[0] > 0 and v_after[0] < 0) or (v_before[0] < 0 and v_after[0] > 0):
+                    bounce_confidence += 0.4
                     
+            if wall_proximity['top'] or wall_proximity['bottom']:
+                # Vertical direction reversal
+                if (v_before[1] > 0 and v_after[1] < 0) or (v_before[1] < 0 and v_after[1] > 0):
+                    bounce_confidence += 0.4
+            
+            # 4. Crosscourt filtering
+            crosscourt_likelihood = 0.0
+            if 20 <= angle_change <= 35:  # Typical crosscourt range
+                crosscourt_likelihood += 0.3
+            if 0.8 <= speed_ratio <= 1.2:  # Consistent speed
+                crosscourt_likelihood += 0.2
+            
+            # Final decision
+            if (bounce_confidence >= 0.6 and 
+                crosscourt_likelihood < 0.5 and 
+                angle_change > 30):
+                bounce_positions.append((int(x_curr), int(y_curr)))
+                
         except Exception:
             continue
     
@@ -1478,39 +1687,124 @@ def calculate_shot_confidence(trajectory_metrics, previous_shot):
             confidence += 0.1
     
     return min(1.0, max(0.1, confidence))
-def count_wall_hits(past_ball_pos, threshold=12):
+def count_wall_hits(past_ball_pos, threshold=15):
     """
-    Enhanced wall hit detection with improved accuracy and lower threshold
+    Enhanced wall hit detection with improved accuracy and crosscourt filtering.
+    Uses physics-based analysis to distinguish between bounces and direction changes.
     """
     try:
         wall_hits = 0
-        direction_changes = 0
-        last_direction = None
-
-        for i in range(1, len(past_ball_pos) - 1):
-            x1, y1, _ = past_ball_pos[i - 1]
-            x2, y2, _ = past_ball_pos[i]
-            x3, y3, _ = past_ball_pos[i + 1]
-
-            # Calculate direction vectors with more precision
-            dir1 = x2 - x1
-            x3 - x2
-
-            # More sensitive direction change detection
-            if abs(dir1) > threshold:
-                current_direction = 1 if dir1 > 0 else -1
-                if last_direction is not None and current_direction != last_direction:
-                    # Check if direction change is significant enough
-                    if abs(dir1) > threshold * 1.2:  # Additional threshold check
-                        direction_changes += 1
-                last_direction = current_direction
-
-            # Count wall hits with stricter criteria
-            if direction_changes >= 2:
-                wall_hits += 1
-                direction_changes = 0
-                last_direction = None
-
+        consecutive_direction_changes = 0
+        last_direction_x = None
+        last_direction_y = None
+        
+        if len(past_ball_pos) < 5:
+            return 0
+        
+        # Define court boundaries and wall zones
+        court_width, court_height = 640, 360
+        wall_zones = {'left': 25, 'right': 25, 'top': 20, 'bottom': 20}
+        
+        for i in range(2, len(past_ball_pos) - 2):
+            try:
+                # Get extended context
+                x_prev2, y_prev2, _ = past_ball_pos[i-2]
+                x_prev, y_prev, _ = past_ball_pos[i-1]
+                x_curr, y_curr, _ = past_ball_pos[i]
+                x_next, y_next, _ = past_ball_pos[i+1]
+                x_next2, y_next2, _ = past_ball_pos[i+2]
+                
+                # Calculate movement vectors with extended context
+                movement_before = (x_curr - x_prev2, y_curr - y_prev2)
+                movement_after = (x_next2 - x_curr, y_next2 - y_curr)
+                
+                # Calculate speeds
+                speed_before = math.sqrt(movement_before[0]**2 + movement_before[1]**2)
+                speed_after = math.sqrt(movement_after[0]**2 + movement_after[1]**2)
+                
+                # Skip if insufficient movement
+                if speed_before < 3.0 or speed_after < 1.0:
+                    continue
+                
+                # Check wall proximity
+                near_wall = (
+                    x_curr <= wall_zones['left'] or 
+                    x_curr >= (court_width - wall_zones['right']) or
+                    y_curr <= wall_zones['top'] or 
+                    y_curr >= (court_height - wall_zones['bottom'])
+                )
+                
+                if not near_wall:
+                    consecutive_direction_changes = 0
+                    continue
+                
+                # Calculate direction change
+                horizontal_change = abs(movement_after[0] - movement_before[0])
+                vertical_change = abs(movement_after[1] - movement_before[1])
+                total_change = horizontal_change + vertical_change
+                
+                # Enhanced direction change detection
+                if total_change > threshold:
+                    # Calculate angle change for validation
+                    if speed_before > 0 and speed_after > 0:
+                        dot_product = (movement_before[0] * movement_after[0] + 
+                                     movement_before[1] * movement_after[1])
+                        cos_angle = dot_product / (speed_before * speed_after)
+                        cos_angle = max(-1, min(1, cos_angle))
+                        angle_change = math.degrees(math.acos(cos_angle))
+                        
+                        # Physics-based validation
+                        bounce_confidence = 0.0
+                        
+                        # Strong angle change indicates bounce
+                        if angle_change > 45:
+                            bounce_confidence += 0.4
+                            if angle_change > 90:
+                                bounce_confidence += 0.3
+                        
+                        # Speed change pattern
+                        speed_ratio = speed_after / speed_before
+                        if speed_ratio < 0.8 or speed_ratio > 1.3:
+                            bounce_confidence += 0.2
+                        
+                        # Direction reversal (strongest indicator)
+                        horizontal_reversal = (
+                            (movement_before[0] > 0 and movement_after[0] < 0) or
+                            (movement_before[0] < 0 and movement_after[0] > 0)
+                        )
+                        vertical_reversal = (
+                            (movement_before[1] > 0 and movement_after[1] < 0) or
+                            (movement_before[1] < 0 and movement_after[1] > 0)
+                        )
+                        
+                        if horizontal_reversal or vertical_reversal:
+                            bounce_confidence += 0.5
+                        
+                        # Crosscourt filtering
+                        crosscourt_likelihood = 0.0
+                        if 20 <= angle_change <= 35:  # Typical crosscourt angle
+                            crosscourt_likelihood += 0.3
+                        if 0.8 <= speed_ratio <= 1.2:  # Consistent speed
+                            crosscourt_likelihood += 0.2
+                        
+                        # Only count as wall hit if high confidence and not crosscourt
+                        if (bounce_confidence >= 0.6 and 
+                            crosscourt_likelihood < 0.4 and
+                            near_wall):
+                            consecutive_direction_changes += 1
+                        else:
+                            consecutive_direction_changes = 0
+                else:
+                    consecutive_direction_changes = 0
+                
+                # Count as wall hit if we have consistent bounce pattern
+                if consecutive_direction_changes >= 1:  # Single strong bounce
+                    wall_hits += 1
+                    consecutive_direction_changes = 0  # Reset for next detection
+                    
+            except Exception:
+                continue
+        
         return wall_hits
 
     except Exception as e:
@@ -2617,17 +2911,8 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     else:
                         cv2.putText(annotated_frame, "NO BALL DETECTED", 
                                 (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    """
-                    ENHANCED FRAMEPOSE WITH OPTIONAL DEEPSORT
-                    """
-                    # Try to use enhanced DeepSort-based tracking if available, fallback to standard
-                    try:
-                        from squash.deepsortframepose import framepose as enhanced_framepose
-                        use_enhanced_tracking = True
-                        print("🔄 Using enhanced DeepSort-based player tracking")
-                    except ImportError as e:
-                        use_enhanced_tracking = False
-                        print(f"📝 Using standard player tracking (DeepSort not available: {e})")
+                    use_enhanced_tracking = False
+
                     
                     # Use the appropriate framepose function
                     if use_enhanced_tracking:
@@ -2896,16 +3181,31 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     # Safe wall bounce detection with fallback dimensions
                     try:
                         if 'frame_width' in locals() and 'frame_height' in locals():
-                            bounce_count = detect_wall_bounces_advanced(past_ball_pos, frame_width, frame_height)
+                            bounce_result = detect_wall_bounces_advanced(past_ball_pos, frame_width, frame_height)
                         else:
                             # Use default dimensions or get from frame
                             current_frame_width = getattr(frame, 'shape', [0, 640])[1] if 'frame' in locals() else 640
                             current_frame_height = getattr(frame, 'shape', [360, 0])[0] if 'frame' in locals() else 360
-                            bounce_count = detect_wall_bounces_advanced(past_ball_pos, current_frame_width, current_frame_height)
-                        coaching_data['wall_bounce_count'] = bounce_count
+                            bounce_result = detect_wall_bounces_advanced(past_ball_pos, current_frame_width, current_frame_height)
+                        
+                        # Extract bounce count and positions
+                        if isinstance(bounce_result, tuple) and len(bounce_result) == 2:
+                            bounce_count, bounce_positions = bounce_result
+                            coaching_data['wall_bounce_count'] = bounce_count
+                            coaching_data['wall_bounce_positions'] = bounce_positions
+                            
+                            # Debug output for first few bounces
+                            if bounce_count > 0 and frame_count <= 100:
+                                print(f"🏐 Frame {frame_count}: {bounce_count} bounces detected at {bounce_positions}")
+                        else:
+                            # Fallback for old format
+                            coaching_data['wall_bounce_count'] = bounce_result if isinstance(bounce_result, int) else 0
+                            coaching_data['wall_bounce_positions'] = []
+                            
                     except Exception as bounce_error:
                         print(f"Wall bounce detection error: {bounce_error}")
                         coaching_data['wall_bounce_count'] = 0
+                        coaching_data['wall_bounce_positions'] = []
                 
                 coaching_data_collection.append(coaching_data)
                 
@@ -3480,6 +3780,21 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 1,
                 )
             
+            #get last 3 ball positions (x,y)
+            if len(past_ball_pos) > 2:
+                x1, y1 = past_ball_pos[-1][0], past_ball_pos[-1][1]
+                x2, y2 = past_ball_pos[-2][0], past_ball_pos[-2][1]
+                #find the slope of the line between the last 2 ball positions
+                if x2 - x1 != 0:
+                    slope = (y2 - y1) / (x2 - x1)
+                else:
+                    pass
+                #find the magnitude of the difference between the last 2 ball positions
+                magnitude = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                #draw an arrow on the middle right to display the slope and magnitude
+                arrow_start = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+                arrow_end = (int(arrow_start[0] + 50), int(arrow_start[1] + 50 * slope)) if slope is not None else arrow_start
+                cv2.arrowedLine(annotated_frame, arrow_start, arrow_end, (0, 255, 0), 2)
             try:
                 csvwrite()
             except Exception as e:
@@ -3627,40 +3942,12 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
             
             # Enhanced coaching report with bounce analysis
             enhanced_report = f"""
-ENHANCED SQUASH COACHING ANALYSIS
-================================================
 
 Analysis Date: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Video Analyzed: {path}
 Total Frames Processed: {frame_count}
 Enhanced Coaching Data Points: {len(coaching_data_collection)}
-GPU Acceleration: {'✅ Enabled' if torch.cuda.is_available() else '❌ CPU Only'}
 
-ENHANCED BALL TRACKING ANALYSIS:
-------------------------------
-• Total trajectory points: {len(past_ball_pos)}
-• Enhanced bounce detection: GPU-accelerated
-• Multi-criteria validation: Angle, velocity, wall proximity
-• Visualization: Real-time yellow circle indicators
-
-{coaching_insights}
-
-TECHNICAL ENHANCEMENTS:
----------------------
-• ⚡ GPU-optimized ball detection and tracking
-• 🎯 Enhanced bounce detection with multiple validation criteria
-• 🔄 Real-time trajectory analysis with physics modeling
-• 📊 Comprehensive coaching data collection
-• 🏐 Advanced ball bounce pattern analysis
-
-SYSTEM PERFORMANCE:
------------------
-• Processing device: {'GPU' if torch.cuda.is_available() else 'CPU'}
-• Ball detection accuracy: Enhanced with trained model
-• Bounce detection: Multi-algorithm validation
-• Real-time analysis: ✅ Active throughout session
-
-================================================
 """
             
             # Save enhanced report
