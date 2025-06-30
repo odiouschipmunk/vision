@@ -29,6 +29,17 @@ from torchvision import transforms
 from autonomous_coaching import collect_coaching_data, generate_coaching_report
 import json
 from sahi.utils.cv import read_image_as_pil
+
+# Import ByteTracker integration
+try:
+    from simple_bytetrack_integration import create_simple_bytetrack_integration
+    BYTETRACK_AVAILABLE = True
+    print("✅ Simplified ByteTracker integration available")
+except ImportError as e:
+    BYTETRACK_AVAILABLE = False
+    print(f"⚠️ ByteTracker not available: {e}")
+    print("Falling back to standard YOLO tracking")
+
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
 
@@ -1413,9 +1424,9 @@ def detect_wall_bounces_advanced(trajectory, court_width, court_height):
                 
                 # 5. Final bounce decision with confidence threshold
                 is_bounce = (bounce_indicators >= 2 and 
-                           bounce_confidence >= 0.6 and 
-                           crosscourt_likelihood < 0.5 and
-                           near_any_wall)
+                        bounce_confidence >= 0.6 and 
+                        crosscourt_likelihood < 0.5 and
+                        near_any_wall)
                 
                 if is_bounce:
                     bounces += 1
@@ -1520,13 +1531,13 @@ def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=
                     # Side wall bounce: horizontal direction reversal
                     if (wall_proximity[pos_idx] and 
                         ((extended_velocities[i, 0] > 0 and extended_velocities[i+1, 0] < 0) or
-                         (extended_velocities[i, 0] < 0 and extended_velocities[i+1, 0] > 0))):
+                        (extended_velocities[i, 0] < 0 and extended_velocities[i+1, 0] > 0))):
                         wall_bounce_indicators[i] = True
                     
                     # Front/back wall bounce: vertical direction component change
                     if (wall_proximity[pos_idx] and
                         ((extended_velocities[i, 1] > 0 and extended_velocities[i+1, 1] < 0) or
-                         (extended_velocities[i, 1] < 0 and extended_velocities[i+1, 1] > 0))):
+                        (extended_velocities[i, 1] < 0 and extended_velocities[i+1, 1] > 0))):
                         wall_bounce_indicators[i] = True
             
             # Combine criteria with enhanced validation
@@ -1560,7 +1571,7 @@ def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=
                     if wall_proximity[pos_idx] and bounce_confidence[idx-2] >= 0.6:
                         x, y = trajectory[idx][:2]
                         bounce_positions.append((int(x.cpu() if hasattr(x, 'cpu') else x), 
-                                              int(y.cpu() if hasattr(y, 'cpu') else y)))
+                                            int(y.cpu() if hasattr(y, 'cpu') else y)))
         
         return bounce_positions
         
@@ -1748,7 +1759,7 @@ def count_wall_hits(past_ball_pos, threshold=15):
                     # Calculate angle change for validation
                     if speed_before > 0 and speed_after > 0:
                         dot_product = (movement_before[0] * movement_after[0] + 
-                                     movement_before[1] * movement_after[1])
+                                    movement_before[1] * movement_after[1])
                         cos_angle = dot_product / (speed_before * speed_after)
                         cos_angle = max(-1, min(1, cos_angle))
                         angle_change = math.degrees(math.acos(cos_angle))
@@ -2278,9 +2289,29 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
             ballmodel.to(device)
             print("✅ Ball detection model loaded on GPU")
         
+        # Initialize ByteTracker integration
+        bytetrack_integration = None
+        if BYTETRACK_AVAILABLE:
+            try:
+                bytetrack_integration = create_simple_bytetrack_integration(
+                    track_thresh=0.5,    # Confidence threshold for tracking
+                    track_buffer=30,     # Frames to keep lost tracks
+                    match_thresh=0.8     # IOU threshold for matching
+                )
+                print("✅ Simplified ByteTracker integration initialized")
+            except Exception as e:
+                print(f"⚠️  Simplified ByteTracker initialization failed: {e}")
+                bytetrack_integration = None
+        else:
+            print("⚠️  ByteTracker not available, using standard YOLO tracking")
+        
         print("=" * 70)
         print("📊 Enhanced Features Active:")
         print("   • GPU-accelerated ball and pose detection")
+        if bytetrack_integration:
+            print("   • Simplified ByteTracker-enhanced player tracking")
+        else:
+            print("   • Standard YOLO player tracking")
         print("   • Enhanced bounce detection with yellow circle visualization")
         print("   • Multi-criteria bounce validation (angle, velocity, wall proximity)")
         print("   • Real-time coaching data collection & analysis")
@@ -2455,10 +2486,41 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 occluded=False,
                 importantdata=[],
                 embeddings=[],
-                plast=[[],[]]
+                plast=[[],[]],
+                bytetrack_integration=None
             ):
                 global known_players_features
                 try:
+                    # Use ByteTracker integration if available
+                    if bytetrack_integration is not None:
+                        try:
+                            # Use ByteTracker enhanced framepose
+                            result = bytetrack_integration.integrate_with_framepose(
+                                pose_model=pose_model,
+                                frame=frame,
+                                other_track_ids=other_track_ids,
+                                updated=updated,
+                                references1=references1,
+                                references2=references2,
+                                pixdiffs=pixdiffs,
+                                players=players,
+                                frame_count=frame_count,
+                                player_last_positions=player_last_positions,
+                                frame_width=frame_width,
+                                frame_height=frame_height,
+                                annotated_frame=annotated_frame,
+                                max_players=max_players
+                            )
+                            return result + [
+                                occluded,
+                                importantdata,
+                                embeddings,
+                                plast
+                            ]
+                        except Exception as e:
+                            print(f"ByteTracker failed: {e}, falling back to standard YOLO tracking")
+                    
+                    # Standard YOLO tracking (fallback)
                     track_results = pose_model.track(frame, persist=True, show=False)
                     if (
                         track_results
@@ -2727,7 +2789,8 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 occluded,
                 importantdata,
                 embeddings=[[],[]],
-                plast=[[],[]]
+                plast=[[],[]],
+                bytetrack_integration=None  # Add ByteTracker parameter
             ):
                 try:
                     # Ball detection with simple processing and safety checks
@@ -2911,16 +2974,19 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     else:
                         cv2.putText(annotated_frame, "NO BALL DETECTED", 
                                 (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    use_enhanced_tracking = False
+                    
+                    # Enable ByteTracker if available
+                    use_enhanced_tracking = bytetrack_integration is not None
 
                     
                     # Use the appropriate framepose function
                     if use_enhanced_tracking:
                         try:
-                            framepose_result = enhanced_framepose(
+                            # Use ByteTracker enhanced tracking
+                            framepose_result = framepose(
                                 pose_model=pose_model,
                                 frame=frame,
-                                otherTrackIds=other_track_ids,
+                                other_track_ids=other_track_ids,
                                 updated=updated,
                                 references1=references1,
                                 references2=references2,
@@ -2935,10 +3001,15 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                                 occluded=occluded,
                                 importantdata=importantdata,
                                 embeddings=embeddings,
-                                plast=plast
+                                plast=plast,
+                                bytetrack_integration=bytetrack_integration
                             )
+                            
+                            # Add ByteTracker status indicator
+                            cv2.putText(annotated_frame, "BYTETRACK: ON", 
+                                    (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
                         except Exception as e:
-                            print(f"Enhanced tracking failed: {e}, falling back to standard")
+                            print(f"ByteTracker failed: {e}, falling back to standard")
                             use_enhanced_tracking = False
                     
                     if not use_enhanced_tracking:
@@ -2960,8 +3031,13 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                             occluded=occluded,
                             importantdata=importantdata,
                             embeddings=embeddings,
-                            plast=plast
+                            plast=plast,
+                            bytetrack_integration=None  # No ByteTracker for fallback
                         )
+                        
+                        # Add standard tracking status indicator
+                        cv2.putText(annotated_frame, "BYTETRACK: OFF", 
+                                (10, 110), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (128, 128, 128), 2)
                     
                     # Ensure framepose_result has minimum required elements
                     if len(framepose_result) < 13:
@@ -3064,7 +3140,9 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 player_last_positions=player_last_positions,
                 occluded=False,
                 importantdata=[],
-                embeddings=embeddings,                plast=plast,
+                embeddings=embeddings,
+                plast=plast,
+                bytetrack_integration=bytetrack_integration  # Pass ByteTracker integration
             )
             
             # Ensure we have all the expected elements in detections_result
@@ -3722,16 +3800,34 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                         else:
                             shot = str(type_of_shot)
                         
-                        # Safe player pose extraction
-                        try:
-                            p1_pose = players.get(1).get_latest_pose().xyn[0].tolist() if players.get(1) and players.get(1).get_latest_pose() else []
-                        except Exception:
-                            p1_pose = []
+                        # Safe player pose extraction with multiple format handling
+                        def extract_player_pose(player):
+                            """Extract player pose keypoints with robust format handling"""
+                            if not player or not player.get_latest_pose():
+                                return []
                             
-                        try:
-                            p2_pose = players.get(2).get_latest_pose().xyn[0].tolist() if players.get(2) and players.get(2).get_latest_pose() else []
-                        except Exception:
-                            p2_pose = []
+                            pose = player.get_latest_pose()
+                            try:
+                                # Try .xyn format first (YOLO standard tracking)
+                                if hasattr(pose, 'xyn') and len(pose.xyn) > 0:
+                                    return pose.xyn[0].tolist()
+                                # Try direct numpy array (SimpleBYTETracker)
+                                elif isinstance(pose, np.ndarray):
+                                    if len(pose.shape) == 3:  # (1, 17, 2/3)
+                                        return pose[0].tolist()
+                                    elif len(pose.shape) == 2:  # (17, 2/3)
+                                        return pose.tolist()
+                                # Try keypoints attribute
+                                elif hasattr(pose, 'keypoints'):
+                                    return pose.keypoints.tolist()
+                                else:
+                                    return pose.tolist() if hasattr(pose, 'tolist') else []
+                            except Exception as e:
+                                print(f"Warning: Error extracting pose data: {e}")
+                                return []
+                        
+                        p1_pose = extract_player_pose(players.get(1))
+                        p2_pose = extract_player_pose(players.get(2))
                         
                         # Safe ball location
                         try:
