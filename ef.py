@@ -1924,16 +1924,16 @@ def calculate_ball_speed(ball_positions):
 
 def main(path="self1.mp4", frame_width=640, frame_height=360):
     try:
-        print("🚀 INITIALIZING GPU-OPTIMIZED SQUASH COACHING PIPELINE")
+        print(" INITIALIZING GPU-OPTIMIZED SQUASH COACHING PIPELINE")
         print("=" * 70)
         
         # GPU optimization setup
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"🔧 Primary compute device: {device}")
+        print(f" Primary compute device: {device}")
         
         if torch.cuda.is_available():
-            print(f"🎮 GPU: {torch.cuda.get_device_name(0)}")
-            print(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f" GPU: {torch.cuda.get_device_name(0)}")
+            print(f" GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
             # Optimize GPU memory usage
             torch.cuda.empty_cache()
         
@@ -1949,9 +1949,9 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 # Try to use GPU for TensorFlow if available
                 import tensorflow as tf
                 tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU')[0], True)
-                print("📊 Ball prediction model loaded with GPU acceleration")
+                print(" Ball prediction model loaded with GPU acceleration")
         except Exception as e:
-            print(f"⚠️  Ball prediction model loading error: {e}")
+            print(f"Ball prediction model loading error: {e}")
             ball_predict = None
 
         def load_data(file_path):
@@ -1970,22 +1970,22 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
         cleanwrite()
         
         # Load models with GPU optimization
-        print("🔄 Loading YOLO models with GPU acceleration...")
+        print(" Loading YOLO models with GPU acceleration...")
         
         # Load pose model with GPU acceleration
         pose_model = YOLO("models/yolo11n-pose.pt")
         if torch.cuda.is_available():
             pose_model.to(device)
-            print("✅ Pose model loaded on GPU")
+            print(" Pose model loaded on GPU")
         
         # Load ball detection model with GPU acceleration  
         ballmodel = YOLO("trained-models\\black_ball_selfv3.pt")
         if torch.cuda.is_available():
             ballmodel.to(device)
-            print("✅ Ball detection model loaded on GPU")
+            print(" Ball detection model loaded on GPU")
         
         print("=" * 70)
-        print("📊 Enhanced Features Active:")
+        print(" Enhanced Features Active:")
         print("   • GPU-accelerated ball and pose detection")
         print("   • Enhanced bounce detection with yellow circle visualization")
         print("   • Multi-criteria bounce validation (angle, velocity, wall proximity)")
@@ -2624,10 +2624,10 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     try:
                         from squash.deepsortframepose import framepose as enhanced_framepose
                         use_enhanced_tracking = True
-                        print("🔄 Using enhanced DeepSort-based player tracking")
+                        #print(" Using enhanced DeepSort-based player tracking")
                     except ImportError as e:
                         use_enhanced_tracking = False
-                        print(f"📝 Using standard player tracking (DeepSort not available: {e})")
+                        print(f"Using standard player tracking (DeepSort not available: {e})")
                     
                     # Use the appropriate framepose function
                     if use_enhanced_tracking:
@@ -2856,7 +2856,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     player_action = classify_player_action(player_keypoints)
                     if isinstance(type_of_shot, list) and len(type_of_shot) >= 2:
                         type_of_shot.append(f"Player{who_hit}_{player_action}")
-                    print(f"🎾 Player {who_hit} action: {player_action}")
+                    #print(f" Player {who_hit} action: {player_action}")
                 except ImportError:
                     pass  # Action classifier not available
                 except Exception as e:
@@ -2892,20 +2892,21 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     except Exception as vel_error:
                         print(f"Velocity calculation error: {vel_error}")
                         coaching_data['ball_velocity_profile'] = []
-                    
-                    # Safe wall bounce detection with fallback dimensions
+                      # Safe wall bounce detection with fallback dimensions
                     try:
                         if 'frame_width' in locals() and 'frame_height' in locals():
-                            bounce_count = detect_wall_bounces_advanced(past_ball_pos, frame_width, frame_height)
+                            bounce_count, bounce_positions = detect_wall_bounces_advanced(past_ball_pos, frame_width, frame_height)
                         else:
                             # Use default dimensions or get from frame
                             current_frame_width = getattr(frame, 'shape', [0, 640])[1] if 'frame' in locals() else 640
                             current_frame_height = getattr(frame, 'shape', [360, 0])[0] if 'frame' in locals() else 360
-                            bounce_count = detect_wall_bounces_advanced(past_ball_pos, current_frame_width, current_frame_height)
+                            bounce_count, bounce_positions = detect_wall_bounces_advanced(past_ball_pos, current_frame_width, current_frame_height)
                         coaching_data['wall_bounce_count'] = bounce_count
+                        coaching_data['bounce_positions'] = bounce_positions
                     except Exception as bounce_error:
                         print(f"Wall bounce detection error: {bounce_error}")
                         coaching_data['wall_bounce_count'] = 0
+                        coaching_data['bounce_positions'] = []
                 
                 coaching_data_collection.append(coaching_data)
                 
@@ -3402,7 +3403,9 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                 else:
                     print(f"Warning: Last ball position has insufficient data: {last_ball_pos}")
             else:
-                print("Warning: No ball positions available for 3D conversion")
+                
+                pass
+                #print("Warning: No ball positions available for 3D conversion")
             
 
             def csvwrite():
@@ -3498,7 +3501,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     # Generate periodic autonomous coaching reports for real-time insights
                     if len(coaching_data_collection) > 50 and running_frame % 500 == 0:
                         try:
-                            print(f"\n🔄 Generating interim coaching report at frame {running_frame}...")
+                            print(f"\n Generating interim coaching report at frame {running_frame}...")
                             generate_coaching_report(coaching_data_collection, path, frame_count)
                             print("✓ Interim coaching report updated.")
                         except Exception as e:
@@ -3615,7 +3618,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
             pass
         
         # Enhanced autonomous coaching analysis and report generation
-        print("\n🎯 Generating Enhanced Autonomous Coaching Analysis with Bounce Detection...")
+        print("\n Generating Enhanced Autonomous Coaching Analysis with Bounce Detection...")
         
         try:
             # Initialize the enhanced autonomous coach
@@ -3634,7 +3637,7 @@ Analysis Date: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Video Analyzed: {path}
 Total Frames Processed: {frame_count}
 Enhanced Coaching Data Points: {len(coaching_data_collection)}
-GPU Acceleration: {'✅ Enabled' if torch.cuda.is_available() else '❌ CPU Only'}
+GPU Acceleration: {' Enabled' if torch.cuda.is_available() else '❌ CPU Only'}
 
 ENHANCED BALL TRACKING ANALYSIS:
 ------------------------------
@@ -3647,39 +3650,37 @@ ENHANCED BALL TRACKING ANALYSIS:
 
 TECHNICAL ENHANCEMENTS:
 ---------------------
-• ⚡ GPU-optimized ball detection and tracking
-• 🎯 Enhanced bounce detection with multiple validation criteria
-• 🔄 Real-time trajectory analysis with physics modeling
-• 📊 Comprehensive coaching data collection
-• 🏐 Advanced ball bounce pattern analysis
+•  GPU-optimized ball detection and tracking
+•  Enhanced bounce detection with multiple validation criteria
+•  Real-time trajectory analysis with physics modeling
+•  Comprehensive coaching data collection
+•  Advanced ball bounce pattern analysis
 
 SYSTEM PERFORMANCE:
 -----------------
 • Processing device: {'GPU' if torch.cuda.is_available() else 'CPU'}
 • Ball detection accuracy: Enhanced with trained model
 • Bounce detection: Multi-algorithm validation
-• Real-time analysis: ✅ Active throughout session
+• Real-time analysis:  Active throughout session
 
 ================================================
 """
-            
-            # Save enhanced report
-            with open("output/enhanced_autonomous_coaching_report.txt", "w") as f:
+              # Save enhanced report
+            with open("output/enhanced_autonomous_coaching_report.txt", "w", encoding='utf-8') as f:
                 f.write(enhanced_report)
-            
-            # Save detailed coaching data with bounce information
+              # Save detailed coaching data with bounce information
             detailed_data = []
             for data_point in coaching_data_collection:
                 if isinstance(data_point, dict):
                     detailed_data.append(data_point)
             
-            with open("output/enhanced_coaching_data.json", "w") as f:
+            with open("output/enhanced_coaching_data.json", "w", encoding='utf-8') as f:
                 json.dump(detailed_data, f, indent=2, default=str)
             
-            print("✅ Enhanced coaching analysis completed!")
+            print(" Enhanced coaching analysis completed!")
             print(f"📋 Enhanced report saved: output/enhanced_autonomous_coaching_report.txt")
-            print(f"📊 Enhanced data saved: output/enhanced_coaching_data.json")
-            print(f"🏐 Ball bounces analyzed: GPU-accelerated detection active")
+            print(f" Enhanced data saved: output/enhanced_coaching_data.json")
+            print(f" Ball bounces analyzed: GPU-accelerated detection active")
             
             # Also generate traditional report for compatibility
             generate_coaching_report(coaching_data_collection, path, frame_count)

@@ -1,0 +1,69 @@
+
+ENHANCED SQUASH COACHING ANALYSIS
+================================================
+
+Analysis Date: 2025-07-02 17:57:23
+Video Analyzed: self1.mp4
+Total Frames Processed: 138
+Enhanced Coaching Data Points: 137
+GPU Acceleration:  Enabled
+
+ENHANCED BALL TRACKING ANALYSIS:
+------------------------------
+• Total trajectory points: 53
+• Enhanced bounce detection: GPU-accelerated
+• Multi-criteria validation: Angle, velocity, wall proximity
+• Visualization: Real-time yellow circle indicators
+
+Based on the comprehensive match analysis provided, here's a detailed coaching plan to address both technical and tactical aspects, with specific emphasis on shot placement, movement control, and training recommendations:
+
+### 1. Technical Shot Analysis with Bounce Pattern Insights
+
+**Shot Placement:**
+- **Straight Drive:** The most frequent shot type indicates strong comfort in this shot. Ensure the follow-through is clean and the body position is correct (e.g., knees bent, hips open). Focus on maintaining proper balance through the shot.
+- **Crosscourt Lob:** This shot shows good variety but could benefit from more consistent placement. Work on varying the height and depth of the lob to create different angles and make it harder for your opponent to read your intentions.
+
+**Bounce Patterns:**
+- **Ball Bounce Analysis:** Since only one bounce was detected, focus on improving the control and timing of the initial bounce. For example, when lobbing, aim to create a softer, lower bounce to catch your opponent off guard. Conversely, when hitting a drive, ensure the ball has enough height to avoid a short game.
+
+### 2. Movement Pattern Assessment
+
+**Player 1:**
+- **Court Coverage:** Good overall coverage but can improve by being more aggressive in the corners and the backcourt. Use the full width of the court to create opportunities.
+- **Mobility:** Low mobility suggests a need for more footwork practice. Focus on quick, explosive movements between shots to maintain pressure on your opponent.
+- **Positioning:** Central positioning is fine for some situations but can be improved by moving closer to the baseline or net depending on the rally dynamics.
+
+**Player 2:**
+- **Court Coverage:** Limited coverage indicates a lack of aggression and a tendency to stay in the middle of the court. Encourage a more active approach, moving deeper into the corners and baselines.
+- **Mobility:** Low mobility can be improved through drills focusing on quick changes of direction and explosive starts.
+- **Positioning:** Central positioning can be beneficial but should be varied based on the situation. Sometimes staying central works well, but other times, moving towards the corners or net can be advantageous.
+
+### 3. Specific Improvement Areas
+
+**Shot Execution Quality:**
+- **Straight Drive:** Ensure the follow-through is smooth and consistent. Practice with a mirror or video to analyze your form. Focus on keeping the wrist firm and the arm extended.
+- **Crosscourt Lob:** Improve the consistency of the bounce by adjusting the height and angle of your shots. Work on the timing
+
+ **Ball Bounce Analysis:**
+   • Total bounces detected: 1
+   • Average bounces per rally: 0.0
+   • Bounce frequency: low
+   • Good shot control with minimal wall bounces
+   • Consider adding tactical boasts when appropriate
+
+TECHNICAL ENHANCEMENTS:
+---------------------
+•  GPU-optimized ball detection and tracking
+•  Enhanced bounce detection with multiple validation criteria
+•  Real-time trajectory analysis with physics modeling
+•  Comprehensive coaching data collection
+•  Advanced ball bounce pattern analysis
+
+SYSTEM PERFORMANCE:
+-----------------
+• Processing device: GPU
+• Ball detection accuracy: Enhanced with trained model
+• Bounce detection: Multi-algorithm validation
+• Real-time analysis:  Active throughout session
+
+================================================

@@ -21,11 +21,11 @@ from squash.Player import Player
 
 class AutonomousSquashCoach:
     def __init__(self):
-        print("🚀 Loading enhanced autonomous coaching model with GPU optimization...")
+        print("Loading enhanced autonomous coaching model with GPU optimization...")
         
         # GPU optimization setup
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"🔧 Coach compute device: {self.device}")
+        print(f"Coach compute device: {self.device}")
         
         # Enhanced analysis parameters
         self.analysis_config = {
@@ -48,13 +48,13 @@ class AutonomousSquashCoach:
             # GPU memory optimization
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                print("   💾 GPU memory optimized for coaching model")
+                print("   GPU memory optimized for coaching model")
             
-            print(f"✅ Enhanced coach model loaded on {self.device}")
+            print(f"Enhanced coach model loaded on {self.device}")
             
         except Exception as e:
-            print(f"⚠️  Could not load AI coaching model: {e}")
-            print("   📝 Will provide enhanced rule-based analysis instead")
+            print(f" Could not load AI coaching model: {e}")
+            print("    Will provide enhanced rule-based analysis instead")
             self.model = None
             self.tokenizer = None
     
@@ -73,9 +73,12 @@ class AutonomousSquashCoach:
             bounce_positions = []
             
             for data_point in coaching_data:
-                if isinstance(data_point, dict):
-                    # Collect wall bounce data
+                if isinstance(data_point, dict):                    # Collect wall bounce data
                     wall_bounces = data_point.get('wall_bounce_count', 0)
+                    # Ensure wall_bounces is an integer (in case it was incorrectly set as a tuple)
+                    if isinstance(wall_bounces, (tuple, list)):
+                        wall_bounces = wall_bounces[0] if wall_bounces else 0
+                    wall_bounces = int(wall_bounces) if wall_bounces is not None else 0
                     total_bounces += wall_bounces
                     
                     if wall_bounces > 0:
@@ -115,17 +118,17 @@ class AutonomousSquashCoach:
         
         # Ball bounce coaching insights
         if bounce_patterns['total_bounces'] > 0:
-            insights.append("🏐 **Ball Bounce Analysis:**")
+            insights.append(" **Ball Bounce Analysis:**")
             insights.append(f"   • Total bounces detected: {bounce_patterns['total_bounces']}")
             insights.append(f"   • Average bounces per rally: {bounce_patterns['avg_bounces_per_rally']:.1f}")
             insights.append(f"   • Bounce frequency: {bounce_patterns['bounce_frequency']}")
             
             if bounce_patterns['bounce_frequency'] == 'high':
-                insights.append("   • 🔄 Consider working on shot placement to reduce unnecessary wall bounces")
-                insights.append("   • 💡 Focus on straight drives and court positioning")
+                insights.append("   •  Consider working on shot placement to reduce unnecessary wall bounces")
+                insights.append("   •  Focus on straight drives and court positioning")
             elif bounce_patterns['bounce_frequency'] == 'low':
-                insights.append("   • ✅ Good shot control with minimal wall bounces")
-                insights.append("   • 💡 Consider adding tactical boasts when appropriate")
+                insights.append("   • Good shot control with minimal wall bounces")
+                insights.append("   • Consider adding tactical boasts when appropriate")
         
         return "\n".join(insights)
 
@@ -163,9 +166,12 @@ Provide enhanced coaching advice including:
 Focus on actionable feedback that addresses both technique and bounce control patterns."""
 
         try:
+            if not self.model or not self.tokenizer:
+                return self.fallback_analysis_with_bounces(analysis, bounce_patterns)
+                
             inputs = self.tokenizer(coaching_prompt, return_tensors="pt", truncation=True, max_length=2048)
-            if self.device == "cuda":
-                inputs = {k: v.cuda() for k, v in inputs.items()}
+            # Move inputs to the same device as the model
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
             
             with torch.no_grad():
                 outputs = self.model.generate(
@@ -565,9 +571,8 @@ def generate_coaching_report(coaching_data_collection, path, frame_count):
     
     try:
         coaching_report = autonomous_coach.analyze_match_data(coaching_data_collection)
-        
-        # Save comprehensive coaching report
-        with open("output/autonomous_coaching_report.txt", "w") as f:
+          # Save comprehensive coaching report
+        with open("output/autonomous_coaching_report.txt", "w", encoding='utf-8') as f:
             f.write("AUTONOMOUS SQUASH COACHING ANALYSIS\n")
             f.write("="*50 + "\n\n")
             f.write(f"Analysis Date: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -579,9 +584,8 @@ def generate_coaching_report(coaching_data_collection, path, frame_count):
             f.write(coaching_report)
             f.write("\n\n" + "="*50 + "\n")
             f.write("End of Analysis\n")
-        
-        # Save detailed coaching data
-        with open("output/detailed_coaching_data.json", "w") as f:
+          # Save detailed coaching data
+        with open("output/detailed_coaching_data.json", "w", encoding='utf-8') as f:
             json.dump({
                 "match_metadata": {
                     "video_path": path,
@@ -603,9 +607,8 @@ def generate_coaching_report(coaching_data_collection, path, frame_count):
         print(coaching_report[:400] + "..." if len(coaching_report) > 400 else coaching_report)
         
     except Exception as e:
-        print(f"Error generating coaching report: {e}")
-        # Still save basic data
-        with open("output/match_data_summary.json", "w") as f:
+        print(f"Error generating coaching report: {e}")        # Still save basic data
+        with open("output/match_data_summary.json", "w", encoding='utf-8') as f:
             json.dump({
                 "total_frames": frame_count,
                 "enhanced_coaching_points": len(coaching_data_collection),

@@ -18,7 +18,7 @@ def initialize_tracker():
     global tracker, device, device_name, feature_extractor, feature_transform
     
     if tracker is None:
-        print("🔄 Initializing DeepSORT tracker (one-time setup)...")
+        print("Initializing DeepSORT tracker (one-time setup)...")
         
         # Initialize DeepSORT tracker with optimized parameters for squash
         tracker = DeepSort(
@@ -36,7 +36,7 @@ def initialize_tracker():
         # Initialize ResNet for appearance features with more robust feature extraction
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         device_name = "GPU" if torch.cuda.is_available() else "CPU"
-        print(f"🚀 DeepSORT using {device_name} for feature extraction")
+        print(f"DeepSORT using {device_name} for feature extraction")
 
         feature_extractor = models.resnet50(pretrained=True).to(device)  # Using ResNet50 for better features
         feature_extractor.eval()
@@ -49,7 +49,7 @@ def initialize_tracker():
             ]
         )
         
-        print("✅ DeepSORT tracker initialized successfully")
+        print(" DeepSORT tracker initialized successfully")
 
 # Track ID to Player ID mapping with confidence scores
 track_to_player = {}
