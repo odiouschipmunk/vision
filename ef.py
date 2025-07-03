@@ -3904,10 +3904,26 @@ SYSTEM PERFORMANCE:
             print(f"📋 Enhanced report saved: output/enhanced_autonomous_coaching_report.txt")
             print(f" Enhanced data saved: output/enhanced_coaching_data.json")
             print(f" Ball bounces analyzed: GPU-accelerated detection active")
-            
-            # Also generate traditional report for compatibility
+              # Also generate traditional report for compatibility
             generate_coaching_report(coaching_data_collection, path, frame_count)
             print("📝 Traditional coaching report also generated for compatibility.")
+            
+            # Generate comprehensive visualizations and analytics
+            print("\n📊 Generating comprehensive visualizations and analytics...")
+            try:
+                from autonomous_coaching import create_graphics, view_all_graphics
+                
+                # Generate all visualizations based on final.csv data
+                create_graphics()
+                print("✅ All visualizations generated successfully!")
+                
+                # Display summary of generated graphics
+                view_all_graphics()
+                print("📈 Graphics summary and analytics displayed!")
+                
+            except Exception as viz_error:
+                print(f"⚠️  Error generating visualizations: {viz_error}")
+                print("   Pipeline completed successfully, but visualizations could not be generated.")
             
         except Exception as e:
             print(f"⚠️  Error in enhanced coaching analysis: {e}")
@@ -3924,6 +3940,13 @@ SYSTEM PERFORMANCE:
         print("   • enhanced_autonomous_coaching_report.txt - Enhanced analysis")
         print("   • enhanced_coaching_data.json - Detailed data with bounces")
         print("   • annotated.mp4 - Video with bounce visualization")
+        print("   • final.csv - Complete match data")
+        print("   📊 graphics/ - Comprehensive visualizations and analytics:")
+        print("     - Shot type analysis and heatmaps")
+        print("     - Player and ball movement patterns")
+        print("     - Ball trajectory analysis")
+        print("     - Match flow and performance metrics")
+        print("     - Summary statistics and reports")
         print("   • Other traditional output files")
         print("=" * 50)
 

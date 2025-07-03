@@ -107783,3 +107783,2449 @@ Same as last frame.
 Frame 201:
 Same as last frame.
 --------------------------------------------------
+
+Frame 1:
+Player 1 is in the unknown area, unknown leaning, and is stationary
+Player 2 is in the unknown area, unknown leaning, and is stationary
+--------------------------------------------------
+
+Frame 2:
+Player 1 is in the unknown area, unknown leaning, and is stationary
+Player 2 is in the unknown area, unknown leaning, and is stationary
+--------------------------------------------------
+
+Frame 3:
+Same as last frame.
+--------------------------------------------------
+
+Frame 4:
+Same as last frame.
+--------------------------------------------------
+
+Frame 5:
+Same as last frame.
+--------------------------------------------------
+
+Frame 6:
+Same as last frame.
+--------------------------------------------------
+
+Frame 7:
+Same as last frame.
+--------------------------------------------------
+
+Frame 8:
+Same as last frame.
+--------------------------------------------------
+
+Frame 9:
+Same as last frame.
+--------------------------------------------------
+
+Frame 10:
+Same as last frame.
+--------------------------------------------------
+
+Frame 11:
+Same as last frame.
+--------------------------------------------------
+
+Frame 12:
+Same as last frame.
+--------------------------------------------------
+
+Frame 13:
+Same as last frame.
+--------------------------------------------------
+
+Frame 14:
+Same as last frame.
+--------------------------------------------------
+
+Frame 15:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+--------------------------------------------------
+
+Frame 16:
+Same as last frame.
+--------------------------------------------------
+
+Frame 17:
+Same as last frame.
+--------------------------------------------------
+
+Frame 18:
+Same as last frame.
+--------------------------------------------------
+
+Frame 19:
+Same as last frame.
+--------------------------------------------------
+
+Frame 20:
+Same as last frame.
+--------------------------------------------------
+
+Frame 21:
+Same as last frame.
+--------------------------------------------------
+
+Frame 22:
+Same as last frame.
+--------------------------------------------------
+
+Frame 23:
+Same as last frame.
+--------------------------------------------------
+
+Frame 24:
+Same as last frame.
+--------------------------------------------------
+
+Frame 25:
+Same as last frame.
+--------------------------------------------------
+
+Frame 26:
+Same as last frame.
+--------------------------------------------------
+
+Frame 27:
+Same as last frame.
+--------------------------------------------------
+
+Frame 28:
+Same as last frame.
+--------------------------------------------------
+
+Frame 29:
+Same as last frame.
+--------------------------------------------------
+
+Frame 30:
+Same as last frame.
+--------------------------------------------------
+
+Frame 31:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [442, 118]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 32:
+Same as last frame.
+--------------------------------------------------
+
+Frame 33:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [445, 114]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 34:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [446, 113]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 35:
+Same as last frame.
+--------------------------------------------------
+
+Frame 36:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [450, 113]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 37:
+Same as last frame.
+--------------------------------------------------
+
+Frame 38:
+Same as last frame.
+--------------------------------------------------
+
+Frame 39:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [454, 118]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 40:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [454, 121]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 41:
+Same as last frame.
+--------------------------------------------------
+
+Frame 42:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [457, 128]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 43:
+Same as last frame.
+--------------------------------------------------
+
+Frame 44:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [459, 137]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 45:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [460, 142]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 46:
+Same as last frame.
+--------------------------------------------------
+
+Frame 47:
+Same as last frame.
+--------------------------------------------------
+
+Frame 48:
+Same as last frame.
+--------------------------------------------------
+
+Frame 49:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [357, 95]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 50:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [341, 88]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 51:
+Same as last frame.
+--------------------------------------------------
+
+Frame 52:
+Same as last frame.
+--------------------------------------------------
+
+Frame 53:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [324, 79]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 54:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [324, 79]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 55:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [324, 79]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 56:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [324, 79]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 57:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [324, 79]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 58:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [298, 73]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 59:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [298, 73]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 60:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [298, 73]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 61:
+Same as last frame.
+--------------------------------------------------
+
+Frame 62:
+Same as last frame.
+--------------------------------------------------
+
+Frame 63:
+Same as last frame.
+--------------------------------------------------
+
+Frame 64:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is 
+Ball position: [298, 73]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 65:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [298, 73]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 66:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front right area, forward and not leaning sideways, and is stationary
+Ball position: [238, 81]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 67:
+Same as last frame.
+--------------------------------------------------
+
+Frame 68:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [217, 89]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 69:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [206, 95]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 70:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [195, 101]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 71:
+Same as last frame.
+--------------------------------------------------
+
+Frame 72:
+Same as last frame.
+--------------------------------------------------
+
+Frame 73:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [151, 128]
+Shot type: crosscourt lob
+--------------------------------------------------
+
+Frame 74:
+Same as last frame.
+--------------------------------------------------
+
+Frame 75:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [121, 151]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 76:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [122, 160]
+Shot type: crosscourt lob
+--------------------------------------------------
+
+Frame 77:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [122, 170]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 78:
+Same as last frame.
+--------------------------------------------------
+
+Frame 79:
+Same as last frame.
+--------------------------------------------------
+
+Frame 80:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [125, 210]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 81:
+Same as last frame.
+--------------------------------------------------
+
+Frame 82:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [127, 245]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 83:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [130, 255]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 84:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [132, 249]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 85:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [134, 245]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 86:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [138, 241]
+Shot type: wide_crosscourt lob
+--------------------------------------------------
+
+Frame 87:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [141, 238]
+Shot type: crosscourt lob
+--------------------------------------------------
+
+Frame 88:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [145, 235]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 89:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [148, 233]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 90:
+Same as last frame.
+--------------------------------------------------
+
+Frame 91:
+Same as last frame.
+--------------------------------------------------
+
+Frame 92:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [148, 233]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 93:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [148, 233]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 94:
+Same as last frame.
+--------------------------------------------------
+
+Frame 95:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [148, 233]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 96:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [148, 233]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 97:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [265, 94]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 98:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [265, 94]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 99:
+Player 1 is in the middle left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [265, 94]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 100:
+Player 1 is in the middle left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [265, 94]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 101:
+Same as last frame.
+--------------------------------------------------
+
+Frame 101:
+Player 1 is in the middle left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [265, 94]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 102:
+Player 1 is in the middle left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [254, 90]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 103:
+Player 1 is in the middle left area, forward and not leaning sideways, and is right
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [252, 89]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 104:
+Player 1 is in the middle left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [252, 89]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 105:
+Same as last frame.
+--------------------------------------------------
+
+Frame 106:
+Player 1 is in the middle left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [252, 89]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 107:
+Player 1 is in the front center area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [252, 89]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 108:
+Player 1 is in the front center area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [237, 96]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 109:
+Same as last frame.
+--------------------------------------------------
+
+Frame 110:
+Same as last frame.
+--------------------------------------------------
+
+Frame 111:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [237, 96]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 112:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Ball position: [220, 111]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 113:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [220, 111]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 114:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [220, 111]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 115:
+Same as last frame.
+--------------------------------------------------
+
+Frame 116:
+Same as last frame.
+--------------------------------------------------
+
+Frame 117:
+Same as last frame.
+--------------------------------------------------
+
+Frame 118:
+Player 1 is in the front center area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [220, 111]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 119:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [180, 177]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 120:
+Same as last frame.
+--------------------------------------------------
+
+Frame 121:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [164, 211]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 122:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [155, 230]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 123:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [147, 242]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 124:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [140, 238]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 125:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [133, 234]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 126:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [125, 232]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 127:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [117, 230]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 128:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [109, 229]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 129:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [99, 229]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 130:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [90, 230]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 131:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [80, 232]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 132:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [69, 234]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 133:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [58, 239]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 134:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [45, 245]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 135:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [32, 253]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 136:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [22, 258]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 137:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [30, 250]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 138:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [38, 246]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 139:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [45, 242]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 140:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [52, 240]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 141:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [60, 238]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 142:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [67, 238]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 143:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [74, 238]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 144:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [81, 240]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 145:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is stationary
+Ball position: [88, 242]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 146:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is stationary
+Ball position: [93, 246]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 147:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is stationary
+Ball position: [100, 250]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 148:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is stationary
+Ball position: [107, 255]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 149:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 150:
+Same as last frame.
+--------------------------------------------------
+
+Frame 151:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the middle left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 152:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 153:
+Same as last frame.
+--------------------------------------------------
+
+Frame 154:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 155:
+Same as last frame.
+--------------------------------------------------
+
+Frame 156:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 157:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 158:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 159:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 160:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 161:
+Same as last frame.
+--------------------------------------------------
+
+Frame 162:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 163:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 164:
+Same as last frame.
+--------------------------------------------------
+
+Frame 165:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 166:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 167:
+Player 1 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 168:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [222, 121]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 169:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [218, 125]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 170:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [214, 130]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 171:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [210, 135]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 172:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [205, 141]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 173:
+Same as last frame.
+--------------------------------------------------
+
+Frame 174:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [195, 157]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 175:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 176:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 177:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 178:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, upright and not leaning sideways, and is 
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 179:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, upright and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 180:
+Same as last frame.
+--------------------------------------------------
+
+Frame 181:
+Same as last frame.
+--------------------------------------------------
+
+Frame 182:
+Same as last frame.
+--------------------------------------------------
+
+Frame 183:
+Same as last frame.
+--------------------------------------------------
+
+Frame 184:
+Same as last frame.
+--------------------------------------------------
+
+Frame 185:
+Same as last frame.
+--------------------------------------------------
+
+Frame 186:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 187:
+Same as last frame.
+--------------------------------------------------
+
+Frame 188:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 189:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 190:
+Same as last frame.
+--------------------------------------------------
+
+Frame 191:
+Same as last frame.
+--------------------------------------------------
+
+Frame 192:
+Same as last frame.
+--------------------------------------------------
+
+Frame 193:
+Same as last frame.
+--------------------------------------------------
+
+Frame 194:
+Same as last frame.
+--------------------------------------------------
+
+Frame 195:
+Same as last frame.
+--------------------------------------------------
+
+Frame 196:
+Same as last frame.
+--------------------------------------------------
+
+Frame 197:
+Same as last frame.
+--------------------------------------------------
+
+Frame 198:
+Same as last frame.
+--------------------------------------------------
+
+Frame 199:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 200:
+Same as last frame.
+--------------------------------------------------
+
+Frame 201:
+Same as last frame.
+--------------------------------------------------
+
+Frame 201:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 202:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 203:
+Same as last frame.
+--------------------------------------------------
+
+Frame 204:
+Same as last frame.
+--------------------------------------------------
+
+Frame 205:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 206:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 207:
+Same as last frame.
+--------------------------------------------------
+
+Frame 208:
+Same as last frame.
+--------------------------------------------------
+
+Frame 209:
+Same as last frame.
+--------------------------------------------------
+
+Frame 210:
+Same as last frame.
+--------------------------------------------------
+
+Frame 211:
+Same as last frame.
+--------------------------------------------------
+
+Frame 212:
+Same as last frame.
+--------------------------------------------------
+
+Frame 213:
+Same as last frame.
+--------------------------------------------------
+
+Frame 214:
+Same as last frame.
+--------------------------------------------------
+
+Frame 215:
+Same as last frame.
+--------------------------------------------------
+
+Frame 216:
+Same as last frame.
+--------------------------------------------------
+
+Frame 217:
+Same as last frame.
+--------------------------------------------------
+
+Frame 218:
+Same as last frame.
+--------------------------------------------------
+
+Frame 219:
+Same as last frame.
+--------------------------------------------------
+
+Frame 220:
+Same as last frame.
+--------------------------------------------------
+
+Frame 221:
+Same as last frame.
+--------------------------------------------------
+
+Frame 222:
+Same as last frame.
+--------------------------------------------------
+
+Frame 223:
+Same as last frame.
+--------------------------------------------------
+
+Frame 224:
+Same as last frame.
+--------------------------------------------------
+
+Frame 225:
+Same as last frame.
+--------------------------------------------------
+
+Frame 226:
+Same as last frame.
+--------------------------------------------------
+
+Frame 227:
+Same as last frame.
+--------------------------------------------------
+
+Frame 228:
+Same as last frame.
+--------------------------------------------------
+
+Frame 229:
+Same as last frame.
+--------------------------------------------------
+
+Frame 230:
+Same as last frame.
+--------------------------------------------------
+
+Frame 231:
+Same as last frame.
+--------------------------------------------------
+
+Frame 232:
+Player 1 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Player 2 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 233:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [189, 166]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 234:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [213, 136]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 235:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [213, 136]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 236:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [203, 146]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 237:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [198, 152]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 238:
+Same as last frame.
+--------------------------------------------------
+
+Frame 239:
+Same as last frame.
+--------------------------------------------------
+
+Frame 240:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [179, 177]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 241:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [179, 177]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 242:
+Same as last frame.
+--------------------------------------------------
+
+Frame 243:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [158, 202]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 244:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [153, 200]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 245:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [147, 198]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 246:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [141, 197]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 247:
+Same as last frame.
+--------------------------------------------------
+
+Frame 248:
+Same as last frame.
+--------------------------------------------------
+
+Frame 249:
+Same as last frame.
+--------------------------------------------------
+
+Frame 250:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [115, 197]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 251:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [108, 198]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 252:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [100, 201]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 253:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [93, 205]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 254:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [88, 209]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 255:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [82, 214]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 256:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [76, 220]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 257:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [69, 227]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 258:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [62, 236]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 259:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [56, 246]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 260:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [49, 257]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 261:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [42, 270]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 262:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [33, 280]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 263:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [21, 282]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 264:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front center area, forward and not leaning sideways, and is stationary
+Ball position: [10, 286]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 265:
+Same as last frame.
+--------------------------------------------------
+
+Frame 266:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [10, 286]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 267:
+Same as last frame.
+--------------------------------------------------
+
+Frame 268:
+Same as last frame.
+--------------------------------------------------
+
+Frame 269:
+Same as last frame.
+--------------------------------------------------
+
+Frame 270:
+Same as last frame.
+--------------------------------------------------
+
+Frame 271:
+Same as last frame.
+--------------------------------------------------
+
+Frame 272:
+Same as last frame.
+--------------------------------------------------
+
+Frame 273:
+Same as last frame.
+--------------------------------------------------
+
+Frame 274:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [5, 286]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 275:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [11, 285]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 276:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [20, 285]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 277:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [28, 285]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 278:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [34, 286]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 279:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [36, 281]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 280:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [38, 278]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 281:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [41, 275]
+Shot type: straight lob
+--------------------------------------------------
+
+Frame 282:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [43, 273]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 283:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [45, 273]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 284:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [48, 273]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 285:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [51, 274]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 286:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [54, 274]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 287:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [55, 271]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 288:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [58, 270]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 289:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [59, 269]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 290:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [61, 269]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 291:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [64, 269]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 292:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [66, 267]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 293:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [67, 266]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 294:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [69, 266]
+Shot type: straight drive
+--------------------------------------------------
+
+Frame 295:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [71, 264]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 296:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [73, 264]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 297:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [75, 263]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 298:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [76, 262]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 299:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [78, 261]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 300:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [80, 259]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 301:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [82, 258]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 301:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [82, 258]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 302:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [83, 258]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 303:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [85, 257]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 304:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [86, 256]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 305:
+Player 1 is in the front center area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is 
+Ball position: [88, 255]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 306:
+Player 1 is in the front left area, forward and not leaning sideways, and is moving rapidly
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [89, 254]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 307:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [91, 253]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 308:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [92, 253]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 309:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [93, 251]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 310:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [95, 250]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 311:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [97, 250]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 312:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [98, 249]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 313:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [99, 248]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 314:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [100, 247]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 315:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [102, 247]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 316:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [103, 246]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 317:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [104, 245]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 318:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [105, 245]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 319:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [107, 244]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 320:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [108, 242]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 321:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [109, 242]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 322:
+Same as last frame.
+--------------------------------------------------
+
+Frame 323:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [110, 241]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 324:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [112, 241]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 325:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [113, 240]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 326:
+Same as last frame.
+--------------------------------------------------
+
+Frame 327:
+Same as last frame.
+--------------------------------------------------
+
+Frame 328:
+Same as last frame.
+--------------------------------------------------
+
+Frame 329:
+Same as last frame.
+--------------------------------------------------
+
+Frame 330:
+Same as last frame.
+--------------------------------------------------
+
+Frame 331:
+Same as last frame.
+--------------------------------------------------
+
+Frame 332:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [123, 234]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 333:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [125, 233]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 334:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [126, 232]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 335:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [129, 231]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 336:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [130, 230]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 337:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [132, 229]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 338:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [133, 229]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 339:
+Same as last frame.
+--------------------------------------------------
+
+Frame 340:
+Same as last frame.
+--------------------------------------------------
+
+Frame 341:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [138, 225]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 342:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [139, 225]
+Shot type: tight_straight drive
+--------------------------------------------------
+
+Frame 343:
+Same as last frame.
+--------------------------------------------------
+
+Frame 344:
+Same as last frame.
+--------------------------------------------------
+
+Frame 345:
+Same as last frame.
+--------------------------------------------------
+
+Frame 346:
+Same as last frame.
+--------------------------------------------------
+
+Frame 347:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [126, 201]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 348:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [122, 194]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 349:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [124, 189]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 350:
+Same as last frame.
+--------------------------------------------------
+
+Frame 351:
+Same as last frame.
+--------------------------------------------------
+
+Frame 352:
+Same as last frame.
+--------------------------------------------------
+
+Frame 353:
+Same as last frame.
+--------------------------------------------------
+
+Frame 354:
+Same as last frame.
+--------------------------------------------------
+
+Frame 355:
+Same as last frame.
+--------------------------------------------------
+
+Frame 356:
+Same as last frame.
+--------------------------------------------------
+
+Frame 357:
+Same as last frame.
+--------------------------------------------------
+
+Frame 358:
+Same as last frame.
+--------------------------------------------------
+
+Frame 359:
+Same as last frame.
+--------------------------------------------------
+
+Frame 360:
+Same as last frame.
+--------------------------------------------------
+
+Frame 361:
+Same as last frame.
+--------------------------------------------------
+
+Frame 362:
+Same as last frame.
+--------------------------------------------------
+
+Frame 363:
+Same as last frame.
+--------------------------------------------------
+
+Frame 364:
+Same as last frame.
+--------------------------------------------------
+
+Frame 365:
+Same as last frame.
+--------------------------------------------------
+
+Frame 366:
+Same as last frame.
+--------------------------------------------------
+
+Frame 367:
+Same as last frame.
+--------------------------------------------------
+
+Frame 368:
+Same as last frame.
+--------------------------------------------------
+
+Frame 369:
+Same as last frame.
+--------------------------------------------------
+
+Frame 370:
+Same as last frame.
+--------------------------------------------------
+
+Frame 371:
+Same as last frame.
+--------------------------------------------------
+
+Frame 372:
+Same as last frame.
+--------------------------------------------------
+
+Frame 373:
+Same as last frame.
+--------------------------------------------------
+
+Frame 374:
+Same as last frame.
+--------------------------------------------------
+
+Frame 375:
+Same as last frame.
+--------------------------------------------------
+
+Frame 376:
+Same as last frame.
+--------------------------------------------------
+
+Frame 377:
+Same as last frame.
+--------------------------------------------------
+
+Frame 378:
+Same as last frame.
+--------------------------------------------------
+
+Frame 379:
+Same as last frame.
+--------------------------------------------------
+
+Frame 380:
+Same as last frame.
+--------------------------------------------------
+
+Frame 381:
+Same as last frame.
+--------------------------------------------------
+
+Frame 382:
+Same as last frame.
+--------------------------------------------------
+
+Frame 383:
+Same as last frame.
+--------------------------------------------------
+
+Frame 384:
+Same as last frame.
+--------------------------------------------------
+
+Frame 385:
+Same as last frame.
+--------------------------------------------------
+
+Frame 386:
+Same as last frame.
+--------------------------------------------------
+
+Frame 387:
+Same as last frame.
+--------------------------------------------------
+
+Frame 388:
+Same as last frame.
+--------------------------------------------------
+
+Frame 389:
+Same as last frame.
+--------------------------------------------------
+
+Frame 390:
+Same as last frame.
+--------------------------------------------------
+
+Frame 391:
+Same as last frame.
+--------------------------------------------------
+
+Frame 392:
+Same as last frame.
+--------------------------------------------------
+
+Frame 393:
+Same as last frame.
+--------------------------------------------------
+
+Frame 394:
+Same as last frame.
+--------------------------------------------------
+
+Frame 395:
+Same as last frame.
+--------------------------------------------------
+
+Frame 396:
+Same as last frame.
+--------------------------------------------------
+
+Frame 397:
+Same as last frame.
+--------------------------------------------------
+
+Frame 398:
+Same as last frame.
+--------------------------------------------------
+
+Frame 399:
+Same as last frame.
+--------------------------------------------------
+
+Frame 400:
+Same as last frame.
+--------------------------------------------------
+
+Frame 401:
+Same as last frame.
+--------------------------------------------------
+
+Frame 401:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [124, 189]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 402:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [124, 189]
+Shot type: tight_straight lob
+--------------------------------------------------
+
+Frame 403:
+Same as last frame.
+--------------------------------------------------
+
+Frame 404:
+Same as last frame.
+--------------------------------------------------
+
+Frame 405:
+Same as last frame.
+--------------------------------------------------
+
+Frame 406:
+Same as last frame.
+--------------------------------------------------
+
+Frame 407:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [245, 128]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 408:
+Same as last frame.
+--------------------------------------------------
+
+Frame 409:
+Same as last frame.
+--------------------------------------------------
+
+Frame 410:
+Same as last frame.
+--------------------------------------------------
+
+Frame 411:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [260, 122]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 412:
+Same as last frame.
+--------------------------------------------------
+
+Frame 413:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [268, 122]
+Shot type: slight_crosscourt lob
+--------------------------------------------------
+
+Frame 414:
+Same as last frame.
+--------------------------------------------------
+
+Frame 415:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [276, 126]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 416:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [280, 129]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 417:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [280, 129]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 418:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [289, 136]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 419:
+Same as last frame.
+--------------------------------------------------
+
+Frame 420:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [297, 144]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 421:
+Player 1 is in the front left area, forward and not leaning sideways, and is 
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [301, 150]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 422:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [301, 150]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 423:
+Same as last frame.
+--------------------------------------------------
+
+Frame 424:
+Same as last frame.
+--------------------------------------------------
+
+Frame 425:
+Same as last frame.
+--------------------------------------------------
+
+Frame 426:
+Same as last frame.
+--------------------------------------------------
+
+Frame 427:
+Same as last frame.
+--------------------------------------------------
+
+Frame 428:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [348, 85]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 429:
+Same as last frame.
+--------------------------------------------------
+
+Frame 430:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [354, 80]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 431:
+Player 1 is in the front left area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [357, 78]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 432:
+Same as last frame.
+--------------------------------------------------
+
+Frame 433:
+Same as last frame.
+--------------------------------------------------
+
+Frame 434:
+Player 1 is in the front right area, forward and not leaning sideways, and is moving rapidly
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [357, 78]
+Shot type: angled_crosscourt lob
+--------------------------------------------------
+
+Frame 435:
+Player 1 is in the front right area, forward and not leaning sideways, and is stationary
+Player 2 is in the front left area, forward and not leaning sideways, and is stationary
+Ball position: [357, 78]
+Shot type: angled_crosscourt lob
+--------------------------------------------------

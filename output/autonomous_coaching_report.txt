@@ -1,54 +1,53 @@
 AUTONOMOUS SQUASH COACHING ANALYSIS
 ==================================================
 
-Analysis Date: 2025-07-02 17:59:53
+Analysis Date: 2025-07-03 12:11:04
 Video Analyzed: self1.mp4
-Total Frames Processed: 138
-Enhanced Coaching Data Points: 137
+Total Frames Processed: 435
+Enhanced Coaching Data Points: 435
 
 COACHING INSIGHTS:
 --------------------
-Based on the comprehensive match analysis provided, here's a detailed set of coaching advice aimed at improving technical shot placement, movement patterns, and overall tactical execution while addressing bounce control:
+Based on the comprehensive match analysis provided, here is a detailed set of coaching advice for improving Player1's performance in squash:
 
 ### 1. Technical Shot Analysis with Bounce Pattern Insights
 
-**Shot Placement and Bounce Control:**
-- **Straight Drive (Straight Drive_0):** Player1 excelled in straight drives, but the ball was often bouncing off the back wall. Ensure to adjust your stance and footwork to maintain control over the bounce, especially when approaching from the backcourt.
-- **Straight Lob Soft:** This shot was effective but sometimes resulted in a high bounce that can be difficult to control. Work on your approach angle and timing to generate more consistent bounces.
-- **Angled Crosscourt Lob Soft:** This shot showed promise, but the ball was frequently bouncing too high or low. Focus on the height and depth of your lob, ensuring it lands softly and close to the net.
+**Shot Analysis:**
+- **Slight Crosscourt Lob Soft:** This shot is the most frequently used, but it might not be as effective due to its low variation. Consider incorporating more variation in the height and pace of this shot to confuse the opponent.
+- **Tight Straight Drive Soft:** Effective, but can be improved by varying the depth and angle. Aim for tighter angles and deeper positions to create more favorable shot placements.
+- **Tight Straight Lob Soft:** Similar to the lob, focus on varied heights and angles to keep your opponent guessing.
 
-**Recommendation:**
-- Incorporate specific drills focusing on controlling the bounce, such as hitting against a wall or using a soft surface to practice landing the ball at desired heights and angles.
-- Practice with a coach to get feedback on your approach angles and timing.
+**Bounce Pattern Insights:**
+- **Ball Bounces:** The high number of bounces suggests that the ball is often hit close to the boundary or with significant backspin, which can lead to errors if not controlled properly. Focus on maintaining consistent bounce patterns, especially near the edges of the court, to create more challenging shots for your opponent.
 
 ### 2. Movement Pattern Assessment
 
-**Court Coverage and Movement:**
-- **PLAYER1:** While court coverage is good, mobility and positioning need improvement. Maintain a balanced position to cover the entire court, especially when transitioning between shots. Use quick and efficient movements to change direction quickly.
-- **PLAYER2:** Limited court coverage and low mobility indicate a need for more aggressive movement patterns. Increase the range of motion during your approach and return shots to better cover the court.
+**Player1:**
+- **Court Coverage:** Good overall, but the mobility could be improved. More dynamic movements can help you cover more ground and create more opportunities.
+- **Positioning:** Central positioning works well, but try to use the entire court more effectively. Moving to different parts of the court can disrupt your opponent’s rhythm and create more openings.
 
-**Recommendation:**
-- Implement agility drills like shuttle runs, ladder drills, and lateral shuffles to improve mobility and reaction time.
-- Work on dynamic footwork to make quicker transitions between different parts of the court.
+**Player2:**
+- **Court Coverage:** Also good, but similar to Player1, mobility needs improvement. Utilize the full width of the court to create more pressure.
+- **Positioning:** Central positioning suits both players, but consider using the corners more strategically to create more difficult situations.
 
 ### 3. Specific Improvement Areas Focusing on Shot Placement
 
-**Straight Drives:**
-- Ensure your stance and weight distribution are correct, with your back foot slightly ahead of your front foot. Keep your knees bent and your body in a stable position.
-- Practice hitting from various angles to understand how different approaches affect the ball’s trajectory and bounce.
+**Shot Placement:**
+- **Drive Shots:** Work on hitting drives from different angles and depths. Practice hitting drives from the front and back of the court to force your opponent into poor shot placement.
+- **Lob Shots:** Vary the height and pace of your lob shots. Hit higher lobs from the corners to catch your opponent off guard and lower lobs from the center to force them into unforced errors.
+- **Crosscourt Shots:** Practice hitting crosscourt shots from different parts of the court, including the corners, to keep your opponent guessing.
 
-**Straight Lobs:**
-- Focus on maintaining a high center of gravity to produce a softer, controlled bounce. Practice lifting the ball off the table before hitting the lob.
-- Experiment with different heights and depths to find the ideal landing point.
+### 4. Training Recommendations for Better Court Control
 
-**Angled Crosscourt Lobs
+**Training Recommendations:**
+- **Court Drills:** Implement drills that require
 
  **Ball Bounce Analysis:**
-   • Total bounces detected: 1
-   • Average bounces per rally: 0.0
-   • Bounce frequency: low
-   • Good shot control with minimal wall bounces
-   • Consider adding tactical boasts when appropriate
+   • Total bounces detected: 359
+   • Average bounces per rally: 0.8
+   • Bounce frequency: high
+   •  Consider working on shot placement to reduce unnecessary wall bounces
+   •  Focus on straight drives and court positioning
 
 ==================================================
 End of Analysis

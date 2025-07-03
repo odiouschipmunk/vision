@@ -2,54 +2,54 @@
 ENHANCED SQUASH COACHING ANALYSIS
 ================================================
 
-Analysis Date: 2025-07-02 17:57:23
+Analysis Date: 2025-07-03 12:08:36
 Video Analyzed: self1.mp4
-Total Frames Processed: 138
-Enhanced Coaching Data Points: 137
+Total Frames Processed: 435
+Enhanced Coaching Data Points: 435
 GPU Acceleration:  Enabled
 
 ENHANCED BALL TRACKING ANALYSIS:
 ------------------------------
-• Total trajectory points: 53
+• Total trajectory points: 100
 • Enhanced bounce detection: GPU-accelerated
 • Multi-criteria validation: Angle, velocity, wall proximity
 • Visualization: Real-time yellow circle indicators
 
-Based on the comprehensive match analysis provided, here's a detailed coaching plan to address both technical and tactical aspects, with specific emphasis on shot placement, movement control, and training recommendations:
+Based on the comprehensive match analysis, here are specific coaching insights to address the identified areas for improvement in both technical aspects and movement patterns:
 
 ### 1. Technical Shot Analysis with Bounce Pattern Insights
 
 **Shot Placement:**
-- **Straight Drive:** The most frequent shot type indicates strong comfort in this shot. Ensure the follow-through is clean and the body position is correct (e.g., knees bent, hips open). Focus on maintaining proper balance through the shot.
-- **Crosscourt Lob:** This shot shows good variety but could benefit from more consistent placement. Work on varying the height and depth of the lob to create different angles and make it harder for your opponent to read your intentions.
+- **Slight Crosscourt Lob Soft:** This shot is effective but can be improved by varying the height and depth of the lob. Ensure the ball bounces low on the opponent's side to create angles and force errors.
+- **Tight Straight Drive Soft:** While this drive is solid, it can be more effective if you adjust your shot height to create more spin and control. Aim for a higher shot when you need to keep the ball low and a lower shot when you want to hit through the ball.
 
 **Bounce Patterns:**
-- **Ball Bounce Analysis:** Since only one bounce was detected, focus on improving the control and timing of the initial bounce. For example, when lobbing, aim to create a softer, lower bounce to catch your opponent off guard. Conversely, when hitting a drive, ensure the ball has enough height to avoid a short game.
+- **High to Low Bounces:** Use this pattern more frequently, especially against aggressive players. For example, hit a high lob followed by a low drive or a tight lob followed by a crosscourt drive. This disrupts the opponent’s rhythm and forces them into unforced errors.
+- **Low to High Bounces:** This pattern can be used to set up shots. Hit a low lob followed by a high drive to catch the opponent off guard. Alternatively, hit a low lob followed by a high crosscourt drive to create a difficult angle.
 
 ### 2. Movement Pattern Assessment
 
-**Player 1:**
-- **Court Coverage:** Good overall coverage but can improve by being more aggressive in the corners and the backcourt. Use the full width of the court to create opportunities.
-- **Mobility:** Low mobility suggests a need for more footwork practice. Focus on quick, explosive movements between shots to maintain pressure on your opponent.
-- **Positioning:** Central positioning is fine for some situations but can be improved by moving closer to the baseline or net depending on the rally dynamics.
+**PLAYER1:**
+- **Court Coverage:** Good, but can improve mobility. Move faster and more efficiently between the baseline and the sidelines. Focus on quick footwork to cover ground quickly.
+- **Mobility:** Improve your ability to move laterally and vertically. Practice drills that enhance lateral movement such as shuttle runs and lateral sprints.
+- **Positioning:** Maintain a central position to cover all areas of the court effectively. Avoid getting stuck in one corner.
 
-**Player 2:**
-- **Court Coverage:** Limited coverage indicates a lack of aggression and a tendency to stay in the middle of the court. Encourage a more active approach, moving deeper into the corners and baselines.
-- **Mobility:** Low mobility can be improved through drills focusing on quick changes of direction and explosive starts.
-- **Positioning:** Central positioning can be beneficial but should be varied based on the situation. Sometimes staying central works well, but other times, moving towards the corners or net can be advantageous.
+**PLAYER2:**
+- **Court Coverage:** Good, but needs to be more consistent. Ensure you cover the full width of the court without leaving gaps.
+- **Mobility:** Work on increasing your mobility. Focus on drills that improve your ability to accelerate and decelerate quickly, such as plyometric jumps and explosive sprints.
+- **Positioning:** Central positioning is good, but also practice moving to different parts of the court to create pressure. This will help you anticipate your opponent's movements better.
 
-### 3. Specific Improvement Areas
+### 3. Specific Improvement Areas Focusing on Shot Placement
 
-**Shot Execution Quality:**
-- **Straight Drive:** Ensure the follow-through is smooth and consistent. Practice with a mirror or video to analyze your form. Focus on keeping the wrist firm and the arm extended.
-- **Crosscourt Lob:** Improve the consistency of the bounce by adjusting the height and angle of your shots. Work on the timing
+**PLAYER1:**
+- **Slight Crosscourt Lob Soft:** Practice hitting slightly higher lobs to create more depth. Also, vary the timing
 
  **Ball Bounce Analysis:**
-   • Total bounces detected: 1
-   • Average bounces per rally: 0.0
-   • Bounce frequency: low
-   • Good shot control with minimal wall bounces
-   • Consider adding tactical boasts when appropriate
+   • Total bounces detected: 359
+   • Average bounces per rally: 0.8
+   • Bounce frequency: high
+   •  Consider working on shot placement to reduce unnecessary wall bounces
+   •  Focus on straight drives and court positioning
 
 TECHNICAL ENHANCEMENTS:
 ---------------------

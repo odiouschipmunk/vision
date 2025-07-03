@@ -1,0 +1,29 @@
+SQUASH MATCH ANALYSIS SUMMARY
+========================================
+
+Total Frames: 289
+Active Frames: 259
+Activity Rate: 89.6%
+Unique Shot Types: 8
+Most Common Shot: slight_crosscourt lob
+Player 1 Hits: 90
+Player 2 Hits: 166
+Average Ball Height: N/A
+Max Ball Height: N/A
+
+SHOT TYPE BREAKDOWN:
+--------------------
+slight_crosscourt lob: 109 (37.7%)
+straight lob: 56 (19.4%)
+straight drive: 40 (13.8%)
+tight_straight drive: 28 (9.7%)
+angled_crosscourt lob: 26 (9.0%)
+tight_straight lob: 15 (5.2%)
+wide_crosscourt lob: 11 (3.8%)
+crosscourt lob: 4 (1.4%)
+
+PLAYER PERFORMANCE:
+--------------------
+2 hit the ball: 166 (57.4%)
+1 hit the ball: 90 (31.1%)
+0 hit the ball: 33 (11.4%)
