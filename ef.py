@@ -1328,131 +1328,354 @@ def detect_wall_bounces_advanced(trajectory, court_width, court_height):
     
     return bounces, bounce_positions
 
-def detect_ball_bounces_gpu(trajectory, velocity_threshold=3.0, angle_threshold=30.0, court_width=640, court_height=360):
+
+def detect_ball_bounces_gpu(trajectory, velocity_threshold=30.0, angle_threshold=45.0, court_width=640, court_height=360):
     """
-    Enhanced GPU-optimized ball bounce detection with improved accuracy and visual feedback
+    Enhanced GPU-optimized ball bounce detection with improved physics modeling and filtering
     """
-    if len(trajectory) < 4:
+    if len(trajectory) < 6:  # Need more points for reliable detection
         return []
     
-    # Use GPU if available
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     try:
         # Extract positions and convert to GPU tensors
         positions = torch.tensor([[pos[0], pos[1]] for pos in trajectory], dtype=torch.float32, device=device)
+        times = torch.tensor([pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)], dtype=torch.float32, device=device)
         
         bounce_positions = []
         
-        if len(positions) < 4:
+        if len(positions) < 6:
             return bounce_positions
         
-        # Calculate velocities using GPU vectorization
-        velocities = positions[1:] - positions[:-1]
+        # 1. ENHANCED VELOCITY ANALYSIS
+        # Calculate velocities with time normalization
+        dt = times[1:] - times[:-1]
+        dt = torch.clamp(dt, min=1e-6)  # Prevent division by zero
+        
+        displacements = positions[1:] - positions[:-1]
+        velocities = displacements / dt.unsqueeze(1)
         speeds = torch.norm(velocities, dim=1)
         
-        # Enhanced bounce detection with multiple criteria
-        if len(velocities) >= 2:
+        # 2. ACCELERATION ANALYSIS (key for bounce detection)
+        dt_vel = times[2:] - times[:-2] 
+        dt_vel = torch.clamp(dt_vel, min=1e-6)
+        
+        accelerations = (velocities[1:] - velocities[:-1]) / dt_vel.unsqueeze(1)
+        acceleration_magnitudes = torch.norm(accelerations, dim=1)
+        
+        # 3. ENHANCED DIRECTION ANALYSIS
+        if len(velocities) >= 3:
             # Normalize velocities to get directions
-            normalized_velocities = torch.nn.functional.normalize(velocities + 1e-8, p=2, dim=1)
+            normalized_velocities = F.normalize(velocities + 1e-8, p=2, dim=1)
             
-            # Calculate dot products for consecutive direction vectors
+            # Calculate angular changes between consecutive velocity vectors
             dot_products = torch.sum(normalized_velocities[:-1] * normalized_velocities[1:], dim=1)
-            
-            # Calculate angles between consecutive direction vectors
             angles = torch.acos(torch.clamp(dot_products, -1.0, 1.0)) * 180.0 / math.pi
             
-            # Enhanced velocity analysis
-            velocity_changes = torch.abs(speeds[1:] - speeds[:-1])
+            # 4. ENHANCED WALL PROXIMITY WITH GRADIENT
+            wall_margin = 50
+            wall_distances = torch.min(torch.stack([
+                positions[:, 0],  # Distance from left wall
+                court_width - positions[:, 0],  # Distance from right wall  
+                positions[:, 1],  # Distance from top wall
+                court_height - positions[:, 1]  # Distance from bottom wall
+            ]), dim=0)[0]
             
-            # Speed ratio analysis - dramatic speed changes indicate bounces
-            speed_ratios = torch.zeros_like(velocity_changes)
-            mask = speeds[:-1] > 1e-6
-            speed_ratios[mask] = speeds[1:][mask] / speeds[:-1][mask]
+            # Create wall proximity score (0 = at wall, 1 = far from wall)
+            wall_proximity_score = torch.clamp(wall_distances / wall_margin, 0, 1)
             
-            # Wall proximity check using GPU
-            wall_proximity = torch.zeros(len(positions), dtype=torch.bool, device=device)
-            wall_margin = 40  # pixels from wall
-            wall_proximity = (
-                (positions[:, 0] < wall_margin) |  # Left wall
-                (positions[:, 0] > court_width - wall_margin) |  # Right wall
-                (positions[:, 1] < wall_margin) |  # Top wall
-                (positions[:, 1] > court_height - wall_margin)   # Bottom wall
-            )
+            # 5. PHYSICS-BASED BOUNCE DETECTION
+            # Look for characteristic bounce patterns
+            bounce_candidates = []
             
-            # Enhanced bounce detection criteria
-            # 1. Significant angle change
-            angle_bounces = angles > angle_threshold
-            
-            # 2. Dramatic velocity change
-            velocity_bounces = velocity_changes > velocity_threshold
-            
-            # 3. Speed ratio indicating impact (sudden deceleration or acceleration)
-            ratio_bounces = (speed_ratios < 0.4) | (speed_ratios > 2.5)
-            
-            # 4. Combine all criteria with wall proximity
-            bounce_mask = (angle_bounces | velocity_bounces | ratio_bounces)
-            
-            # Get bounce indices
-            bounce_indices = torch.where(bounce_mask)[0] + 1
-            
-            # Additional validation: check wall proximity for each bounce
-            for idx in bounce_indices:
-                if idx < len(trajectory):
-                    pos_idx = min(idx, len(wall_proximity) - 1)
-                    # Accept bounce if near wall OR has very strong signal
-                    strong_signal = (
-                        angles[min(idx-1, len(angles)-1)] > angle_threshold * 1.5 or
-                        velocity_changes[min(idx-1, len(velocity_changes)-1)] > velocity_threshold * 2
-                    )
+            for i in range(2, len(speeds) - 2):
+                # Skip if not enough data
+                if i >= len(angles) or i >= len(acceleration_magnitudes):
+                    continue
+                
+                # Multiple bounce indicators
+                indicators = []
+                
+                # A. Sudden direction change
+                if angles[i-1] > angle_threshold:
+                    indicators.append(('angle', angles[i-1].item(), 0.8))
+                
+                # B. Velocity magnitude change (deceleration then acceleration)
+                speed_change = abs(speeds[i+1] - speeds[i-1])
+                if speed_change > velocity_threshold:
+                    indicators.append(('velocity', speed_change.item(), 0.7))
+                
+                # C. High acceleration (impact detection)
+                if acceleration_magnitudes[i-1] > 100:  # Adjust threshold as needed
+                    indicators.append(('acceleration', acceleration_magnitudes[i-1].item(), 0.9))
+                
+                # D. Wall proximity factor
+                wall_factor = 1.0 - wall_proximity_score[i]
+                if wall_factor > 0.3:  # Near wall
+                    indicators.append(('wall_proximity', wall_factor.item(), 0.6))
+                
+                # E. Velocity reversal detection
+                if i > 0 and i < len(velocities) - 1:
+                    vel_before = velocities[i-1]
+                    vel_after = velocities[i+1]
                     
-                    if wall_proximity[pos_idx] or strong_signal:
-                        x, y = trajectory[idx][:2]
-                        bounce_positions.append((int(x.cpu() if hasattr(x, 'cpu') else x), 
-                                            int(y.cpu() if hasattr(y, 'cpu') else y)))
+                    # Check for component reversal (especially important for wall bounces)
+                    x_reversal = vel_before[0] * vel_after[0] < 0
+                    y_reversal = vel_before[1] * vel_after[1] < 0
+                    
+                    if x_reversal or y_reversal:
+                        reversal_strength = 1.0 if (x_reversal and y_reversal) else 0.7
+                        indicators.append(('velocity_reversal', reversal_strength, 0.85))
+                
+                # F. Trajectory curvature analysis
+                if i >= 2 and i < len(positions) - 2:
+                    # Calculate curvature using three points
+                    p1, p2, p3 = positions[i-1], positions[i], positions[i+1]
+                    
+                    # Vector from p1 to p2
+                    v1 = p2 - p1
+                    # Vector from p2 to p3  
+                    v2 = p3 - p2
+                    
+                    # Cross product magnitude indicates curvature
+                    cross_product = v1[0] * v2[1] - v1[1] * v2[0]
+                    curvature = abs(cross_product) / (torch.norm(v1) * torch.norm(v2) + 1e-8)
+                    
+                    if curvature > 0.5:  # High curvature indicates direction change
+                        indicators.append(('curvature', curvature.item(), 0.6))
+                
+                # Calculate combined confidence score
+                if indicators:
+                    total_weight = sum(weight for _, _, weight in indicators)
+                    weighted_score = sum(weight for _, _, weight in indicators) / len(indicators)
+                    
+                    # Bonus for multiple indicators
+                    multi_indicator_bonus = min(0.3, 0.1 * (len(indicators) - 1))
+                    final_confidence = weighted_score + multi_indicator_bonus
+                    
+                    bounce_candidates.append({
+                        'index': i,
+                        'confidence': final_confidence,
+                        'indicators': indicators,
+                        'wall_factor': wall_factor.item()
+                    })
+            
+            # 6. BOUNCE FILTERING AND SELECTION
+            # Sort by confidence and apply non-maximum suppression
+            bounce_candidates.sort(key=lambda x: x['confidence'], reverse=True)
+            
+            # Non-maximum suppression to avoid duplicate detections
+            min_separation = 5  # Minimum frames between bounces
+            selected_bounces = []
+            
+            for candidate in bounce_candidates:
+                if candidate['confidence'] < 0.5:  # Confidence threshold
+                    continue
+                
+                # Check if too close to already selected bounces
+                too_close = False
+                for selected in selected_bounces:
+                    if abs(candidate['index'] - selected['index']) < min_separation:
+                        too_close = True
+                        break
+                
+                if not too_close:
+                    selected_bounces.append(candidate)
+            
+            # 7. CONVERT TO OUTPUT FORMAT
+            for bounce in selected_bounces:
+                idx = bounce['index']
+                if idx < len(trajectory):
+                    x, y = trajectory[idx][:2]
+                    
+                    # Ensure coordinates are properly converted
+                    if hasattr(x, 'cpu'):
+                        x = x.cpu()
+                    if hasattr(y, 'cpu'):
+                        y = y.cpu()
+                    
+                    bounce_positions.append({
+                        'position': (int(x), int(y)),
+                        'confidence': bounce['confidence'],
+                        'indicators': bounce['indicators'],
+                        'frame_index': idx
+                    })
         
-        return bounce_positions
+        # Return just positions for compatibility, but include confidence info
+        return [bounce['position'] for bounce in bounce_positions]
         
     except Exception as e:
         print(f"GPU bounce detection error: {e}, falling back to CPU")
-        return detect_ball_bounces_cpu(trajectory, velocity_threshold, angle_threshold)
+        return detect_ball_bounces_cpu_enhanced(trajectory, velocity_threshold, angle_threshold, court_width, court_height)
 
-def detect_ball_bounces_cpu(trajectory, velocity_threshold=3.0, angle_threshold=30.0):
-    """CPU fallback for bounce detection"""
+def detect_ball_bounces_cpu_enhanced(trajectory, velocity_threshold=30.0, angle_threshold=45.0, court_width=640, court_height=360):
+    """
+    Enhanced CPU fallback with improved physics modeling
+    """
     bounce_positions = []
     
-    if len(trajectory) < 4:
+    if len(trajectory) < 6:
         return bounce_positions
     
-    for i in range(2, len(trajectory) - 1):
-        try:
-            p1, p2, p3 = trajectory[i-1], trajectory[i], trajectory[i+1]
+    # Convert to numpy for efficient computation
+    positions = np.array([[pos[0], pos[1]] for pos in trajectory])
+    times = np.array([pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)])
+    
+    # Calculate velocities
+    dt = np.diff(times)
+    dt = np.maximum(dt, 1e-6)  # Prevent division by zero
+    
+    displacements = np.diff(positions, axis=0)
+    velocities = displacements / dt[:, np.newaxis]
+    speeds = np.linalg.norm(velocities, axis=1)
+    
+    # Calculate accelerations
+    if len(velocities) >= 2:
+        dt_vel = times[2:] - times[:-2]
+        dt_vel = np.maximum(dt_vel, 1e-6)
+        
+        accelerations = np.diff(velocities, axis=0) / dt_vel[:, np.newaxis]
+        acceleration_magnitudes = np.linalg.norm(accelerations, axis=1)
+        
+        # Enhanced bounce detection
+        for i in range(2, len(speeds) - 2):
+            bounce_score = 0
             
-            # Calculate vectors
-            v1 = [p2[0] - p1[0], p2[1] - p1[1]]
-            v2 = [p3[0] - p2[0], p3[1] - p2[1]]
-            
-            # Calculate speeds
-            speed1 = math.sqrt(v1[0]**2 + v1[1]**2)
-            speed2 = math.sqrt(v2[0]**2 + v2[1]**2)
-            
-            # Calculate angle change
-            if speed1 > 0 and speed2 > 0:
-                dot_product = v1[0]*v2[0] + v1[1]*v2[1]
-                cos_angle = dot_product / (speed1 * speed2)
-                cos_angle = max(-1, min(1, cos_angle))
-                angle = math.degrees(math.acos(cos_angle))
+            # Check multiple bounce indicators
+            if i < len(velocities) - 1:
+                # Direction change
+                v1 = velocities[i-1]
+                v2 = velocities[i+1]
                 
-                # Check for bounce indicators
-                speed_change = abs(speed2 - speed1)
-                
-                if angle > angle_threshold or speed_change > velocity_threshold:
-                    bounce_positions.append((int(p2[0]), int(p2[1])))
+                if np.linalg.norm(v1) > 0 and np.linalg.norm(v2) > 0:
+                    cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+                    angle = np.arccos(np.clip(cos_angle, -1, 1)) * 180 / np.pi
                     
-        except Exception:
-            continue
+                    if angle > angle_threshold:
+                        bounce_score += 0.4
+                
+                # Velocity magnitude change
+                speed_change = abs(speeds[i+1] - speeds[i-1])
+                if speed_change > velocity_threshold:
+                    bounce_score += 0.3
+                
+                # Acceleration spike
+                if i-1 < len(acceleration_magnitudes) and acceleration_magnitudes[i-1] > 100:
+                    bounce_score += 0.3
+                
+                # Wall proximity
+                x, y = positions[i]
+                wall_distance = min(x, court_width - x, y, court_height - y)
+                if wall_distance < 50:
+                    bounce_score += 0.2 * (1 - wall_distance / 50)
+                
+                # Velocity component reversal
+                if (v1[0] * v2[0] < 0) or (v1[1] * v2[1] < 0):
+                    bounce_score += 0.3
+                
+                # Accept bounce if score is high enough
+                if bounce_score > 0.6:
+                    bounce_positions.append((int(positions[i][0]), int(positions[i][1])))
     
     return bounce_positions
+
+def smooth_trajectory_gpu(trajectory, window_size=5):
+    """
+    GPU-optimized trajectory smoothing to reduce noise before bounce detection
+    """
+    if len(trajectory) < window_size:
+        return trajectory
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    try:
+        positions = torch.tensor([[pos[0], pos[1]] for pos in trajectory], dtype=torch.float32, device=device)
+        
+        # Apply Gaussian smoothing
+        smoothed_positions = []
+        
+        for i in range(len(positions)):
+            start_idx = max(0, i - window_size // 2)
+            end_idx = min(len(positions), i + window_size // 2 + 1)
+            
+            window_positions = positions[start_idx:end_idx]
+            weights = torch.exp(-torch.linspace(-1, 1, len(window_positions))**2)
+            weights = weights / weights.sum()
+            
+            smoothed_pos = torch.sum(window_positions * weights.unsqueeze(1), dim=0)
+            smoothed_positions.append(smoothed_pos)
+        
+        # Convert back to original format
+        smoothed_trajectory = []
+        for i, pos in enumerate(smoothed_positions):
+            original_time = trajectory[i][2] if len(trajectory[i]) > 2 else i
+            smoothed_trajectory.append([pos[0].cpu().item(), pos[1].cpu().item(), original_time])
+        
+        return smoothed_trajectory
+        
+    except Exception as e:
+        print(f"GPU smoothing error: {e}, using CPU fallback")
+        return trajectory
+
+def detect_ball_bounces_with_preprocessing(trajectory, **kwargs):
+    """
+    Main function that combines preprocessing with enhanced bounce detection
+    """
+    if len(trajectory) < 6:
+        return []
+    
+    # 1. Smooth trajectory to reduce noise
+    smoothed_trajectory = smooth_trajectory_gpu(trajectory)
+    
+    # 2. Apply enhanced bounce detection
+    bounces = detect_ball_bounces_gpu(smoothed_trajectory, **kwargs)
+    
+    # 3. Post-process bounces (remove duplicates, validate physics)
+    validated_bounces = validate_bounces(bounces, smoothed_trajectory)
+    
+    return validated_bounces
+
+def validate_bounces(bounces, trajectory):
+    """
+    Validate detected bounces using physics constraints
+    """
+    if not bounces or len(trajectory) < 6:
+        return bounces
+    
+    validated = []
+    
+    for bounce in bounces:
+        # Extract position (handle both tuple and dict formats)
+        if isinstance(bounce, dict):
+            pos = bounce['position']
+        else:
+            pos = bounce
+        
+        # Find corresponding trajectory index
+        bounce_idx = None
+        for i, traj_pos in enumerate(trajectory):
+            if abs(traj_pos[0] - pos[0]) < 5 and abs(traj_pos[1] - pos[1]) < 5:
+                bounce_idx = i
+                break
+        
+        if bounce_idx is not None and bounce_idx > 2 and bounce_idx < len(trajectory) - 2:
+            # Validate physics: check if velocity pattern makes sense
+            before_pos = trajectory[bounce_idx - 2]
+            after_pos = trajectory[bounce_idx + 2]
+            
+            # Check if there's actual movement (not a false positive)
+            movement_before = math.sqrt((trajectory[bounce_idx][0] - before_pos[0])**2 + 
+                                     (trajectory[bounce_idx][1] - before_pos[1])**2)
+            movement_after = math.sqrt((after_pos[0] - trajectory[bounce_idx][0])**2 + 
+                                     (after_pos[1] - trajectory[bounce_idx][1])**2)
+            
+            if movement_before > 5 and movement_after > 5:  # Sufficient movement
+                validated.append(bounce)
+    
+    return validated
+
+
 
 def calculate_shot_confidence(trajectory_metrics, previous_shot):
     """
@@ -1494,7 +1717,7 @@ def count_wall_hits(past_ball_pos, threshold=12):
 
             # Calculate direction vectors with more precision
             dir1 = x2 - x1
-            x3 - x2
+            
 
             # More sensitive direction change detection
             if abs(dir1) > threshold:
