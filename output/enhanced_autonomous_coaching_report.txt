@@ -2,10 +2,10 @@
 ENHANCED SQUASH COACHING ANALYSIS
 ================================================
 
-Analysis Date: 2025-07-03 12:08:36
+Analysis Date: 2025-07-18 15:10:59
 Video Analyzed: self1.mp4
-Total Frames Processed: 435
-Enhanced Coaching Data Points: 435
+Total Frames Processed: 4086
+Enhanced Coaching Data Points: 3982
 GPU Acceleration:  Enabled
 
 ENHANCED BALL TRACKING ANALYSIS:
@@ -15,41 +15,66 @@ ENHANCED BALL TRACKING ANALYSIS:
 • Multi-criteria validation: Angle, velocity, wall proximity
 • Visualization: Real-time yellow circle indicators
 
-Based on the comprehensive match analysis, here are specific coaching insights to address the identified areas for improvement in both technical aspects and movement patterns:
+ENHANCED AUTONOMOUS SQUASH COACHING ANALYSIS:
 
-### 1. Technical Shot Analysis with Bounce Pattern Insights
+COMPREHENSIVE MATCH ANALYSIS:
 
-**Shot Placement:**
-- **Slight Crosscourt Lob Soft:** This shot is effective but can be improved by varying the height and depth of the lob. Ensure the ball bounces low on the opponent's side to create angles and force errors.
-- **Tight Straight Drive Soft:** While this drive is solid, it can be more effective if you adjust your shot height to create more spin and control. Aim for a higher shot when you need to keep the ball low and a lower shot when you want to hit through the ball.
+BASIC STATISTICS:
+• Total data points analyzed: 3982
+• Active rally time: 93.4% of match
+• Number of rallies: 38
+• Average rally length: 97.8 frames
+• Longest rally: 678 frames
 
-**Bounce Patterns:**
-- **High to Low Bounces:** Use this pattern more frequently, especially against aggressive players. For example, hit a high lob followed by a low drive or a tight lob followed by a crosscourt drive. This disrupts the opponent’s rhythm and forces them into unforced errors.
-- **Low to High Bounces:** This pattern can be used to set up shots. Hit a low lob followed by a high drive to catch the opponent off guard. Alternatively, hit a low lob followed by a high crosscourt drive to create a difficult angle.
+SHOT ANALYSIS:
+• Most frequent shot: straight_lob_soft (822 occurrences)
+• Shot variety score: 39/10
+• Total unique shot types: 46
+• Top 3 shots: {'straight_lob_soft': 822, 'angled_crosscourt_lob_soft': 576, 'slight_crosscourt_lob_soft': 521}
 
-### 2. Movement Pattern Assessment
+BALL DYNAMICS:
+• Average ball speed: 8.05 pixels/frame
+• Maximum ball speed: 119.86 pixels/frame
+• Speed consistency: Variable
+• Ball tracking quality: 0.00/1.0
 
-**PLAYER1:**
-- **Court Coverage:** Good, but can improve mobility. Move faster and more efficiently between the baseline and the sidelines. Focus on quick footwork to cover ground quickly.
-- **Mobility:** Improve your ability to move laterally and vertically. Practice drills that enhance lateral movement such as shuttle runs and lateral sprints.
-- **Positioning:** Maintain a central position to cover all areas of the court effectively. Avoid getting stuck in one corner.
+MOVEMENT PATTERNS:
+• PLAYER1: Court coverage - Excellent, Mobility - Low, Positioning - Central
+• PLAYER2: Court coverage - Excellent, Mobility - Low, Positioning - Central
 
-**PLAYER2:**
-- **Court Coverage:** Good, but needs to be more consistent. Ensure you cover the full width of the court without leaving gaps.
-- **Mobility:** Work on increasing your mobility. Focus on drills that improve your ability to accelerate and decelerate quickly, such as plyometric jumps and explosive sprints.
-- **Positioning:** Central positioning is good, but also practice moving to different parts of the court to create pressure. This will help you anticipate your opponent's movements better.
+SHOT PATTERNS & TACTICS:
+• Shot direction preference: 44.7% straight, 55.3% crosscourt
+• Shot height preference: 15.5% drives, 84.5% lobs
+• Most common transition: slight_crosscourt→straight (46 times)
+• Pattern predictability: 15.0% (Low)
+• Tactical variety: High
 
-### 3. Specific Improvement Areas Focusing on Shot Placement
+PERFORMANCE ASSESSMENT:
+• Overall performance level: Good (6.2/10)
+• Match intensity: High
+• Shot execution quality: Needs improvement
+• Rally sustainability: Strong
+• Technical diversity: High
 
-**PLAYER1:**
-- **Slight Crosscourt Lob Soft:** Practice hitting slightly higher lobs to create more depth. Also, vary the timing
+DATA QUALITY INDICATORS:
+• Ball detection rate: 99.2%
+• Movement tracking quality: Good
+• Average movement intensity: 0.01 pixels/frame
 
  **Ball Bounce Analysis:**
-   • Total bounces detected: 359
-   • Average bounces per rally: 0.8
+   • Total bounces detected: 6889
+   • Average bounces per rally: 1.7
    • Bounce frequency: high
    •  Consider working on shot placement to reduce unnecessary wall bounces
    •  Focus on straight drives and court positioning
+
+COACHING RECOMMENDATIONS:
+• Continue tracking ball bounces for better shot placement awareness
+• Focus on minimizing unnecessary wall bounces through improved accuracy
+• Use tactical bounces (boasts) strategically when appropriate
+• Work on court positioning to optimize ball trajectory control
+
+Note: This analysis uses enhanced ball bounce detection with GPU acceleration for improved accuracy.
 
 TECHNICAL ENHANCEMENTS:
 ---------------------

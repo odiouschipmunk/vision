@@ -9,6 +9,10 @@ Pillow==10.0.0
 torch==2.0.1
 torchvision==0.15.2
 
+# Enhanced ReID system dependencies
+scikit-learn==1.3.0
+clip-by-openai==1.0
+
 # Optional for enhanced features
 tensorflow==2.13.0
 pandas==2.0.3

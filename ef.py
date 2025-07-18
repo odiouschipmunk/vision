@@ -2843,17 +2843,56 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     """
                     ENHANCED FRAMEPOSE WITH OPTIONAL DEEPSORT
                     """
-                    # Try to use enhanced DeepSort-based tracking if available, fallback to standard
+                    # Try to use enhanced ReID system first, then DeepSort, then fallback to standard
+                    use_enhanced_reid = False
+                    use_enhanced_tracking = False
+                    
+                    # First, try enhanced ReID system
                     try:
-                        from squash.deepsortframepose import framepose as enhanced_framepose
-                        use_enhanced_tracking = True
-                        #print(" Using enhanced DeepSort-based player tracking")
+                        from enhanced_framepose import enhanced_framepose as reid_framepose
+                        use_enhanced_reid = True
+                        print("🔄 Using enhanced ReID-based player tracking")
                     except ImportError as e:
-                        use_enhanced_tracking = False
-                        print(f"Using standard player tracking (DeepSort not available: {e})")
+                        print(f"Enhanced ReID not available: {e}")
+                    
+                    # If ReID not available, try DeepSort
+                    if not use_enhanced_reid:
+                        try:
+                            from squash.deepsortframepose import framepose as enhanced_framepose
+                            use_enhanced_tracking = True
+                            print("🔄 Using enhanced DeepSort-based player tracking")
+                        except ImportError as e:
+                            print(f"Using standard player tracking (DeepSort not available: {e})")
                     
                     # Use the appropriate framepose function
-                    if use_enhanced_tracking:
+                    if use_enhanced_reid:
+                        try:
+                            framepose_result = reid_framepose(
+                                pose_model=pose_model,
+                                frame=frame,
+                                otherTrackIds=other_track_ids,
+                                updated=updated,
+                                references1=references1,
+                                references2=references2,
+                                pixdiffs=pixdiffs,
+                                players=players,
+                                frame_count=frame_count,
+                                player_last_positions=player_last_positions,
+                                frame_width=frame_width,
+                                frame_height=frame_height,
+                                annotated_frame=annotated_frame,
+                                max_players=2,
+                                occluded=occluded,
+                                importantdata=importantdata,
+                                embeddings=embeddings,
+                                plast=plast
+                            )
+                        except Exception as e:
+                            print(f"Enhanced ReID tracking failed: {e}, falling back to DeepSort")
+                            use_enhanced_reid = False
+                            use_enhanced_tracking = True
+                    
+                    if not use_enhanced_reid and use_enhanced_tracking:
                         try:
                             framepose_result = enhanced_framepose(
                                 pose_model=pose_model,
@@ -2879,7 +2918,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                             print(f"Enhanced tracking failed: {e}, falling back to standard")
                             use_enhanced_tracking = False
                     
-                    if not use_enhanced_tracking:
+                    if not use_enhanced_reid and not use_enhanced_tracking:
                         # Standard framepose with enhanced parameters
                         framepose_result = framepose(
                             pose_model=pose_model,
@@ -2920,6 +2959,18 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     embeddings = framepose_result[15] if len(framepose_result) > 15 else [[],[]]
                     
                     who_hit = determine_ball_hit(players, past_ball_pos)
+                    
+                    # Save ReID statistics periodically
+                    if frame_count % 500 == 0:
+                        try:
+                            if use_enhanced_reid:
+                                from enhanced_framepose import save_reid_references, get_reid_statistics
+                                save_reid_references(f"output/reid_references_frame_{frame_count}.json")
+                                reid_stats = get_reid_statistics()
+                                print(f"📊 ReID Stats at frame {frame_count}: {reid_stats}")
+                        except Exception as e:
+                            print(f"Error saving ReID stats: {e}")
+                    
                     #print(f'is rally on: {is_rally_on(plast)}')
                     return [
                         frame,  # 0
@@ -3908,6 +3959,52 @@ SYSTEM PERFORMANCE:
             generate_coaching_report(coaching_data_collection, path, frame_count)
             print("📝 Traditional coaching report also generated for compatibility.")
             
+            # Generate ReID system report if available
+            try:
+                from enhanced_framepose import get_reid_statistics, save_reid_references
+                reid_stats = get_reid_statistics()
+                if reid_stats:
+                    save_reid_references("output/final_reid_references.json")
+                    
+                    reid_report = f"""
+ENHANCED PLAYER RE-IDENTIFICATION REPORT
+=======================================
+
+Total Track ID Swaps Detected: {reid_stats.get('total_swaps_detected', 0)}
+Player 1 Initialization: {'✅ Complete' if reid_stats.get('initialization_status', {}).get(1) else '❌ Incomplete'}
+Player 2 Initialization: {'✅ Complete' if reid_stats.get('initialization_status', {}).get(2) else '❌ Incomplete'}
+
+Reference Feature Counts:
+- Player 1: {reid_stats.get('reference_counts', {}).get(1, 0)} appearance features
+- Player 2: {reid_stats.get('reference_counts', {}).get(2, 0)} appearance features
+
+Final Track Mappings: {reid_stats.get('current_mappings', {})}
+
+System Performance:
+- Initialization frames: 100-150 (when players are separated)
+- Proximity threshold: 100 pixels (for swap detection)
+- Confidence threshold: 0.6 (for identity assignments)
+- Feature extraction: ResNet50-based deep features
+
+The ReID system continuously monitors player appearances and positions,
+detecting when track IDs may have been swapped due to occlusion or
+close proximity between players.
+"""
+                    
+                    with open("output/reid_analysis_report.txt", "w", encoding='utf-8') as f:
+                        f.write(reid_report)
+                    
+                    print("🆔 Player ReID analysis report generated!")
+                    print(f"   - Total swaps detected: {reid_stats.get('total_swaps_detected', 0)}")
+                    print(f"   - References saved: output/final_reid_references.json")
+                    print(f"   - Report saved: output/reid_analysis_report.txt")
+            except Exception as e:
+                print(f"⚠️ Error generating ReID report: {e}")
+            
+            # Also generate traditional report for compatibility
+            generate_coaching_report(coaching_data_collection, path, frame_count)
+            print("📝 Traditional coaching report also generated for compatibility.")
+            
             # Generate comprehensive visualizations and analytics
             print("\n📊 Generating comprehensive visualizations and analytics...")
             try:
@@ -3939,6 +4036,8 @@ SYSTEM PERFORMANCE:
         print("📁 Check output/ directory for results:")
         print("   • enhanced_autonomous_coaching_report.txt - Enhanced analysis")
         print("   • enhanced_coaching_data.json - Detailed data with bounces")
+        print("   🆔 reid_analysis_report.txt - Player ReID analysis")
+        print("   🆔 final_reid_references.json - Player appearance references")
         print("   • annotated.mp4 - Video with bounce visualization")
         print("   • final.csv - Complete match data")
         print("   📊 graphics/ - Comprehensive visualizations and analytics:")
@@ -3948,6 +4047,13 @@ SYSTEM PERFORMANCE:
         print("     - Match flow and performance metrics")
         print("     - Summary statistics and reports")
         print("   • Other traditional output files")
+        print("=" * 50)
+        print("\n🆔 ENHANCED REID SYSTEM FEATURES:")
+        print("   • Initial player appearance capture (frames 100-150)")
+        print("   • Continuous track ID swap detection")
+        print("   • Deep learning-based appearance features")
+        print("   • Multi-modal identity verification (appearance + position)")
+        print("   • Real-time confidence scoring")
         print("=" * 50)
 
         cap.release()
