@@ -139,31 +139,32 @@ def enhanced_framepose(
             reid_result = reid_system.process_frame(reid_detections, frame_count)
             
             # Update otherTrackIds based on ReID results
-            for detection in reid_detections:
-                track_id = detection['track_id']
+            # This is critical - ensure unique player assignments
+            reid_assignments = reid_result['player_assignments']
+            
+            # First, remove any existing mappings for these track IDs to avoid conflicts
+            track_ids_to_update = list(reid_assignments.keys())
+            otherTrackIds[:] = [mapping for mapping in otherTrackIds if mapping[0] not in track_ids_to_update]
+            
+            # Add new mappings from ReID system
+            for track_id, player_id in reid_assignments.items():
+                otherTrackIds.append([track_id, player_id])
+                logger.info(f"ReID assignment: Track {track_id} -> Player {player_id}")
+            
+            # Validate no duplicate player assignments
+            assigned_players = [mapping[1] for mapping in otherTrackIds]
+            if len(assigned_players) != len(set(assigned_players)) and len(assigned_players) > 1:
+                logger.warning(f"Duplicate player assignments detected: {otherTrackIds}")
+                # Keep only the latest assignment for each player
+                player_to_latest_track = {}
+                for track_id, player_id in otherTrackIds:
+                    player_to_latest_track[player_id] = track_id
                 
-                if track_id in reid_result['player_assignments']:
-                    player_id = reid_result['player_assignments'][track_id]
-                    
-                    # Update otherTrackIds if not already present
-                    if not find_match_2d_array(otherTrackIds, track_id):
-                        otherTrackIds.append([track_id, player_id])
-                        logger.info(f"Added track id {track_id} to player {player_id} (ReID)")
-                    else:
-                        # Check if ReID suggests a different player ID
-                        current_mapping = None
-                        for mapping in otherTrackIds:
-                            if mapping[0] == track_id:
-                                current_mapping = mapping[1]
-                                break
-                        
-                        if current_mapping != player_id:
-                            # Update mapping based on ReID
-                            for mapping in otherTrackIds:
-                                if mapping[0] == track_id:
-                                    mapping[1] = player_id
-                                    logger.info(f"Updated track id {track_id} mapping to player {player_id} (ReID correction)")
-                                    break
+                # Rebuild otherTrackIds with unique assignments
+                otherTrackIds.clear()
+                for player_id, track_id in player_to_latest_track.items():
+                    otherTrackIds.append([track_id, player_id])
+                logger.info(f"Fixed to unique assignments: {otherTrackIds}")
             
             # Display ReID information on frame
             if reid_result['swap_detection'] and reid_result['swap_detection']['swap_detected']:
@@ -188,6 +189,18 @@ def enhanced_framepose(
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (255, 255, 0),
+                1
+            )
+            
+            # Display current assignments
+            assignments_text = f"Assignments: {reid_result['player_assignments']}"
+            cv2.putText(
+                annotated_frame,
+                assignments_text,
+                (10, 150),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (0, 255, 255),
                 1
             )
             

@@ -2851,7 +2851,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                     try:
                         from enhanced_framepose import enhanced_framepose as reid_framepose
                         use_enhanced_reid = True
-                        print("🔄 Using enhanced ReID-based player tracking")
+                        #print(" Using enhanced ReID-based player tracking")
                     except ImportError as e:
                         print(f"Enhanced ReID not available: {e}")
                     
@@ -2860,7 +2860,7 @@ def main(path="self1.mp4", frame_width=640, frame_height=360):
                         try:
                             from squash.deepsortframepose import framepose as enhanced_framepose
                             use_enhanced_tracking = True
-                            print("🔄 Using enhanced DeepSort-based player tracking")
+                            #print(" Using enhanced DeepSort-based player tracking")
                         except ImportError as e:
                             print(f"Using standard player tracking (DeepSort not available: {e})")
                     

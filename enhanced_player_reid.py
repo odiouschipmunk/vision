@@ -3,22 +3,34 @@ Enhanced Player Re-Identification (ReID) System for Squash Analysis
 ================================================================
 
 This module provides an advanced player re-identification system that:
-1. Captures initial player appearances when they are separated (frames 100-150)
-2. Continuously monitors for track ID swapping when players come close
-3. Uses multiple features: appearance, position, and temporal consistency
-4. Provides confidence scores for identity assignments
+1. Uses a proper person ReID model (OSNet) for robust feature extraction
+2. Captures initial player appearances when they are separated (frames 100-150)
+3. Continuously monitors for track ID swapping when players come close
+4. Uses multiple features: appearance, position, and temporal consistency
+5. Ensures unique player assignments (no duplicate player IDs)
+6. Provides confidence scores for identity assignments
 """
 
 import cv2
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from torchvision.models import resnet50, ResNet50_Weights
+import torch.nn.functional as F
 import math
 from typing import Dict, List, Tuple, Optional
 import json
 from collections import deque
 import logging
+
+# Import proper person ReID model
+try:
+    import torchreid
+    from torchreid.utils import FeatureExtractor
+    TORCHREID_AVAILABLE = True
+except ImportError:
+    print("Warning: torchreid not available, falling back to ResNet50")
+    from torchvision.models import resnet50, ResNet50_Weights
+    TORCHREID_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,21 +88,33 @@ class EnhancedPlayerReID:
     def _init_feature_extractor(self):
         """Initialize the deep learning feature extractor"""
         try:
-            # Use ResNet50 for robust feature extraction
-            self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
-            self.feature_extractor.fc = torch.nn.Identity()  # Remove final classification layer
-            self.feature_extractor.to(self.device)
-            self.feature_extractor.eval()
-            
-            # Preprocessing pipeline
-            self.preprocess = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
-            
-            logger.info("Feature extractor initialized successfully")
+            if TORCHREID_AVAILABLE:
+                # Use proper person ReID model (OSNet)
+                logger.info("Initializing OSNet person ReID model...")
+                self.feature_extractor = FeatureExtractor(
+                    model_name='osnet_x1_0',  # State-of-the-art person ReID model
+                    model_path=None,  # Will download pretrained weights
+                    device=str(self.device).replace('cuda:', 'cuda').replace('cpu', 'cpu')
+                )
+                logger.info("OSNet person ReID model initialized successfully")
+                self.use_osnet = True
+                
+            else:
+                # Fallback to ResNet50
+                logger.warning("Using ResNet50 fallback (install torchreid for better results)")
+                self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
+                self.feature_extractor.fc = torch.nn.Identity()  # Remove final classification layer
+                self.feature_extractor.to(self.device)
+                self.feature_extractor.eval()
+                self.use_osnet = False
+                
+                # Preprocessing pipeline for ResNet50
+                self.preprocess = transforms.Compose([
+                    transforms.ToPILImage(),
+                    transforms.Resize((224, 224)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                ])
             
         except Exception as e:
             logger.error(f"Error initializing feature extractor: {e}")
@@ -98,10 +122,10 @@ class EnhancedPlayerReID:
     
     def extract_appearance_features(self, player_crop: np.ndarray) -> np.ndarray:
         """
-        Extract deep appearance features from player crop
+        Extract deep appearance features from player crop using proper person ReID model
         
         Args:
-            player_crop: RGB image crop of player
+            player_crop: RGB/BGR image crop of player
             
         Returns:
             Feature vector as numpy array
@@ -110,19 +134,37 @@ class EnhancedPlayerReID:
             if player_crop.size == 0:
                 return np.zeros(2048)
             
-            # Ensure RGB format
-            if len(player_crop.shape) == 3 and player_crop.shape[2] == 3:
-                # Convert BGR to RGB if needed
-                if player_crop.max() > 1.0:  # Assume 0-255 range
-                    player_crop = cv2.cvtColor(player_crop, cv2.COLOR_BGR2RGB)
-            
-            # Preprocess and extract features
-            input_tensor = self.preprocess(player_crop).unsqueeze(0).to(self.device)
-            
-            with torch.no_grad():
-                features = self.feature_extractor(input_tensor)
-            
-            return features.cpu().numpy().flatten()
+            if self.use_osnet:
+                # Use OSNet person ReID model
+                # OSNet expects RGB images
+                if len(player_crop.shape) == 3 and player_crop.shape[2] == 3:
+                    # Convert BGR to RGB if needed
+                    if player_crop.dtype == np.uint8 and player_crop.max() > 1.0:
+                        player_crop_rgb = cv2.cvtColor(player_crop, cv2.COLOR_BGR2RGB)
+                    else:
+                        player_crop_rgb = player_crop
+                else:
+                    return np.zeros(2048)
+                
+                # OSNet expects list of images
+                features = self.feature_extractor([player_crop_rgb])
+                return features[0]  # OSNet returns list of features
+                
+            else:
+                # Use ResNet50 fallback
+                # Ensure RGB format
+                if len(player_crop.shape) == 3 and player_crop.shape[2] == 3:
+                    # Convert BGR to RGB if needed
+                    if player_crop.max() > 1.0:  # Assume 0-255 range
+                        player_crop = cv2.cvtColor(player_crop, cv2.COLOR_BGR2RGB)
+                
+                # Preprocess and extract features
+                input_tensor = self.preprocess(player_crop).unsqueeze(0).to(self.device)
+                
+                with torch.no_grad():
+                    features = self.feature_extractor(input_tensor)
+                
+                return features.cpu().numpy().flatten()
             
         except Exception as e:
             logger.error(f"Error extracting appearance features: {e}")
@@ -326,36 +368,79 @@ class EnhancedPlayerReID:
         if not self.detect_players_in_proximity(positions):
             return swap_result
         
-        # Predict identity for each detection
+        # Get current mappings
+        current_mapping = {}
+        for detection in track_detections:
+            track_id = detection['track_id']
+            if track_id in self.track_to_player_mapping:
+                current_mapping[track_id] = self.track_to_player_mapping[track_id]
+        
+        # If we don't have both tracks mapped, can't detect swaps
+        if len(current_mapping) != 2:
+            return swap_result
+        
+        # Check if both tracks are currently assigned to the same player (major issue)
+        assigned_players = list(current_mapping.values())
+        if len(set(assigned_players)) == 1:
+            logger.warning(f"Both tracks assigned to same player {assigned_players[0]} - forcing correction")
+            # Force position-based reassignment
+            sorted_detections = sorted(track_detections, key=lambda x: x['position'][0])
+            for i, detection in enumerate(sorted_detections):
+                new_player_id = i + 1
+                old_player_id = current_mapping[detection['track_id']]
+                if new_player_id != old_player_id:
+                    swap_result['swap_detected'] = True
+                    swap_result['swapped_tracks'].append(detection['track_id'])
+                    swap_result['corrected_mapping'][detection['track_id']] = new_player_id
+                    swap_result['confidence'] = 1.0  # High confidence for this type of correction
+                    
+            if swap_result['swap_detected']:
+                self.swap_detections += 1
+                logger.info(f"Forced swap correction at frame {frame_count}: {swap_result['corrected_mapping']}")
+                
+                # Update track mapping
+                for track_id, player_id in swap_result['corrected_mapping'].items():
+                    self.track_to_player_mapping[track_id] = player_id
+            
+            return swap_result
+        
+        # Predict identity for each detection and check for mismatches
         identity_predictions = []
         for detection in track_detections:
             predicted_id, confidence = self.predict_player_identity(detection, frame_count)
+            current_id = current_mapping[detection['track_id']]
+            
             identity_predictions.append({
                 'track_id': detection['track_id'],
                 'predicted_player_id': predicted_id,
+                'current_player_id': current_id,
                 'confidence': confidence,
-                'current_mapping': self.track_to_player_mapping.get(detection['track_id'], predicted_id)
+                'mismatch': predicted_id != current_id
             })
         
-        # Check for inconsistencies in mapping
-        for pred in identity_predictions:
-            if (pred['track_id'] in self.track_to_player_mapping and 
-                pred['predicted_player_id'] != self.track_to_player_mapping[pred['track_id']] and
-                pred['confidence'] > self.confidence_threshold):
-                
-                swap_result['swap_detected'] = True
-                swap_result['swapped_tracks'].append(pred['track_id'])
-                swap_result['corrected_mapping'][pred['track_id']] = pred['predicted_player_id']
-                swap_result['confidence'] = max(swap_result['confidence'], pred['confidence'])
+        # Check for swaps - both predictions should be swapped for high confidence
+        mismatched_predictions = [p for p in identity_predictions if p['mismatch'] and p['confidence'] > self.confidence_threshold]
         
-        # If swap detected, update mapping
-        if swap_result['swap_detected']:
-            self.swap_detections += 1
-            logger.info(f"Track ID swap detected at frame {frame_count}: {swap_result['corrected_mapping']}")
-            
-            # Update track mapping
-            for track_id, player_id in swap_result['corrected_mapping'].items():
-                self.track_to_player_mapping[track_id] = player_id
+        if len(mismatched_predictions) == 2:
+            # Check if it's a true swap (predictions are swapped)
+            pred1, pred2 = mismatched_predictions
+            if (pred1['predicted_player_id'] == pred2['current_player_id'] and 
+                pred2['predicted_player_id'] == pred1['current_player_id']):
+                
+                # This is a true swap
+                swap_result['swap_detected'] = True
+                swap_result['confidence'] = (pred1['confidence'] + pred2['confidence']) / 2
+                
+                for pred in mismatched_predictions:
+                    swap_result['swapped_tracks'].append(pred['track_id'])
+                    swap_result['corrected_mapping'][pred['track_id']] = pred['predicted_player_id']
+                
+                self.swap_detections += 1
+                logger.info(f"Track ID swap detected at frame {frame_count}: {swap_result['corrected_mapping']}")
+                
+                # Update track mapping
+                for track_id, player_id in swap_result['corrected_mapping'].items():
+                    self.track_to_player_mapping[track_id] = player_id
         
         return swap_result
     
@@ -367,101 +452,211 @@ class EnhancedPlayerReID:
             detections: List of player detections
             frame_count: Current frame number
         """
-        # Handle case where we have 2 detections but need to assign them to players 1 and 2
-        if len(detections) == 2:
-            self._handle_two_player_assignment(detections, frame_count)
-        
         for detection in detections:
             track_id = detection['track_id']
             
-            # Determine player ID
+            # Get player ID from current mapping
             if track_id in self.track_to_player_mapping:
                 player_id = self.track_to_player_mapping[track_id]
             else:
-                # Predict player ID
-                player_id, confidence = self.predict_player_identity(detection, frame_count)
-                if confidence > self.confidence_threshold:
-                    self.track_to_player_mapping[track_id] = player_id
-                else:
-                    continue  # Skip if confidence too low
+                # Skip if no mapping exists
+                continue
             
-            # Update references
+            # Update references only for valid player IDs
             if player_id in self.player_references:
                 features = self.extract_appearance_features(detection['crop'])
                 
-                self.player_references[player_id]['appearance_features'].append(features)
-                self.player_references[player_id]['position_history'].append(detection['position'])
-                self.player_references[player_id]['last_seen_frame'] = frame_count
-                
-                # Keep only recent features (sliding window)
-                if len(self.player_references[player_id]['appearance_features']) > 20:
-                    self.player_references[player_id]['appearance_features'].pop(0)
+                # Only add valid features
+                if features is not None and len(features) > 0 and not np.all(features == 0):
+                    self.player_references[player_id]['appearance_features'].append(features)
+                    self.player_references[player_id]['position_history'].append(detection['position'])
+                    self.player_references[player_id]['last_seen_frame'] = frame_count
+                    
+                    # Keep only recent features (sliding window)
+                    if len(self.player_references[player_id]['appearance_features']) > 20:
+                        self.player_references[player_id]['appearance_features'].pop(0)
     
     def _handle_two_player_assignment(self, detections: List[Dict], frame_count: int):
         """
         Handle assignment when we have exactly 2 detections to ensure one goes to P1 and one to P2
+        This is the critical function that prevents both players getting the same ID
         """
         if len(detections) != 2:
             return
         
-        # Get current mappings
-        mapped_players = set()
-        unmapped_detections = []
+        # Get current track IDs
+        track_ids = [det['track_id'] for det in detections]
         
-        for detection in detections:
-            track_id = detection['track_id']
+        # Check current mappings
+        current_mappings = {}
+        unmapped_tracks = []
+        
+        for track_id in track_ids:
             if track_id in self.track_to_player_mapping:
-                mapped_players.add(self.track_to_player_mapping[track_id])
+                current_mappings[track_id] = self.track_to_player_mapping[track_id]
             else:
-                unmapped_detections.append(detection)
+                unmapped_tracks.append(track_id)
         
-        # If both detections map to the same player, we need to reassign one
-        assigned_players = [self.track_to_player_mapping.get(det['track_id']) for det in detections]
-        if len(set(filter(None, assigned_players))) == 1 and None not in assigned_players:
-            # Both track IDs are mapped to the same player - reassign based on position/appearance
-            self._reassign_duplicate_mapping(detections, frame_count)
+        # Case 1: Both tracks unmapped - assign based on position/appearance
+        if len(unmapped_tracks) == 2:
+            logger.info("Both tracks unmapped, performing initial assignment")
+            self._assign_unmapped_tracks(detections, frame_count)
+            return
         
-        # Assign unmapped detections to available player IDs
-        available_players = {1, 2} - mapped_players
-        for detection in unmapped_detections:
+        # Case 2: One track mapped, one unmapped
+        if len(unmapped_tracks) == 1:
+            mapped_players = set(current_mappings.values())
+            available_players = {1, 2} - mapped_players
+            
             if available_players:
-                # Try to predict based on appearance if possible
-                predicted_id, confidence = self.predict_player_identity(detection, frame_count)
+                unmapped_track = unmapped_tracks[0]
+                unmapped_detection = next(det for det in detections if det['track_id'] == unmapped_track)
+                
+                # Try to predict based on appearance
+                predicted_id, confidence = self.predict_player_identity(unmapped_detection, frame_count)
                 
                 if predicted_id in available_players and confidence > self.confidence_threshold:
                     player_id = predicted_id
                 else:
-                    # Assign to any available player
-                    player_id = available_players.pop()
+                    # Assign to the only available player
+                    player_id = list(available_players)[0]
                 
-                self.track_to_player_mapping[detection['track_id']] = player_id
-                available_players.discard(player_id)
-                logger.info(f"Assigned track ID {detection['track_id']} to player {player_id}")
-    
-    def _reassign_duplicate_mapping(self, detections: List[Dict], frame_count: int):
-        """
-        Reassign when both detections map to the same player
-        """
-        if len(detections) != 2:
+                self.track_to_player_mapping[unmapped_track] = player_id
+                logger.info(f"Assigned unmapped track ID {unmapped_track} to player {player_id}")
             return
         
+        # Case 3: Both tracks mapped - check for conflicts
+        mapped_players = list(current_mappings.values())
+        
+        # If both tracks mapped to the same player - THIS IS THE CRITICAL FIX
+        if len(set(mapped_players)) == 1:
+            logger.warning(f"Both tracks mapped to same player {mapped_players[0]} - fixing assignment")
+            self._fix_duplicate_assignment(detections, frame_count)
+            return
+        
+        # Case 4: Both tracks mapped to different players - check for swaps
+        if len(set(mapped_players)) == 2:
+            # Check if we need to swap based on appearance/position
+            self._check_and_fix_swaps(detections, frame_count)
+            return
+    
+    def _assign_unmapped_tracks(self, detections: List[Dict], frame_count: int):
+        """Assign two unmapped tracks to players 1 and 2"""
         # Sort by x-coordinate (left = player 1, right = player 2)
         sorted_detections = sorted(detections, key=lambda x: x['position'][0])
         
-        # Try to use appearance-based prediction first
-        reassigned = False
-        for i, (target_player, detection) in enumerate(zip([1, 2], sorted_detections)):
-            predicted_id, confidence = self.predict_player_identity(detection, frame_count)
-            
-            if predicted_id == target_player and confidence > self.confidence_threshold:
-                self.track_to_player_mapping[detection['track_id']] = target_player
-                reassigned = True
+        # Try appearance-based assignment first if references exist
+        assignments_made = []
         
-        # If appearance-based reassignment didn't work, use position-based
-        if not reassigned:
-            for i, (target_player, detection) in enumerate(zip([1, 2], sorted_detections)):
-                self.track_to_player_mapping[detection['track_id']] = target_player
-                logger.info(f"Position-based reassignment: Track ID {detection['track_id']} -> Player {target_player}")
+        for target_player in [1, 2]:
+            if self.player_references[target_player]['initialization_complete']:
+                best_detection = None
+                best_confidence = 0.0
+                
+                for detection in sorted_detections:
+                    if detection['track_id'] not in [a[0] for a in assignments_made]:
+                        predicted_id, confidence = self.predict_player_identity(detection, frame_count)
+                        if predicted_id == target_player and confidence > best_confidence:
+                            best_confidence = confidence
+                            best_detection = detection
+                
+                if best_detection and best_confidence > self.confidence_threshold:
+                    self.track_to_player_mapping[best_detection['track_id']] = target_player
+                    assignments_made.append((best_detection['track_id'], target_player))
+                    logger.info(f"Appearance-based assignment: Track {best_detection['track_id']} -> Player {target_player} (conf: {best_confidence:.3f})")
+        
+        # Assign remaining tracks by position
+        assigned_tracks = [a[0] for a in assignments_made]
+        remaining_detections = [det for det in sorted_detections if det['track_id'] not in assigned_tracks]
+        assigned_players = [a[1] for a in assignments_made]
+        available_players = [p for p in [1, 2] if p not in assigned_players]
+        
+        for detection, player_id in zip(remaining_detections, available_players):
+            self.track_to_player_mapping[detection['track_id']] = player_id
+            logger.info(f"Position-based assignment: Track {detection['track_id']} -> Player {player_id}")
+    
+    def _fix_duplicate_assignment(self, detections: List[Dict], frame_count: int):
+        """Fix the case where both tracks are assigned to the same player"""
+        # Sort detections by x-coordinate
+        sorted_detections = sorted(detections, key=lambda x: x['position'][0])
+        
+        # Force assignment: left player = 1, right player = 2
+        for i, (target_player, detection) in enumerate(zip([1, 2], sorted_detections)):
+            old_assignment = self.track_to_player_mapping.get(detection['track_id'], None)
+            self.track_to_player_mapping[detection['track_id']] = target_player
+            
+            if old_assignment != target_player:
+                logger.info(f"Fixed duplicate assignment: Track {detection['track_id']} changed from Player {old_assignment} to Player {target_player}")
+    
+    def _check_and_fix_swaps(self, detections: List[Dict], frame_count: int):
+        """Check if tracks need to be swapped based on appearance"""
+        if not (self.player_references[1]['initialization_complete'] and 
+                self.player_references[2]['initialization_complete']):
+            return
+        
+        # Check if current assignments make sense based on appearance
+        swaps_needed = []
+        
+        for detection in detections:
+            track_id = detection['track_id']
+            current_player = self.track_to_player_mapping[track_id]
+            predicted_player, confidence = self.predict_player_identity(detection, frame_count)
+            
+            if (predicted_player != current_player and 
+                confidence > self.confidence_threshold and
+                confidence > 0.8):  # High confidence threshold for swapping
+                swaps_needed.append((track_id, current_player, predicted_player, confidence))
+        
+        # Apply swaps if confident
+        if swaps_needed:
+            for track_id, old_player, new_player, confidence in swaps_needed:
+                # Check if the target player assignment is available or would create a valid swap
+                conflicting_track = None
+                for other_track, other_player in self.track_to_player_mapping.items():
+                    if other_player == new_player and other_track != track_id:
+                        conflicting_track = other_track
+                        break
+                
+                if conflicting_track:
+                    # Swap the assignments
+                    self.track_to_player_mapping[track_id] = new_player
+                    self.track_to_player_mapping[conflicting_track] = old_player
+                    logger.info(f"Swapped assignments: Track {track_id} -> Player {new_player}, Track {conflicting_track} -> Player {old_player}")
+                else:
+                    # Simple reassignment
+                    self.track_to_player_mapping[track_id] = new_player
+                    logger.info(f"Reassigned: Track {track_id} -> Player {new_player} (conf: {confidence:.3f})")
+        
+    def ensure_unique_assignments(self):
+        """Ensure each player ID is assigned to at most one track"""
+        # Get current assignments
+        player_to_tracks = {1: [], 2: []}
+        
+        for track_id, player_id in self.track_to_player_mapping.items():
+            if player_id in player_to_tracks:
+                player_to_tracks[player_id].append(track_id)
+        
+        # Fix duplicates
+        for player_id, track_list in player_to_tracks.items():
+            if len(track_list) > 1:
+                logger.warning(f"Player {player_id} assigned to multiple tracks: {track_list}")
+                # Keep only the most recent assignment
+                most_recent_track = max(track_list)
+                for track_id in track_list:
+                    if track_id != most_recent_track:
+                        del self.track_to_player_mapping[track_id]
+                        logger.info(f"Removed duplicate assignment: Track {track_id}")
+        
+        # Ensure both players are represented if we have 2 tracks
+        assigned_players = set(self.track_to_player_mapping.values())
+        all_tracks = list(self.track_to_player_mapping.keys())
+        
+        if len(all_tracks) == 2 and len(assigned_players) == 1:
+            # Both tracks assigned to same player - fix it
+            sorted_tracks = sorted(all_tracks)
+            self.track_to_player_mapping[sorted_tracks[0]] = 1
+            self.track_to_player_mapping[sorted_tracks[1]] = 2
+            logger.info(f"Fixed same-player assignment: Track {sorted_tracks[0]} -> Player 1, Track {sorted_tracks[1]} -> Player 2")
     
     def process_frame(self, detections: List[Dict], frame_count: int) -> Dict:
         """
@@ -484,24 +679,67 @@ class EnhancedPlayerReID:
             }
         }
         
+        if not detections:
+            return result
+        
         # Initialize references if in initialization window
         if self.is_initialization_frame(frame_count):
             self.initialize_player_references(detections, frame_count)
         
-        # Check for track ID swaps
-        if (self.player_references[1]['initialization_complete'] and 
+        # CRITICAL: Handle assignment logic to prevent duplicate player IDs
+        if len(detections) == 2:
+            # This is the most common case - ensure unique assignments
+            self._handle_two_player_assignment(detections, frame_count)
+        elif len(detections) == 1:
+            # Single detection - assign to best matching player
+            detection = detections[0]
+            track_id = detection['track_id']
+            
+            if track_id not in self.track_to_player_mapping:
+                predicted_id, confidence = self.predict_player_identity(detection, frame_count)
+                if confidence > self.confidence_threshold:
+                    # Check if this player ID is already taken
+                    occupied_players = set(self.track_to_player_mapping.values())
+                    if predicted_id not in occupied_players:
+                        self.track_to_player_mapping[track_id] = predicted_id
+                    else:
+                        # Assign to the first available player ID
+                        available_players = {1, 2} - occupied_players
+                        if available_players:
+                            self.track_to_player_mapping[track_id] = list(available_players)[0]
+        
+        # Always ensure unique assignments after any changes
+        self.ensure_unique_assignments()
+        
+        # Check for track ID swaps (after ensuring unique assignments)
+        if (len(detections) >= 2 and 
+            self.player_references[1]['initialization_complete'] and 
             self.player_references[2]['initialization_complete']):
             result['swap_detection'] = self.detect_track_id_swap(detections, frame_count)
         
         # Update references
         self.update_player_references(detections, frame_count)
         
-        # Create player assignments
+        # Create final player assignments
         for detection in detections:
             track_id = detection['track_id']
             if track_id in self.track_to_player_mapping:
                 player_id = self.track_to_player_mapping[track_id]
                 result['player_assignments'][track_id] = player_id
+        
+        # Validate assignments (ensure no duplicates)
+        assigned_players = list(result['player_assignments'].values())
+        if len(assigned_players) != len(set(assigned_players)):
+            logger.error(f"Duplicate player assignments detected: {result['player_assignments']}")
+            # Emergency fix: reassign by position
+            if len(detections) == 2:
+                sorted_detections = sorted(detections, key=lambda x: x['position'][0])
+                result['player_assignments'] = {}
+                for i, detection in enumerate(sorted_detections):
+                    player_id = i + 1
+                    result['player_assignments'][detection['track_id']] = player_id
+                    self.track_to_player_mapping[detection['track_id']] = player_id
+                logger.info("Emergency reassignment by position applied")
         
         return result
     
