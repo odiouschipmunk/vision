@@ -1,0 +1,23 @@
+
+ENHANCED PLAYER RE-IDENTIFICATION REPORT
+=======================================
+
+Total Track ID Swaps Detected: 14
+Player 1 Initialization: ✅ Complete
+Player 2 Initialization: ✅ Complete
+
+Reference Feature Counts:
+- Player 1: 21 appearance features
+- Player 2: 21 appearance features
+
+Final Track Mappings: {1: 2, 2: 2, 7: 1, 8: 2, 11: 1, 14: 2, 17: 1, 18: 1, 26: 1, 27: 1, 32: 2, 33: 2, 35: 1, 36: 1, 57: 1, 59: 2, 63: 1, 66: 2, 70: 1, 69: 1, 85: 1, 86: 2, 91: 1, 98: 2, 106: 1, 114: 1, 118: 2, 120: 2, 153: 1, 156: 1, 157: 1, 158: 1, 161: 2, 168: 2, 173: 2, 178: 2, 182: 1, 187: 2, 190: 2, 189: 2, 197: 2, 201: 2, 203: 1, 206: 2, 211: 1, 213: 2, 215: 2, 216: 1, 217: 2, 227: 1, 231: 1, 233: 1, 235: 2, 237: 2, 239: 1, 244: 1, 245: 2}
+
+System Performance:
+- Initialization frames: 100-150 (when players are separated)
+- Proximity threshold: 100 pixels (for swap detection)
+- Confidence threshold: 0.6 (for identity assignments)
+- Feature extraction: ResNet50-based deep features
+
+The ReID system continuously monitors player appearances and positions,
+detecting when track IDs may have been swapped due to occlusion or
+close proximity between players.

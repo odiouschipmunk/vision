@@ -25,10 +25,10 @@ import logging
 # Import proper person ReID model
 try:
     import torchreid
-    from torchreid.utils import FeatureExtractor
+    from torchreid.reid.utils import FeatureExtractor
     TORCHREID_AVAILABLE = True
-except ImportError:
-    print("Warning: torchreid not available, falling back to ResNet50")
+except ImportError as e:
+    print(f"Warning: torchreid not available, falling back to ResNet50, error as {e}")
     from torchvision.models import resnet50, ResNet50_Weights
     TORCHREID_AVAILABLE = False
 
@@ -148,7 +148,10 @@ class EnhancedPlayerReID:
                 
                 # OSNet expects list of images
                 features = self.feature_extractor([player_crop_rgb])
-                return features[0]  # OSNet returns list of features
+                # Ensure we return numpy array
+                if hasattr(features[0], 'cpu'):  # It's a torch tensor
+                    return features[0].cpu().numpy() if features[0].is_cuda else features[0].numpy()
+                return features[0]  # Already numpy array
                 
             else:
                 # Use ResNet50 fallback
@@ -467,8 +470,15 @@ class EnhancedPlayerReID:
                 features = self.extract_appearance_features(detection['crop'])
                 
                 # Only add valid features
-                if features is not None and len(features) > 0 and not np.all(features == 0):
-                    self.player_references[player_id]['appearance_features'].append(features)
+                if features is not None and len(features) > 0:
+                    # Ensure features is a numpy array for the all() check
+                    if hasattr(features, 'cpu'):  # It's a torch tensor
+                        features_np = features.cpu().numpy() if features.is_cuda else features.numpy()
+                    else:
+                        features_np = features
+                    
+                    if not np.all(features_np == 0):
+                        self.player_references[player_id]['appearance_features'].append(features)
                     self.player_references[player_id]['position_history'].append(detection['position'])
                     self.player_references[player_id]['last_seen_frame'] = frame_count
                     

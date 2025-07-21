@@ -1,0 +1,48 @@
+AUTONOMOUS SQUASH COACHING ANALYSIS
+==================================================
+
+Analysis Date: 2025-07-20 13:51:58
+Video Analyzed: self1.mp4
+Total Frames Processed: 587
+Enhanced Coaching Data Points: 586
+
+COACHING INSIGHTS:
+--------------------
+**Enhanced Coaching Advice:**
+
+### 1. Technical Shot Analysis with Bounce Pattern Insights
+
+#### **Shot Placement and Bounce Control**
+- **Slight Crosscourt Lob Soft:** This shot is a strong asset but can be improved in terms of placement and consistency. Analyze the bounce patterns to understand how the ball lands after being lobbed. The ball should ideally land softly and close to the net, allowing for quick follow-throughs and returns.
+- **Straight Drive Soft:** While this shot is effective, it can be more precise if you focus on maintaining a consistent height and trajectory. The bounce should be slightly higher than the lob soft to ensure a stable landing point.
+- **Straight Lob Soft:** Improve the height and consistency of your lob soft. The bounce should be gentle enough to avoid too much bounce that could lead to easy returns.
+
+### 2. Movement Pattern Assessment
+
+#### **Court Coverage and Movement Quality**
+- **PLAYER1:** Your court coverage is good, but mobility needs improvement. Focus on quicker movements between different parts of the court. Central positioning is fine, but try to expand your range by moving more laterally and diagonally.
+- **PLAYER2:** Similar to PLAYER1, improve your mobility and range. Central positioning works well, but try to move more quickly and efficiently across the court. Avoid getting stuck in one area.
+
+### 3. Specific Improvement Areas Focusing on Shot Placement
+
+#### **Technique Improvements**
+- **Slight Crosscourt Lob Soft:** Work on the timing and height of your lob soft. Ensure the ball lands softly and close to the net, allowing for quick returns.
+- **Straight Drive Soft:** Focus on maintaining a consistent height and trajectory. The bounce should be slightly higher than the lob soft to ensure a stable landing point.
+- **Straight Lob Soft:** Improve the height and consistency of your lob soft. The bounce should be gentle enough to avoid too much bounce that could lead to easy returns.
+
+### 4. Training Recommendations for Better Court Control
+
+#### **Specific Exercises and Drills**
+- **Mobility Drills:** Incorporate drills that focus on quick lateral and diagonal movements. Use cones or markers to practice changing direction rapidly without losing momentum.
+- **Height and Consistency Drills:** Practice hitting balls at different heights to improve consistency. Use a target line or marker to ensure the ball lands at the desired height.
+- **Ball Bounce Control:** Work on controlling the bounce of your shots. Use a rebounder or a partner to hit balls from various angles and
+
+ **Ball Bounce Analysis:**
+   • Total bounces detected: 487
+   • Average bounces per rally: 0.8
+   • Bounce frequency: high
+   •  Consider working on shot placement to reduce unnecessary wall bounces
+   •  Focus on straight drives and court positioning
+
+==================================================
+End of Analysis

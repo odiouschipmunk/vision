@@ -31,7 +31,6 @@ import json
 from sahi.utils.cv import read_image_as_pil
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
-
 # Autonomous coaching system imported from autonomous_coaching.py
 
 
@@ -631,8 +630,10 @@ def apply_homography(H, points, inverse=False):
 
     except Exception as e:
         raise ValueError(f"Error in apply_homography: {str(e)}")
-frame_height = 360
-frame_width = 640
+# Global frame dimensions - will be set by main() function parameters
+# These can now be customized by calling main() with custom frame_width and frame_height
+frame_height = 360  # Default value, can be overridden
+frame_width = 640   # Default value, can be overridden
 def shot_type(past_ball_pos, threshold=3):
     # go through the past threshold number of past ball positions and see what kind of shot it is
     # past_ball_pos ordered as [[x,y,frame_number], ...]
@@ -2145,7 +2146,11 @@ def calculate_ball_speed(ball_positions):
         return 0
 
 
-def main(path="self1.mp4", frame_width=640, frame_height=360):
+def main(path="self1.mp4", input_frame_width=1920, input_frame_height=1080):
+    # Update global frame dimensions with user-provided values
+    global frame_width, frame_height
+    frame_width = input_frame_width
+    frame_height = input_frame_height
     try:
         print(" INITIALIZING GPU-OPTIMIZED SQUASH COACHING PIPELINE")
         print("=" * 70)
@@ -3952,12 +3957,12 @@ SYSTEM PERFORMANCE:
                 json.dump(detailed_data, f, indent=2, default=str)
             
             print(" Enhanced coaching analysis completed!")
-            print(f"📋 Enhanced report saved: output/enhanced_autonomous_coaching_report.txt")
+            print(f"Enhanced report saved: output/enhanced_autonomous_coaching_report.txt")
             print(f" Enhanced data saved: output/enhanced_coaching_data.json")
             print(f" Ball bounces analyzed: GPU-accelerated detection active")
               # Also generate traditional report for compatibility
             generate_coaching_report(coaching_data_collection, path, frame_count)
-            print("📝 Traditional coaching report also generated for compatibility.")
+            print("Traditional coaching report also generated for compatibility.")
             
             # Generate ReID system report if available
             try:
@@ -3971,8 +3976,8 @@ ENHANCED PLAYER RE-IDENTIFICATION REPORT
 =======================================
 
 Total Track ID Swaps Detected: {reid_stats.get('total_swaps_detected', 0)}
-Player 1 Initialization: {'✅ Complete' if reid_stats.get('initialization_status', {}).get(1) else '❌ Incomplete'}
-Player 2 Initialization: {'✅ Complete' if reid_stats.get('initialization_status', {}).get(2) else '❌ Incomplete'}
+Player 1 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(1) else '❌ Incomplete'}
+Player 2 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(2) else '❌ Incomplete'}
 
 Reference Feature Counts:
 - Player 1: {reid_stats.get('reference_counts', {}).get(1, 0)} appearance features
@@ -3994,53 +3999,53 @@ close proximity between players.
                     with open("output/reid_analysis_report.txt", "w", encoding='utf-8') as f:
                         f.write(reid_report)
                     
-                    print("🆔 Player ReID analysis report generated!")
+                    print("Player ReID analysis report generated!")
                     print(f"   - Total swaps detected: {reid_stats.get('total_swaps_detected', 0)}")
                     print(f"   - References saved: output/final_reid_references.json")
                     print(f"   - Report saved: output/reid_analysis_report.txt")
             except Exception as e:
-                print(f"⚠️ Error generating ReID report: {e}")
+                print(f"Error generating ReID report: {e}")
             
             # Also generate traditional report for compatibility
             generate_coaching_report(coaching_data_collection, path, frame_count)
-            print("📝 Traditional coaching report also generated for compatibility.")
+            print("Traditional coaching report also generated for compatibility.")
             
             # Generate comprehensive visualizations and analytics
-            print("\n📊 Generating comprehensive visualizations and analytics...")
+            print("\nGenerating comprehensive visualizations and analytics...")
             try:
                 from autonomous_coaching import create_graphics, view_all_graphics
                 
                 # Generate all visualizations based on final.csv data
                 create_graphics()
-                print("✅ All visualizations generated successfully!")
+                print("All visualizations generated successfully!")
                 
                 # Display summary of generated graphics
                 view_all_graphics()
-                print("📈 Graphics summary and analytics displayed!")
+                print("Graphics summary and analytics displayed!")
                 
             except Exception as viz_error:
-                print(f"⚠️  Error generating visualizations: {viz_error}")
+                print(f"  Error generating visualizations: {viz_error}")
                 print("   Pipeline completed successfully, but visualizations could not be generated.")
             
         except Exception as e:
-            print(f"⚠️  Error in enhanced coaching analysis: {e}")
+            print(f"  Error in enhanced coaching analysis: {e}")
             # Fallback to basic report
             try:
                 generate_coaching_report(coaching_data_collection, path, frame_count)
-                print("📝 Fallback coaching report generated successfully.")
+                print(" Fallback coaching report generated successfully.")
             except Exception as fallback_error:
-                print(f"❌ Fallback coaching report error: {fallback_error}")
+                print(f" Fallback coaching report error: {fallback_error}")
         
-        print("\n🎉 ENHANCED PROCESSING COMPLETE!")
+        print("\n ENHANCED PROCESSING COMPLETE!")
         print("=" * 50)
-        print("📁 Check output/ directory for results:")
+        print(" Check output/ directory for results:")
         print("   • enhanced_autonomous_coaching_report.txt - Enhanced analysis")
         print("   • enhanced_coaching_data.json - Detailed data with bounces")
-        print("   🆔 reid_analysis_report.txt - Player ReID analysis")
-        print("   🆔 final_reid_references.json - Player appearance references")
+        print("    reid_analysis_report.txt - Player ReID analysis")
+        print("    final_reid_references.json - Player appearance references")
         print("   • annotated.mp4 - Video with bounce visualization")
         print("   • final.csv - Complete match data")
-        print("   📊 graphics/ - Comprehensive visualizations and analytics:")
+        print("    graphics/ - Comprehensive visualizations and analytics:")
         print("     - Shot type analysis and heatmaps")
         print("     - Player and ball movement patterns")
         print("     - Ball trajectory analysis")
@@ -4048,7 +4053,7 @@ close proximity between players.
         print("     - Summary statistics and reports")
         print("   • Other traditional output files")
         print("=" * 50)
-        print("\n🆔 ENHANCED REID SYSTEM FEATURES:")
+        print("\n ENHANCED REID SYSTEM FEATURES:")
         print("   • Initial player appearance capture (frames 100-150)")
         print("   • Continuous track ID swap detection")
         print("   • Deep learning-based appearance features")
