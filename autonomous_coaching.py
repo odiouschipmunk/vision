@@ -449,6 +449,9 @@ class AdvancedPerformanceAnalyzer:
                 })
         
         return recommendations
+
+
+class PerformanceTracker:
     """Track and analyze performance improvements over time"""
     
     def __init__(self):
@@ -485,7 +488,7 @@ class AdvancedPerformanceAnalyzer:
         # Calculate shot accuracy
         total_shots = len(session_data)
         successful_shots = sum(1 for shot in session_data 
-                             if shot.get('ball_position', [0, 0]) != [0, 0])
+                             if shot.get('ball_position', (0, 0)) != (0, 0))
         shot_accuracy = successful_shots / total_shots if total_shots > 0 else 0
         
         # Calculate movement efficiency
@@ -527,7 +530,7 @@ class AdvancedPerformanceAnalyzer:
             return 0.5
         
         successful = sum(1 for shot in quarter_data 
-                        if shot.get('ball_position', [0, 0]) != [0, 0])
+                        if shot.get('ball_position', (0, 0)) != (0, 0))
         return successful / len(quarter_data)
     
     def _calculate_court_coverage(self, session_data):
@@ -884,7 +887,7 @@ class AutonomousSquashCoach:
         pressure_shots = [shot for shot in shot_data if shot.get('ball_speed', 0) > 15]
         if len(pressure_shots) > 0:
             pressure_accuracy = sum(1 for shot in pressure_shots 
-                                  if shot.get('ball_position', [0, 0]) != [0, 0]) / len(pressure_shots)
+                                  if shot.get('ball_position', (0, 0)) != (0, 0)) / len(pressure_shots)
             
             if pressure_accuracy < 0.6:
                 strategic_insights.append({
@@ -1216,7 +1219,15 @@ for maximum coaching effectiveness."""
                     formatted_insights.append(f"  {priority_emoji} {insight['message']}")
                     formatted_insights.append(f"      Drill: {insight['drill_suggestion']}")
                     if 'metrics' in insight:
-                        metrics_str = ", ".join([f"{k}: {v}" for k, v in insight['metrics'].items()])
+                        # Ensure all keys are strings to avoid unhashable type errors
+                        safe_metrics = {}
+                        for k, v in insight['metrics'].items():
+                            if isinstance(k, (list, dict, set)):
+                                # Convert unhashable types to strings
+                                safe_metrics[str(k)] = v
+                            else:
+                                safe_metrics[k] = v
+                        metrics_str = ", ".join([f"{k}: {v}" for k, v in safe_metrics.items()])
                         formatted_insights.append(f"      Metrics: {metrics_str}")
         
         return "\n".join(formatted_insights)
@@ -1227,10 +1238,15 @@ for maximum coaching effectiveness."""
         
         for data_point in coaching_data:
             if isinstance(data_point, dict):
+                # Ensure ball_position is properly formatted to avoid unhashable type errors
+                ball_pos = data_point.get('ball_position', [0, 0])
+                if isinstance(ball_pos, list):
+                    ball_pos = tuple(ball_pos)  # Convert list to tuple for hashability
+                
                 shot_info = {
                     'shot_type': data_point.get('shot_type', 'unknown'),
-                    'success': data_point.get('ball_position', [0, 0]) != [0, 0],
-                    'ball_position': data_point.get('ball_position', [0, 0]),
+                    'success': ball_pos != (0, 0),
+                    'ball_position': ball_pos,
                     'ball_speed': data_point.get('ball_speed', 0),
                     'player1_position': data_point.get('player1_position', {}),
                     'timing': data_point.get('timestamp', 0),
@@ -1247,7 +1263,7 @@ for maximum coaching effectiveness."""
         # Calculate current performance metrics
         total_shots = len(coaching_data)
         active_shots = sum(1 for data in coaching_data 
-                          if data.get('ball_position', [0, 0]) != [0, 0])
+                          if data.get('ball_position', (0, 0)) != (0, 0))
         
         if total_shots > 0:
             accuracy = (active_shots / total_shots) * 100
@@ -1725,7 +1741,7 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
     # Add ball trajectory analysis
     if past_ball_pos and len(past_ball_pos) > 0:
         coaching_data.update({
-            'ball_position': [float(past_ball_pos[-1][0]), float(past_ball_pos[-1][1])],
+                            'ball_position': (float(past_ball_pos[-1][0]), float(past_ball_pos[-1][1])),
             'ball_trajectory_length': len(past_ball_pos),
             'ball_speed': calculate_ball_speed(past_ball_pos) if len(past_ball_pos) > 1 else 0
         })
