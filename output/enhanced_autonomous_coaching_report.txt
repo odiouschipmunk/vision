@@ -2,10 +2,10 @@
 ENHANCED SQUASH COACHING ANALYSIS
 ================================================
 
-Analysis Date: 2025-07-18 15:10:59
-Video Analyzed: self1.mp4
-Total Frames Processed: 4086
-Enhanced Coaching Data Points: 3982
+Analysis Date: 2025-08-07 20:43:22
+Video Analyzed: self2.mp4
+Total Frames Processed: 7703
+Enhanced Coaching Data Points: 7703
 GPU Acceleration:  Enabled
 
 ENHANCED BALL TRACKING ANALYSIS:
@@ -17,56 +17,81 @@ ENHANCED BALL TRACKING ANALYSIS:
 
 ENHANCED AUTONOMOUS SQUASH COACHING ANALYSIS:
 
-COMPREHENSIVE MATCH ANALYSIS:
+🎾 COMPREHENSIVE MATCH ANALYSIS WITH ADVANCED AI INSIGHTS
+======================================================================
 
-BASIC STATISTICS:
-• Total data points analyzed: 3982
-• Active rally time: 93.4% of match
-• Number of rallies: 38
-• Average rally length: 97.8 frames
-• Longest rally: 678 frames
+📊 BASIC STATISTICS:
+• Total data points analyzed: 7703
+• Active rally time: 93.0% of match
+• Number of rallies: 56
+• Average rally length: 127.9 frames
+• Longest rally: 799 frames
 
-SHOT ANALYSIS:
-• Most frequent shot: straight_lob_soft (822 occurrences)
-• Shot variety score: 39/10
-• Total unique shot types: 46
-• Top 3 shots: {'straight_lob_soft': 822, 'angled_crosscourt_lob_soft': 576, 'slight_crosscourt_lob_soft': 521}
+🎯 SHOT ANALYSIS:
+• Most frequent shot: straight_lob_soft (2430 occurrences)
+• Shot variety score: 35/10
+• Total unique shot types: 38
+• Top 3 shots: {'straight_lob_soft': 2430, 'angled_crosscourt_lob_soft': 1003, 'slight_crosscourt_lob_soft': 981}
 
-BALL DYNAMICS:
-• Average ball speed: 8.05 pixels/frame
-• Maximum ball speed: 119.86 pixels/frame
+⚡ BALL DYNAMICS:
+• Average ball speed: 6.32 pixels/frame
+• Maximum ball speed: 104.81 pixels/frame
 • Speed consistency: Variable
 • Ball tracking quality: 0.00/1.0
 
-MOVEMENT PATTERNS:
+🏃 MOVEMENT PATTERNS:
 • PLAYER1: Court coverage - Excellent, Mobility - Low, Positioning - Central
 • PLAYER2: Court coverage - Excellent, Mobility - Low, Positioning - Central
 
-SHOT PATTERNS & TACTICS:
-• Shot direction preference: 44.7% straight, 55.3% crosscourt
-• Shot height preference: 15.5% drives, 84.5% lobs
-• Most common transition: slight_crosscourt→straight (46 times)
-• Pattern predictability: 15.0% (Low)
+🎪 TACTICAL PATTERN ANALYSIS:
+• Identified pattern: defensive_patterns_corner_to_corner
+• Pattern confidence: 100.0%
+• Shot variety score: 6/10
+• Most used shot: straight (122 times)
+
+📈 ADVANCED PERFORMANCE METRICS:
+• Current session accuracy: 99.8%
+• Shot variety: 6 types
+• Speed consistency: 10.2%
+
+🎯 IDENTIFIED STRENGTHS:
+• Shot Success Rate: 1.00 (Excellent - 142.6% of benchmark)
+• Shot Variety: 6.00 (Excellent - 120.0% of benchmark)
+• Rhythm Consistency: 0.85 (Excellent - 170.0% of benchmark)
+
+⚠️ DEVELOPMENT AREAS:
+• Avg Ball Speed: 6.32 (Gap: 8.68 from benchmark)
+• Speed Consistency: 0.10 (Gap: 0.50 from benchmark)
+
+🧠 PATTERN RECOGNITION INSIGHTS:
+• Strategic pattern: attacking_sequence
+• Pattern confidence: 66.7%
+• Tactical advice: Good attacking pattern! Continue with precision and placement
+
+🔄 SHOT PATTERNS & TACTICS:
+• Shot direction preference: 53.7% straight, 46.3% crosscourt
+• Shot height preference: 5.9% drives, 94.1% lobs
+• Most common transition: straight→slight_crosscourt (63 times)
+• Pattern predictability: 13.5% (Low)
 • Tactical variety: High
 
-PERFORMANCE ASSESSMENT:
-• Overall performance level: Good (6.2/10)
+📊 PERFORMANCE ASSESSMENT:
+• Overall performance level: Good (6.1/10)
 • Match intensity: High
 • Shot execution quality: Needs improvement
 • Rally sustainability: Strong
 • Technical diversity: High
 
-DATA QUALITY INDICATORS:
-• Ball detection rate: 99.2%
+📋 DATA QUALITY INDICATORS:
+• Ball detection rate: 99.8%
 • Movement tracking quality: Good
-• Average movement intensity: 0.01 pixels/frame
+• Average movement intensity: 0.00 pixels/frame
+• Tactical analysis confidence: 100.0%
 
  **Ball Bounce Analysis:**
-   • Total bounces detected: 6889
-   • Average bounces per rally: 1.7
-   • Bounce frequency: high
-   •  Consider working on shot placement to reduce unnecessary wall bounces
-   •  Focus on straight drives and court positioning
+   • Total bounces detected: 7411
+   • Average bounces per rally: 1.0
+   • Bounce frequency: medium
 
 COACHING RECOMMENDATIONS:
 • Continue tracking ball bounces for better shot placement awareness

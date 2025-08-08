@@ -1,47 +1,47 @@
 COMPREHENSIVE SQUASH MATCH ANALYSIS
 ==================================================
 
-Analysis Date: 2025-07-18 15:11:27
+Analysis Date: 2025-08-07 20:43:30
 
-Total Frames: 3982
-Active Ball Frames: 3952
-Player 1 Position Frames: 3979
-Player 2 Position Frames: 3979
-Activity Rate: 99.2%
+Total Frames: 7703
+Active Ball Frames: 7610
+Player 1 Position Frames: 7700
+Player 2 Position Frames: 7700
+Activity Rate: 98.8%
 Unique Shot Types: 16
 Most Common Shot: straight lob
-Player 1 Hits: 2114
-Player 2 Hits: 1395
-Average Ball Height: 0.45m
-Max Ball Height: 1.19m
+Player 1 Hits: 3858
+Player 2 Hits: 3831
+Average Ball Height: 0.86m
+Max Ball Height: 2.62m
 
 DETAILED SHOT TYPE BREAKDOWN:
 ------------------------------
-straight lob: 1129 (28.4%)
-angled_crosscourt lob: 762 (19.1%)
-slight_crosscourt lob: 688 (17.3%)
-crosscourt lob: 353 (8.9%)
-tight_straight drive: 307 (7.7%)
-wide_crosscourt lob: 216 (5.4%)
-straight drive: 197 (4.9%)
-tight_straight lob: 140 (3.5%)
-slight_crosscourt drive: 79 (2.0%)
-wide_crosscourt drop: 25 (0.6%)
-crosscourt drop: 22 (0.6%)
-slight_crosscourt drop: 20 (0.5%)
-angled_crosscourt drop: 18 (0.5%)
-crosscourt drive: 10 (0.3%)
-angled_crosscourt drive: 10 (0.3%)
-straight drop: 6 (0.2%)
+straight lob: 2708 (35.2%)
+angled_crosscourt lob: 1293 (16.8%)
+slight_crosscourt lob: 1213 (15.7%)
+tight_straight lob: 933 (12.1%)
+crosscourt lob: 511 (6.6%)
+wide_crosscourt lob: 383 (5.0%)
+straight drive: 246 (3.2%)
+tight_straight drive: 138 (1.8%)
+straight drop: 60 (0.8%)
+tight_straight drop: 54 (0.7%)
+slight_crosscourt drive: 48 (0.6%)
+crosscourt drop: 44 (0.6%)
+angled_crosscourt drop: 29 (0.4%)
+wide_crosscourt drop: 21 (0.3%)
+angled_crosscourt drive: 13 (0.2%)
+slight_crosscourt drop: 9 (0.1%)
 
 PLAYER PERFORMANCE ANALYSIS:
 ------------------------------
-1 hit the ball: 2114 (53.1%)
-2 hit the ball: 1395 (35.0%)
-0 hit the ball: 473 (11.9%)
+1 hit the ball: 3858 (50.1%)
+2 hit the ball: 3831 (49.7%)
+0 hit the ball: 14 (0.2%)
 
 BALL TRAJECTORY ANALYSIS:
 ------------------------------
-Average Height: 0.45m
-Maximum Height: 1.19m
-Height Standard Deviation: 0.23m
+Average Height: 0.86m
+Maximum Height: 2.62m
+Height Standard Deviation: 0.64m

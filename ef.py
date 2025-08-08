@@ -28,9 +28,12 @@ from torchvision import transforms
 # Import autonomous coaching system
 from autonomous_coaching import collect_coaching_data, generate_coaching_report
 import json
-from sahi.utils.cv import read_image_as_pil
 print(f"time to import everything: {time.time()-start}")
 alldata = organizeddata = []
+# Initialize global frame dimensions and frame counter for exception handling
+frame_count = 0
+frame_width = 0
+frame_height = 0
 # Autonomous coaching system imported from autonomous_coaching.py
 
 
@@ -2146,11 +2149,13 @@ def calculate_ball_speed(ball_positions):
         return 0
 
 
-def main(path="self1.mp4", input_frame_width=640, input_frame_height=360, max_frames=None):
+def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_frames=None):
     # Update global frame dimensions with user-provided values
     global frame_width, frame_height
     frame_width = input_frame_width
     frame_height = input_frame_height
+    # Initialize frame counter early so exception handlers can access it
+    frame_count = 0
     
     # 🚀 AGGRESSIVE PERFORMANCE OPTIMIZATIONS
     print("🚀 INITIALIZING ULTRA-FAST GPU-OPTIMIZED SQUASH COACHING PIPELINE")
@@ -2262,7 +2267,7 @@ def main(path="self1.mp4", input_frame_width=640, input_frame_height=360, max_fr
             print(" Pose model loaded on CPU")
         
         # Load ball detection model with aggressive optimizations
-        ballmodel = YOLO("trained-models\\black_ball_selfv3.pt")
+        ballmodel = YOLO("trained-models/black_ball_selfv3.pt")
         if torch.cuda.is_available():
             ballmodel.to(device)
             # Apply aggressive optimizations
@@ -3708,7 +3713,7 @@ def main(path="self1.mp4", input_frame_width=640, input_frame_height=360, max_fr
                         annotated_frame, (ball_pos[0], ball_pos[1]), 5, (0, 255, 0), -1
                     )
 
-            positions = load_data("output\\ball-xyn.txt")
+            positions = load_data("output/ball-xyn.txt")
             if len(positions) > 11:
                 input_sequence = np.array([positions[-10:]])
                 input_sequence = input_sequence.reshape((1, 10, 2, 1))
@@ -4724,7 +4729,9 @@ def predict_ball_3d_position_advanced(past_ball_pos_3d, frames_ahead=3):
 
 if __name__ == "__main__":
     try:
+        start=time.time()
         main()
+        print(f"Execution time: {time.time() - start:.2f} seconds")
     except KeyboardInterrupt:
         print("\nProgram interrupted by user. All outputs have been generated.")
     except Exception as e:

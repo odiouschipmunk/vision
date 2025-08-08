@@ -1,48 +1,98 @@
 AUTONOMOUS SQUASH COACHING ANALYSIS
 ==================================================
 
-Analysis Date: 2025-07-20 13:51:58
-Video Analyzed: self1.mp4
-Total Frames Processed: 587
-Enhanced Coaching Data Points: 586
+Analysis Date: 2025-08-07 20:43:26
+Video Analyzed: self2.mp4
+Total Frames Processed: 7703
+Enhanced Coaching Data Points: 7703
 
 COACHING INSIGHTS:
 --------------------
-**Enhanced Coaching Advice:**
+ENHANCED AUTONOMOUS SQUASH COACHING ANALYSIS:
 
-### 1. Technical Shot Analysis with Bounce Pattern Insights
+🎾 COMPREHENSIVE MATCH ANALYSIS WITH ADVANCED AI INSIGHTS
+======================================================================
 
-#### **Shot Placement and Bounce Control**
-- **Slight Crosscourt Lob Soft:** This shot is a strong asset but can be improved in terms of placement and consistency. Analyze the bounce patterns to understand how the ball lands after being lobbed. The ball should ideally land softly and close to the net, allowing for quick follow-throughs and returns.
-- **Straight Drive Soft:** While this shot is effective, it can be more precise if you focus on maintaining a consistent height and trajectory. The bounce should be slightly higher than the lob soft to ensure a stable landing point.
-- **Straight Lob Soft:** Improve the height and consistency of your lob soft. The bounce should be gentle enough to avoid too much bounce that could lead to easy returns.
+📊 BASIC STATISTICS:
+• Total data points analyzed: 7703
+• Active rally time: 93.0% of match
+• Number of rallies: 56
+• Average rally length: 127.9 frames
+• Longest rally: 799 frames
 
-### 2. Movement Pattern Assessment
+🎯 SHOT ANALYSIS:
+• Most frequent shot: straight_lob_soft (2430 occurrences)
+• Shot variety score: 35/10
+• Total unique shot types: 38
+• Top 3 shots: {'straight_lob_soft': 2430, 'angled_crosscourt_lob_soft': 1003, 'slight_crosscourt_lob_soft': 981}
 
-#### **Court Coverage and Movement Quality**
-- **PLAYER1:** Your court coverage is good, but mobility needs improvement. Focus on quicker movements between different parts of the court. Central positioning is fine, but try to expand your range by moving more laterally and diagonally.
-- **PLAYER2:** Similar to PLAYER1, improve your mobility and range. Central positioning works well, but try to move more quickly and efficiently across the court. Avoid getting stuck in one area.
+⚡ BALL DYNAMICS:
+• Average ball speed: 6.32 pixels/frame
+• Maximum ball speed: 104.81 pixels/frame
+• Speed consistency: Variable
+• Ball tracking quality: 0.00/1.0
 
-### 3. Specific Improvement Areas Focusing on Shot Placement
+🏃 MOVEMENT PATTERNS:
+• PLAYER1: Court coverage - Excellent, Mobility - Low, Positioning - Central
+• PLAYER2: Court coverage - Excellent, Mobility - Low, Positioning - Central
 
-#### **Technique Improvements**
-- **Slight Crosscourt Lob Soft:** Work on the timing and height of your lob soft. Ensure the ball lands softly and close to the net, allowing for quick returns.
-- **Straight Drive Soft:** Focus on maintaining a consistent height and trajectory. The bounce should be slightly higher than the lob soft to ensure a stable landing point.
-- **Straight Lob Soft:** Improve the height and consistency of your lob soft. The bounce should be gentle enough to avoid too much bounce that could lead to easy returns.
+🎪 TACTICAL PATTERN ANALYSIS:
+• Identified pattern: defensive_patterns_corner_to_corner
+• Pattern confidence: 100.0%
+• Shot variety score: 6/10
+• Most used shot: straight (122 times)
 
-### 4. Training Recommendations for Better Court Control
+📈 ADVANCED PERFORMANCE METRICS:
+• Current session accuracy: 99.8%
+• Shot variety: 6 types
+• Speed consistency: 10.2%
 
-#### **Specific Exercises and Drills**
-- **Mobility Drills:** Incorporate drills that focus on quick lateral and diagonal movements. Use cones or markers to practice changing direction rapidly without losing momentum.
-- **Height and Consistency Drills:** Practice hitting balls at different heights to improve consistency. Use a target line or marker to ensure the ball lands at the desired height.
-- **Ball Bounce Control:** Work on controlling the bounce of your shots. Use a rebounder or a partner to hit balls from various angles and
+🎯 IDENTIFIED STRENGTHS:
+• Shot Success Rate: 1.00 (Excellent - 142.6% of benchmark)
+• Shot Variety: 6.00 (Excellent - 120.0% of benchmark)
+• Rhythm Consistency: 0.85 (Excellent - 170.0% of benchmark)
+
+⚠️ DEVELOPMENT AREAS:
+• Avg Ball Speed: 6.32 (Gap: 8.68 from benchmark)
+• Speed Consistency: 0.10 (Gap: 0.50 from benchmark)
+
+🧠 PATTERN RECOGNITION INSIGHTS:
+• Strategic pattern: attacking_sequence
+• Pattern confidence: 66.7%
+• Tactical advice: Good attacking pattern! Continue with precision and placement
+
+🔄 SHOT PATTERNS & TACTICS:
+• Shot direction preference: 53.7% straight, 46.3% crosscourt
+• Shot height preference: 5.9% drives, 94.1% lobs
+• Most common transition: straight→slight_crosscourt (63 times)
+• Pattern predictability: 13.5% (Low)
+• Tactical variety: High
+
+📊 PERFORMANCE ASSESSMENT:
+• Overall performance level: Good (6.1/10)
+• Match intensity: High
+• Shot execution quality: Needs improvement
+• Rally sustainability: Strong
+• Technical diversity: High
+
+📋 DATA QUALITY INDICATORS:
+• Ball detection rate: 99.8%
+• Movement tracking quality: Good
+• Average movement intensity: 0.00 pixels/frame
+• Tactical analysis confidence: 100.0%
 
  **Ball Bounce Analysis:**
-   • Total bounces detected: 487
-   • Average bounces per rally: 0.8
-   • Bounce frequency: high
-   •  Consider working on shot placement to reduce unnecessary wall bounces
-   •  Focus on straight drives and court positioning
+   • Total bounces detected: 7411
+   • Average bounces per rally: 1.0
+   • Bounce frequency: medium
+
+COACHING RECOMMENDATIONS:
+• Continue tracking ball bounces for better shot placement awareness
+• Focus on minimizing unnecessary wall bounces through improved accuracy
+• Use tactical bounces (boasts) strategically when appropriate
+• Work on court positioning to optimize ball trajectory control
+
+Note: This analysis uses enhanced ball bounce detection with GPU acceleration for improved accuracy.
 
 ==================================================
 End of Analysis
