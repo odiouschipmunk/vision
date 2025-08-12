@@ -2,118 +2,70 @@
 ENHANCED SQUASH COACHING ANALYSIS
 ================================================
 
-Analysis Date: 2025-08-07 20:43:22
+Analysis Date: 2025-08-11 20:33:59
 Video Analyzed: self2.mp4
-Total Frames Processed: 7703
-Enhanced Coaching Data Points: 7703
-GPU Acceleration:  Enabled
+Total Frames Processed: 24
+Enhanced Coaching Data Points: 23
+GPU Acceleration: ✅ Enabled
 
 ENHANCED BALL TRACKING ANALYSIS:
 ------------------------------
-• Total trajectory points: 100
+• Total trajectory points: 8
 • Enhanced bounce detection: GPU-accelerated
 • Multi-criteria validation: Angle, velocity, wall proximity
-• Visualization: Real-time yellow circle indicators
+• Visualization: Real-time colored trajectory indicators
+• Shot tracking: 0 complete shots analyzed
 
-ENHANCED AUTONOMOUS SQUASH COACHING ANALYSIS:
+🎾 SQUASH COACHING ANALYSIS (Rule-Based)
+============================================================
 
-🎾 COMPREHENSIVE MATCH ANALYSIS WITH ADVANCED AI INSIGHTS
-======================================================================
+📊 MATCH OVERVIEW:
+• Total frames analyzed: 23
+• Active play frames: 0
+• Ball hits detected: 0
+• Activity rate: 0.0%
 
-📊 BASIC STATISTICS:
-• Total data points analyzed: 7703
-• Active rally time: 93.0% of match
-• Number of rallies: 56
-• Average rally length: 127.9 frames
-• Longest rally: 799 frames
+🏸 SHOT ANALYSIS:
+• Total shots: 23
+• Shot variety: 2 different types
+• Most common shot: straight
 
-🎯 SHOT ANALYSIS:
-• Most frequent shot: straight_lob_soft (2430 occurrences)
-• Shot variety score: 35/10
-• Total unique shot types: 38
-• Top 3 shots: {'straight_lob_soft': 2430, 'angled_crosscourt_lob_soft': 1003, 'slight_crosscourt_lob_soft': 981}
+👥 PLAYER PERFORMANCE:
+• Player 1 hits: 5
+• Player 2 hits: 0
+• Hit balance: 5 difference
 
-⚡ BALL DYNAMICS:
-• Average ball speed: 6.32 pixels/frame
-• Maximum ball speed: 104.81 pixels/frame
-• Speed consistency: Variable
-• Ball tracking quality: 0.00/1.0
+🏃 BALL TRACKING:
+• Tracked positions: 0
+• Court coverage: 0.0%
 
-🏃 MOVEMENT PATTERNS:
-• PLAYER1: Court coverage - Excellent, Mobility - Low, Positioning - Central
-• PLAYER2: Court coverage - Excellent, Mobility - Low, Positioning - Central
+⚾ BOUNCE ANALYSIS:
+• Total bounces: 0
+• Average bounces per rally: 0.0
+• Bounce frequency: low
 
-🎪 TACTICAL PATTERN ANALYSIS:
-• Identified pattern: defensive_patterns_corner_to_corner
-• Pattern confidence: 100.0%
-• Shot variety score: 6/10
-• Most used shot: straight (122 times)
+🎯 COACHING RECOMMENDATIONS:
+• Focus on practicing different shot types
+• Work on court movement and positioning
 
-📈 ADVANCED PERFORMANCE METRICS:
-• Current session accuracy: 99.8%
-• Shot variety: 6 types
-• Speed consistency: 10.2%
-
-🎯 IDENTIFIED STRENGTHS:
-• Shot Success Rate: 1.00 (Excellent - 142.6% of benchmark)
-• Shot Variety: 6.00 (Excellent - 120.0% of benchmark)
-• Rhythm Consistency: 0.85 (Excellent - 170.0% of benchmark)
-
-⚠️ DEVELOPMENT AREAS:
-• Avg Ball Speed: 6.32 (Gap: 8.68 from benchmark)
-• Speed Consistency: 0.10 (Gap: 0.50 from benchmark)
-
-🧠 PATTERN RECOGNITION INSIGHTS:
-• Strategic pattern: attacking_sequence
-• Pattern confidence: 66.7%
-• Tactical advice: Good attacking pattern! Continue with precision and placement
-
-🔄 SHOT PATTERNS & TACTICS:
-• Shot direction preference: 53.7% straight, 46.3% crosscourt
-• Shot height preference: 5.9% drives, 94.1% lobs
-• Most common transition: straight→slight_crosscourt (63 times)
-• Pattern predictability: 13.5% (Low)
-• Tactical variety: High
-
-📊 PERFORMANCE ASSESSMENT:
-• Overall performance level: Good (6.1/10)
-• Match intensity: High
-• Shot execution quality: Needs improvement
-• Rally sustainability: Strong
-• Technical diversity: High
-
-📋 DATA QUALITY INDICATORS:
-• Ball detection rate: 99.8%
-• Movement tracking quality: Good
-• Average movement intensity: 0.00 pixels/frame
-• Tactical analysis confidence: 100.0%
-
- **Ball Bounce Analysis:**
-   • Total bounces detected: 7411
-   • Average bounces per rally: 1.0
-   • Bounce frequency: medium
-
-COACHING RECOMMENDATIONS:
-• Continue tracking ball bounces for better shot placement awareness
-• Focus on minimizing unnecessary wall bounces through improved accuracy
-• Use tactical bounces (boasts) strategically when appropriate
-• Work on court positioning to optimize ball trajectory control
-
-Note: This analysis uses enhanced ball bounce detection with GPU acceleration for improved accuracy.
+Note: Advanced AI analysis unavailable - using rule-based coaching insights.
 
 TECHNICAL ENHANCEMENTS:
 ---------------------
-•  GPU-optimized ball detection and tracking
-•  Enhanced bounce detection with multiple validation criteria
-•  Real-time trajectory analysis with physics modeling
-•  Comprehensive coaching data collection
-•  Advanced ball bounce pattern analysis
+• 🎾 GPU-optimized ball detection and tracking
+• 🎯 Enhanced shot tracking with real-time visualization
+• 🔍 Enhanced bounce detection with multiple validation criteria
+• 📊 Real-time trajectory analysis with physics modeling
+• 🤖 Comprehensive coaching data collection
+• 📈 Advanced ball bounce pattern analysis
+• 🎨 Color-coded shot visualization system
 
 SYSTEM PERFORMANCE:
 -----------------
 • Processing device: GPU
 • Ball detection accuracy: Enhanced with trained model
 • Bounce detection: Multi-algorithm validation
-• Real-time analysis:  Active throughout session
+• Shot tracking: ✅ Active throughout session
+• Real-time analysis: ✅ Active throughout session
 
 ================================================
