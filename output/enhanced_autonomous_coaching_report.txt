@@ -2,53 +2,118 @@
 ENHANCED SQUASH COACHING ANALYSIS
 ================================================
 
-Analysis Date: 2025-08-11 20:33:59
+Analysis Date: 2025-08-12 17:49:33
 Video Analyzed: self2.mp4
-Total Frames Processed: 24
-Enhanced Coaching Data Points: 23
+Total Frames Processed: 235
+Enhanced Coaching Data Points: 234
 GPU Acceleration: ✅ Enabled
 
 ENHANCED BALL TRACKING ANALYSIS:
 ------------------------------
-• Total trajectory points: 8
+• Total trajectory points: 76
 • Enhanced bounce detection: GPU-accelerated
 • Multi-criteria validation: Angle, velocity, wall proximity
 • Visualization: Real-time colored trajectory indicators
-• Shot tracking: 0 complete shots analyzed
+• Shot tracking: 7 complete shots analyzed
 
-🎾 SQUASH COACHING ANALYSIS (Rule-Based)
+🎾 AUTONOMOUS SQUASH COACHING ANALYSIS
 ============================================================
 
-📊 MATCH OVERVIEW:
-• Total frames analyzed: 23
-• Active play frames: 0
-• Ball hits detected: 0
-• Activity rate: 0.0%
+ AI COACHING INSIGHTS:
+Certainly! Here's a detailed coaching analysis based on the provided match statistics and benchmarks:
 
-🏸 SHOT ANALYSIS:
-• Total shots: 23
-• Shot variety: 2 different types
-• Most common shot: straight
+### 1. Technical Analysis
 
-👥 PLAYER PERFORMANCE:
-• Player 1 hits: 5
-• Player 2 hits: 0
-• Hit balance: 5 difference
+#### Shot Accuracy Assessment
+**Shot Variety:** The use of six distinct shot types indicates a varied game plan. However, the significant disparity in hit counts suggests a lack of consistency across all types.
+- **Improvement Areas:**
+  - Focus more consistently on the most successful shots like `straight_drive` (most common) and `drop_shot`.
+  - Increase practice sessions targeting `crosscourt_confident`, as it has only eight occurrences but is crucial for maintaining balanced play.
 
-🏃 BALL TRACKING:
-• Tracked positions: 0
-• Court coverage: 0.0%
+#### Ball Striking Technique Evaluation
+- **Straight Drive:** Dominates the game, which shows strong control and precision but may need refinement to maintain this level.
+  - Ensure smooth transitions from running into the shot to reduce errors.
+- **Drop Shot:** Shows promise but lacks frequency. More frequent practice should be prioritized.
+  - Improve timing and depth control for better placement.
+- **Crosscourt Shots:** Inconsistent usage; more consistent execution can add unpredictability.
+  - Practice off-speed variations to make opponents react faster.
 
-⚾ BOUNCE ANALYSIS:
-• Total bounces: 0
-• Average bounces per rally: 0.0
-• Bounce frequency: low
+#### Movement Patterns and Court Positioning Efficiency
+- **Ball Tracking Coverage:** Only 17% of the court is covered, indicating poor strategic movement.
+  - Work on developing a more expansive court presence by integrating quick changes of direction.
+- **Average Position:** Positioned closer to mid-court rather than deep or wide, limiting offensive options.
+  - Develop moves towards corners to create angles and pressure opponents.
+  
+#### Tactical Shot Selection Analysis
+- **Strategically Selecting Shots:** Use more aggressive tactics against weaker opposition players.
+  - Maintain defensive posture against stronger competition.
+  - Mix up your playstyle to confuse opponents, focusing on both offense and defense.
 
-🎯 COACHING RECOMMENDATIONS:
-• Focus on practicing different shot types
-• Work on court movement and positioning
+### 2. Strategic Insights
 
-Note: Advanced AI analysis unavailable - using rule-based coaching insights.
+#### Pattern Recognition in Shot Sequences
+- **Repetitive Sequences:** Notable repetitive plays such as `straight_drive` followed by another `straight_drive`.
+  - Introduce randomization to disrupt these patterns.
+- **Predictability Assessment:** Opponent seems somewhat predictable given their reliance on the `straight_drive`.
+  - Implement counter-strategies where possible, exploiting weaknesses in predictable sequences.
+
+#### Court Positioning Strategy Evaluation
+- **Court Coverage:** Limited court coverage contributes to predictability.
+  - Utilize wider baseline shots when possible to force opponents out of position.
+  - Deep lobs or crosscourt drives can also stretch the court effectively.
+
+#### Pressure Situation Performance
+- **Handling High-Stakes Moments:** Need to perform well under pressure, especially when ahead.
+  - Stay composed and maintain confidence through drills focused on mental resilience.
+  - Practice handling close games and tiebreakers calmly.
+
+### 3. Physical Assessment
+
+#### Movement Efficiency and Court Coverage
+- **Movement Speed & Agility:** Generally good, though not top-tier compared to professional standards.
+  - Incorporate agility drills to enhance quickness and responsiveness.
+- **Endurance Indicators:** Matches were short-lived, suggesting room for endurance training.
+  - Focus on interval workouts to improve stamina and recovery times.
+  
+#### Speed and Agility Observations
+- **Speed:** Relatively fast overall but can be improved further with targeted sprints.
+  - Include hill sprints and plyometric exercises to boost explosive power.
+  
+#### Recovery Between Points
+- **Post-Rally Recovery:** Shorter rallies suggest less recovery time, possibly impacting long-term performance.
+  - Prioritize active recovery methods such as stretching and foam rolling after each point.
+  
+### 4. Specific Improvement Recommendations
+
+1. **Priority Areas for Immediate Focus**
+   - **Top 3 Improvements:**
+     1. **Consistent Execution of Straight Drives**: Aim for at least 12 consecutive accurate straight drives without error.
+     2. **Enhanced Drop Shot Usage**: Practice until you achieve a minimum of three consecutive drop shots with varying levels of success.
+     3. **Wide Baseline
+
+ DETAILED TECHNICAL ANALYSIS:
+• ✅ Excellent shot variety - good tactical awareness
+• ⚠️ Unbalanced rally participation - encourage more active play
+• 📍 Limited court coverage - work on court movement
+• ⚠️ High bounce frequency suggests poor shot control
+
+ PERFORMANCE BENCHMARKING:
+• ✅ Shot rate: Professional level
+• ✅ Activity rate: Excellent match intensity
+
+ IMMEDIATE ACTION ITEMS:
+• Work on rally consistency - both players should stay engaged
+
+ PROGRESS TRACKING RECOMMENDATIONS:
+• Track shot accuracy over time
+• Monitor court coverage improvements
+• Record rally length progression
+• Analyze bounce pattern consistency
+• Current session: 217 shots analyzed
+• Compare with previous sessions for improvement trends
+
+Note: This analysis combines advanced AI coaching with comprehensive rule-based insights 
+for maximum coaching effectiveness.
 
 TECHNICAL ENHANCEMENTS:
 ---------------------

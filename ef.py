@@ -37,6 +37,786 @@ frame_width = 0
 frame_height = 0
 # Autonomous coaching system imported from autonomous_coaching.py
 
+class ShotClassificationModel:
+    """Enhanced shot classification using multiple trajectory features"""
+    
+    def __init__(self):
+        self.shot_types = {
+            'straight_drive': {'horizontal_variance': 0.15, 'height_profile': 'low', 'speed_profile': 'fast'},
+            'crosscourt': {'horizontal_variance': 0.35, 'height_profile': 'medium', 'speed_profile': 'medium'},
+            'drop_shot': {'vertical_drop': 0.6, 'speed_profile': 'slow', 'front_court_ending': True},
+            'lob': {'height_profile': 'high', 'trajectory_arc': 'parabolic', 'back_court_ending': True},
+            'boast': {'wall_hits': True, 'angle_change': 60, 'side_wall_contact': True},
+            'kill_shot': {'height_profile': 'very_low', 'speed_profile': 'very_fast', 'front_court_ending': True},
+            'volley': {'interception_height': 'high', 'quick_reaction': True},
+            'defensive_lob': {'height_profile': 'very_high', 'back_court_ending': True, 'pressure_response': True}
+        }
+    
+    def classify_shot(self, trajectory, court_dimensions, player_positions=None):
+        """
+        Classify shot type based on comprehensive trajectory analysis
+        
+        Args:
+            trajectory: List of ball positions [(x, y, frame), ...]
+            court_dimensions: (width, height) of court
+            player_positions: Dict of player positions during shot
+            
+        Returns:
+            dict: Shot classification with confidence and features
+        """
+        if len(trajectory) < 5:
+            return {'type': 'unknown', 'confidence': 0.0, 'features': {}}
+        
+        features = self._extract_trajectory_features(trajectory, court_dimensions)
+        shot_scores = {}
+        
+        # Score each shot type
+        for shot_type, criteria in self.shot_types.items():
+            score = self._calculate_shot_score(features, criteria)
+            shot_scores[shot_type] = score
+        
+        # Get best match
+        best_shot = max(shot_scores.items(), key=lambda x: x[1])
+        shot_type, confidence = best_shot
+        
+        # Add contextual information
+        shot_context = self._analyze_shot_context(trajectory, court_dimensions, player_positions)
+        
+        return {
+            'type': shot_type,
+            'confidence': confidence,
+            'features': features,
+            'context': shot_context,
+            'all_scores': shot_scores
+        }
+    
+    def _extract_trajectory_features(self, trajectory, court_dimensions):
+        """Extract comprehensive features from ball trajectory"""
+        width, height = court_dimensions
+        
+        # Basic trajectory metrics
+        start_pos = trajectory[0]
+        end_pos = trajectory[-1]
+        max_height = min(pos[1] for pos in trajectory)  # Y is inverted in screen coords
+        min_height = max(pos[1] for pos in trajectory)
+        
+        # Movement analysis
+        horizontal_movement = abs(end_pos[0] - start_pos[0])
+        vertical_movement = abs(end_pos[1] - start_pos[1])
+        total_distance = sum(math.sqrt((trajectory[i][0] - trajectory[i-1][0])**2 + 
+                                     (trajectory[i][1] - trajectory[i-1][1])**2) 
+                           for i in range(1, len(trajectory)))
+        
+        # Speed analysis
+        speeds = []
+        for i in range(1, len(trajectory)):
+            if len(trajectory[i]) > 2 and len(trajectory[i-1]) > 2:
+                dt = max(0.033, abs(trajectory[i][2] - trajectory[i-1][2])) if trajectory[i][2] != trajectory[i-1][2] else 1
+                speed = math.sqrt((trajectory[i][0] - trajectory[i-1][0])**2 + 
+                                (trajectory[i][1] - trajectory[i-1][1])**2) / dt
+                speeds.append(speed)
+        
+        avg_speed = sum(speeds) / len(speeds) if speeds else 0
+        max_speed = max(speeds) if speeds else 0
+        speed_variance = np.var(speeds) if speeds else 0
+        
+        # Trajectory shape analysis
+        height_variance = np.var([pos[1] for pos in trajectory])
+        trajectory_curvature = self._calculate_curvature(trajectory)
+        
+        # Court position analysis
+        start_court_zone = self._get_court_zone(start_pos, court_dimensions)
+        end_court_zone = self._get_court_zone(end_pos, court_dimensions)
+        
+        # Wall interaction analysis
+        wall_hits = self._detect_wall_interactions(trajectory, court_dimensions)
+        direction_changes = self._count_direction_changes(trajectory)
+        
+        return {
+            'horizontal_movement': horizontal_movement / width,
+            'vertical_movement': vertical_movement / height,
+            'height_range': (min_height - max_height) / height,
+            'avg_speed': avg_speed,
+            'max_speed': max_speed,
+            'speed_variance': speed_variance,
+            'height_variance': height_variance / (height**2),
+            'trajectory_curvature': trajectory_curvature,
+            'start_zone': start_court_zone,
+            'end_zone': end_court_zone,
+            'wall_hits': wall_hits,
+            'direction_changes': direction_changes,
+            'total_distance': total_distance,
+            'trajectory_length': len(trajectory)
+        }
+    
+    def _calculate_shot_score(self, features, criteria):
+        """Calculate how well features match shot criteria"""
+        score = 0.0
+        total_criteria = len(criteria)
+        
+        for criterion, expected in criteria.items():
+            if criterion == 'horizontal_variance':
+                actual = features.get('horizontal_movement', 0)
+                if isinstance(expected, (int, float)):
+                    score += 1.0 - abs(actual - expected)
+            elif criterion == 'height_profile':
+                height_range = features.get('height_range', 0)
+                if expected == 'low' and height_range < 0.2:
+                    score += 1.0
+                elif expected == 'medium' and 0.2 <= height_range <= 0.5:
+                    score += 1.0
+                elif expected == 'high' and height_range > 0.5:
+                    score += 1.0
+                elif expected == 'very_high' and height_range > 0.7:
+                    score += 1.0
+                elif expected == 'very_low' and height_range < 0.1:
+                    score += 1.0
+            elif criterion == 'speed_profile':
+                avg_speed = features.get('avg_speed', 0)
+                if expected == 'slow' and avg_speed < 10:
+                    score += 1.0
+                elif expected == 'medium' and 10 <= avg_speed <= 25:
+                    score += 1.0
+                elif expected == 'fast' and avg_speed > 25:
+                    score += 1.0
+                elif expected == 'very_fast' and avg_speed > 40:
+                    score += 1.0
+            elif criterion == 'wall_hits' and expected:
+                if features.get('wall_hits', 0) > 0:
+                    score += 1.0
+            elif criterion == 'front_court_ending' and expected:
+                if features.get('end_zone') in ['front_left', 'front_right', 'front_center']:
+                    score += 1.0
+            elif criterion == 'back_court_ending' and expected:
+                if features.get('end_zone') in ['back_left', 'back_right', 'back_center']:
+                    score += 1.0
+        
+        return score / total_criteria if total_criteria > 0 else 0.0
+    
+    def _calculate_curvature(self, trajectory):
+        """Calculate trajectory curvature using three-point method"""
+        if len(trajectory) < 3:
+            return 0.0
+        
+        curvatures = []
+        for i in range(1, len(trajectory) - 1):
+            p1, p2, p3 = trajectory[i-1], trajectory[i], trajectory[i+1]
+            
+            # Vector from p1 to p2
+            v1 = (p2[0] - p1[0], p2[1] - p1[1])
+            # Vector from p2 to p3
+            v2 = (p3[0] - p2[0], p3[1] - p2[1])
+            
+            # Calculate angle between vectors
+            dot_product = v1[0]*v2[0] + v1[1]*v2[1]
+            mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
+            mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
+            
+            if mag1 > 0 and mag2 > 0:
+                cos_angle = dot_product / (mag1 * mag2)
+                cos_angle = max(-1, min(1, cos_angle))  # Clamp to valid range
+                angle = math.acos(cos_angle)
+                curvatures.append(angle)
+        
+        return sum(curvatures) / len(curvatures) if curvatures else 0.0
+    
+    def _get_court_zone(self, position, court_dimensions):
+        """Determine which zone of the court the position is in"""
+        x, y = position[0], position[1]
+        width, height = court_dimensions
+        
+        # Divide court into 9 zones
+        x_zone = 'left' if x < width/3 else 'center' if x < 2*width/3 else 'right'
+        y_zone = 'front' if y < height/3 else 'middle' if y < 2*height/3 else 'back'
+        
+        return f"{y_zone}_{x_zone}"
+    
+    def _detect_wall_interactions(self, trajectory, court_dimensions):
+        """Detect ball interactions with walls"""
+        width, height = court_dimensions
+        wall_threshold = 30  # Pixels from edge
+        
+        wall_hits = 0
+        for i in range(1, len(trajectory)):
+            x, y = trajectory[i][0], trajectory[i][1]
+            prev_x, prev_y = trajectory[i-1][0], trajectory[i-1][1]
+            
+            # Check if ball went from not-near-wall to near-wall
+            near_wall_now = (x < wall_threshold or x > width - wall_threshold or 
+                           y < wall_threshold or y > height - wall_threshold)
+            near_wall_prev = (prev_x < wall_threshold or prev_x > width - wall_threshold or 
+                            prev_y < wall_threshold or prev_y > height - wall_threshold)
+            
+            if near_wall_now and not near_wall_prev:
+                # Also check for direction change
+                if i < len(trajectory) - 1:
+                    next_x, next_y = trajectory[i+1][0], trajectory[i+1][1]
+                    direction_change = abs((x - prev_x) * (next_x - x) + (y - prev_y) * (next_y - y)) < 0
+                    if direction_change:
+                        wall_hits += 1
+        
+        return wall_hits
+    
+    def _count_direction_changes(self, trajectory):
+        """Count significant direction changes in trajectory"""
+        if len(trajectory) < 3:
+            return 0
+        
+        direction_changes = 0
+        threshold = math.pi / 4  # 45 degrees
+        
+        for i in range(1, len(trajectory) - 1):
+            p1, p2, p3 = trajectory[i-1], trajectory[i], trajectory[i+1]
+            
+            # Calculate direction vectors
+            dir1 = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+            dir2 = math.atan2(p3[1] - p2[1], p3[0] - p2[0])
+            
+            # Calculate angle difference
+            angle_diff = abs(dir2 - dir1)
+            angle_diff = min(angle_diff, 2*math.pi - angle_diff)  # Take smaller angle
+            
+            if angle_diff > threshold:
+                direction_changes += 1
+        
+        return direction_changes
+    
+    def _analyze_shot_context(self, trajectory, court_dimensions, player_positions):
+        """Analyze contextual information about the shot"""
+        context = {
+            'shot_duration': len(trajectory),
+            'court_coverage': self._calculate_court_coverage(trajectory, court_dimensions),
+            'pressure_situation': False,
+            'attacking_shot': False,
+            'defensive_shot': False
+        }
+        
+        # Determine if shot is attacking or defensive based on trajectory
+        start_zone = self._get_court_zone(trajectory[0], court_dimensions)
+        end_zone = self._get_court_zone(trajectory[-1], court_dimensions)
+        
+        # Attacking shots typically go to front court
+        if 'front' in end_zone:
+            context['attacking_shot'] = True
+        
+        # Defensive shots typically go to back court or are lobs
+        if 'back' in end_zone and trajectory[0][1] > trajectory[-1][1]:  # Ball goes up
+            context['defensive_shot'] = True
+        
+        return context
+    
+    def _calculate_court_coverage(self, trajectory, court_dimensions):
+        """Calculate how much of the court the trajectory covers"""
+        if not trajectory:
+            return 0.0
+        
+        x_positions = [pos[0] for pos in trajectory]
+        y_positions = [pos[1] for pos in trajectory]
+        
+        x_range = (max(x_positions) - min(x_positions)) / court_dimensions[0]
+        y_range = (max(y_positions) - min(y_positions)) / court_dimensions[1]
+        
+        return (x_range + y_range) / 2
+
+class PlayerHitDetector:
+    """Enhanced player hit detection with multiple algorithms"""
+    
+    def __init__(self):
+        self.hit_detection_methods = [
+            self._proximity_detection,
+            self._trajectory_analysis,
+            self._racket_position_analysis,
+            self._movement_pattern_analysis
+        ]
+        self.confidence_weights = [0.3, 0.4, 0.2, 0.1]
+    
+    def detect_player_hit(self, players, ball_trajectory, frame_count):
+        """
+        Detect which player hit the ball with enhanced accuracy
+        
+        Args:
+            players: Dict of player objects {1: Player, 2: Player}
+            ball_trajectory: List of recent ball positions
+            frame_count: Current frame number
+            
+        Returns:
+            tuple: (player_id, confidence, hit_type, additional_info)
+        """
+        if len(ball_trajectory) < 3 or not players:
+            return 0, 0.0, 'none', {}
+        
+        hit_results = []
+        
+        # Run all detection methods
+        for method, weight in zip(self.hit_detection_methods, self.confidence_weights):
+            try:
+                result = method(players, ball_trajectory, frame_count)
+                hit_results.append((result, weight))
+            except Exception as e:
+                print(f"Hit detection method failed: {e}")
+                hit_results.append(((0, 0.0, 'none', {}), weight))
+        
+        # Combine results with weighted voting
+        return self._combine_hit_results(hit_results)
+    
+    def _proximity_detection(self, players, ball_trajectory, frame_count):
+        """Detect hit based on player proximity to ball"""
+        current_ball_pos = ball_trajectory[-1]
+        player_distances = {}
+        
+        for player_id, player in players.items():
+            if player and player.get_latest_pose():
+                # Get player position using multiple keypoints
+                player_pos = self._get_enhanced_player_position(player)
+                if player_pos:
+                    distance = math.sqrt(
+                        (current_ball_pos[0] - player_pos[0])**2 + 
+                        (current_ball_pos[1] - player_pos[1])**2
+                    )
+                    player_distances[player_id] = distance
+        
+        if not player_distances:
+            return 0, 0.0, 'none', {}
+        
+        closest_player = min(player_distances.items(), key=lambda x: x[1])
+        player_id, distance = closest_player
+        
+        # Convert distance to confidence (closer = higher confidence)
+        max_hit_distance = 100  # pixels
+        confidence = max(0, (max_hit_distance - distance) / max_hit_distance)
+        
+        hit_type = 'proximity_hit' if confidence > 0.3 else 'none'
+        
+        return player_id if confidence > 0.3 else 0, confidence, hit_type, {'distance': distance}
+    
+    def _trajectory_analysis(self, players, ball_trajectory, frame_count):
+        """Detect hit based on ball trajectory changes"""
+        if len(ball_trajectory) < 5:
+            return 0, 0.0, 'none', {}
+        
+        # Analyze last few positions for sudden changes
+        recent_positions = ball_trajectory[-5:]
+        
+        # Calculate velocity and direction changes
+        velocities = []
+        directions = []
+        
+        for i in range(1, len(recent_positions)):
+            p1, p2 = recent_positions[i-1], recent_positions[i]
+            if len(p1) >= 3 and len(p2) >= 3:
+                dt = max(0.033, abs(p2[2] - p1[2])) if p2[2] != p1[2] else 1
+                velocity = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2) / dt
+                direction = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+                velocities.append(velocity)
+                directions.append(direction)
+        
+        # Check for significant changes
+        velocity_change = 0
+        direction_change = 0
+        
+        if len(velocities) >= 2:
+            velocity_change = abs(velocities[-1] - velocities[-2])
+        
+        if len(directions) >= 2:
+            dir_diff = abs(directions[-1] - directions[-2])
+            direction_change = min(dir_diff, 2*math.pi - dir_diff)
+        
+        # Determine which player is most likely to have caused the change
+        hit_confidence = 0
+        hit_player = 0
+        
+        if velocity_change > 15 or direction_change > math.pi/6:  # 30 degrees
+            # Find closest player at time of trajectory change
+            change_position = recent_positions[-2]  # Position where change occurred
+            
+            player_distances = {}
+            for player_id, player in players.items():
+                if player and player.get_latest_pose():
+                    player_pos = self._get_enhanced_player_position(player)
+                    if player_pos:
+                        distance = math.sqrt(
+                            (change_position[0] - player_pos[0])**2 + 
+                            (change_position[1] - player_pos[1])**2
+                        )
+                        player_distances[player_id] = distance
+            
+            if player_distances:
+                closest_player = min(player_distances.items(), key=lambda x: x[1])
+                hit_player, distance = closest_player
+                
+                # Higher confidence for larger trajectory changes and closer proximity
+                trajectory_confidence = min(1.0, (velocity_change + direction_change * 10) / 50)
+                proximity_confidence = max(0, (150 - distance) / 150)
+                hit_confidence = (trajectory_confidence + proximity_confidence) / 2
+        
+        hit_type = 'trajectory_change' if hit_confidence > 0.4 else 'none'
+        
+        return hit_player if hit_confidence > 0.4 else 0, hit_confidence, hit_type, {
+            'velocity_change': velocity_change,
+            'direction_change': direction_change
+        }
+    
+    def _racket_position_analysis(self, players, ball_trajectory, frame_count):
+        """Detect hit based on racket/arm position analysis"""
+        current_ball_pos = ball_trajectory[-1]
+        hit_confidences = {}
+        
+        for player_id, player in players.items():
+            if player and player.get_latest_pose():
+                pose = player.get_latest_pose()
+                
+                # Check arm/racket positions (wrists, elbows)
+                arm_keypoints = []
+                
+                try:
+                    if hasattr(pose, 'xyn') and len(pose.xyn) > 0:
+                        keypoints = pose.xyn[0]
+                        # Wrist keypoints (9=left wrist, 10=right wrist)
+                        # Elbow keypoints (7=left elbow, 8=right elbow)
+                        for idx in [7, 8, 9, 10]:
+                            if idx < len(keypoints):
+                                kp = keypoints[idx]
+                                if len(kp) >= 2 and kp[0] > 0 and kp[1] > 0:
+                                    arm_keypoints.append((kp[0] * 640, kp[1] * 360))  # Convert to pixel coords
+                except Exception:
+                    continue
+                
+                if arm_keypoints:
+                    # Find closest arm keypoint to ball
+                    min_distance = float('inf')
+                    for arm_pos in arm_keypoints:
+                        distance = math.sqrt(
+                            (current_ball_pos[0] - arm_pos[0])**2 + 
+                            (current_ball_pos[1] - arm_pos[1])**2
+                        )
+                        min_distance = min(min_distance, distance)
+                    
+                    # Convert to confidence
+                    max_racket_distance = 80  # pixels
+                    confidence = max(0, (max_racket_distance - min_distance) / max_racket_distance)
+                    hit_confidences[player_id] = (confidence, min_distance)
+        
+        if not hit_confidences:
+            return 0, 0.0, 'none', {}
+        
+        # Get player with highest racket confidence
+        best_player = max(hit_confidences.items(), key=lambda x: x[1][0])
+        player_id, (confidence, distance) = best_player
+        
+        hit_type = 'racket_proximity' if confidence > 0.3 else 'none'
+        
+        return player_id if confidence > 0.3 else 0, confidence, hit_type, {'racket_distance': distance}
+    
+    def _movement_pattern_analysis(self, players, ball_trajectory, frame_count):
+        """Detect hit based on player movement patterns"""
+        # This is a simplified version - could be enhanced with historical movement data
+        current_ball_pos = ball_trajectory[-1]
+        
+        # Look for players moving towards ball position
+        movement_scores = {}
+        
+        for player_id, player in players.items():
+            if player and hasattr(player, 'position_history') and len(player.position_history) > 1:
+                # Check if player was moving towards ball
+                recent_positions = player.position_history[-3:]
+                
+                if len(recent_positions) >= 2:
+                    # Calculate movement direction
+                    last_pos = recent_positions[-1]
+                    prev_pos = recent_positions[-2]
+                    
+                    movement_vector = (last_pos[0] - prev_pos[0], last_pos[1] - prev_pos[1])
+                    ball_vector = (current_ball_pos[0] - prev_pos[0], current_ball_pos[1] - prev_pos[1])
+                    
+                    # Calculate alignment of movement with ball direction
+                    if math.sqrt(movement_vector[0]**2 + movement_vector[1]**2) > 0:
+                        dot_product = movement_vector[0]*ball_vector[0] + movement_vector[1]*ball_vector[1]
+                        movement_mag = math.sqrt(movement_vector[0]**2 + movement_vector[1]**2)
+                        ball_mag = math.sqrt(ball_vector[0]**2 + ball_vector[1]**2)
+                        
+                        if movement_mag > 0 and ball_mag > 0:
+                            alignment = dot_product / (movement_mag * ball_mag)
+                            movement_scores[player_id] = max(0, alignment)
+        
+        if not movement_scores:
+            return 0, 0.0, 'none', {}
+        
+        best_player = max(movement_scores.items(), key=lambda x: x[1])
+        player_id, score = best_player
+        
+        hit_type = 'movement_pattern' if score > 0.5 else 'none'
+        
+        return player_id if score > 0.5 else 0, score, hit_type, {'movement_alignment': score}
+    
+    def _get_enhanced_player_position(self, player):
+        """Get player position using multiple keypoints for better accuracy"""
+        if not player or not player.get_latest_pose():
+            return None
+        
+        pose = player.get_latest_pose()
+        
+        try:
+            if hasattr(pose, 'xyn') and len(pose.xyn) > 0:
+                keypoints = pose.xyn[0]
+                
+                # Priority order: wrists, elbows, shoulders, hips
+                priority_keypoints = [9, 10, 7, 8, 5, 6, 11, 12]  # Wrists, elbows, shoulders, hips
+                
+                for idx in priority_keypoints:
+                    if idx < len(keypoints):
+                        kp = keypoints[idx]
+                        if len(kp) >= 2 and kp[0] > 0 and kp[1] > 0:
+                            return (kp[0] * 640, kp[1] * 360)  # Convert to pixel coordinates
+        except Exception:
+            pass
+        
+        return None
+    
+    def _combine_hit_results(self, hit_results):
+        """Combine results from multiple detection methods"""
+        player_scores = {1: 0.0, 2: 0.0}
+        total_weight = 0
+        combined_info = {}
+        
+        for (player_id, confidence, hit_type, info), weight in hit_results:
+            if player_id > 0:
+                player_scores[player_id] += confidence * weight
+            total_weight += weight
+            combined_info.update(info)
+        
+        # Normalize scores
+        if total_weight > 0:
+            for player_id in player_scores:
+                player_scores[player_id] /= total_weight
+        
+        # Get best player
+        best_player = max(player_scores.items(), key=lambda x: x[1])
+        player_id, final_confidence = best_player
+        
+        # Determine hit type based on confidence
+        if final_confidence > 0.7:
+            final_hit_type = 'strong_hit'
+        elif final_confidence > 0.5:
+            final_hit_type = 'probable_hit'
+        elif final_confidence > 0.3:
+            final_hit_type = 'possible_hit'
+        else:
+            final_hit_type = 'none'
+            player_id = 0
+        
+        return player_id, final_confidence, final_hit_type, combined_info
+
+class ShotPhaseDetector:
+    """Detect shot phases: start (ball leaves racket) -> middle (wall hit) -> end (floor hit)"""
+    
+    def __init__(self):
+        self.phase_history = []
+        self.wall_hit_threshold = 30  # pixels from wall
+        self.floor_hit_indicators = {
+            'height_threshold': 0.7,  # Lower 30% of court
+            'velocity_decrease': 0.7,  # 30% velocity decrease
+            'bounce_pattern': True    # Look for bounce patterns
+        }
+    
+    def detect_shot_phases(self, trajectory, court_dimensions, previous_phase='none'):
+        """
+        Detect current shot phase based on trajectory analysis
+        
+        Args:
+            trajectory: List of ball positions [(x, y, frame), ...]
+            court_dimensions: (width, height)
+            previous_phase: Previous detected phase
+            
+        Returns:
+            dict: Phase information with confidence and details
+        """
+        if len(trajectory) < 3:
+            return {'phase': 'start', 'confidence': 0.0, 'details': {}}
+        
+        width, height = court_dimensions
+        current_pos = trajectory[-1]
+        
+        # Phase detection logic
+        if previous_phase in ['none', 'start']:
+            # Check for wall hit (transition from start to middle)
+            wall_hit = self._detect_wall_hit(trajectory, court_dimensions)
+            if wall_hit['detected']:
+                return {
+                    'phase': 'middle',
+                    'confidence': wall_hit['confidence'],
+                    'details': wall_hit['details'],
+                    'transition': 'start_to_middle'
+                }
+        
+        if previous_phase in ['start', 'middle']:
+            # Check for floor hit (transition to end)
+            floor_hit = self._detect_floor_hit(trajectory, court_dimensions)
+            if floor_hit['detected']:
+                return {
+                    'phase': 'end',
+                    'confidence': floor_hit['confidence'],
+                    'details': floor_hit['details'],
+                    'transition': 'middle_to_end' if previous_phase == 'middle' else 'start_to_end'
+                }
+        
+        # If no transition detected, maintain current phase
+        phase = previous_phase if previous_phase != 'none' else 'start'
+        return {'phase': phase, 'confidence': 0.5, 'details': {}, 'transition': 'none'}
+    
+    def _detect_wall_hit(self, trajectory, court_dimensions):
+        """Detect ball hitting wall based on position and trajectory changes"""
+        if len(trajectory) < 4:
+            return {'detected': False, 'confidence': 0.0, 'details': {}}
+        
+        width, height = court_dimensions
+        recent_positions = trajectory[-4:]
+        
+        wall_hit_confidence = 0.0
+        wall_type = 'none'
+        
+        # Check proximity to walls
+        current_pos = recent_positions[-1]
+        x, y = current_pos[0], current_pos[1]
+        
+        # Distance to each wall
+        dist_to_left = x
+        dist_to_right = width - x
+        dist_to_top = y
+        dist_to_bottom = height - y
+        
+        min_wall_distance = min(dist_to_left, dist_to_right, dist_to_top, dist_to_bottom)
+        
+        # Proximity factor
+        if min_wall_distance < self.wall_hit_threshold:
+            proximity_confidence = (self.wall_hit_threshold - min_wall_distance) / self.wall_hit_threshold
+            wall_hit_confidence += proximity_confidence * 0.4
+            
+            # Determine which wall
+            if min_wall_distance == dist_to_left:
+                wall_type = 'left_wall'
+            elif min_wall_distance == dist_to_right:
+                wall_type = 'right_wall'
+            elif min_wall_distance == dist_to_top:
+                wall_type = 'front_wall'
+            else:
+                wall_type = 'back_wall'
+        
+        # Check for direction change near wall
+        if len(recent_positions) >= 3:
+            direction_change = self._calculate_direction_change(recent_positions[-3:])
+            if direction_change > math.pi/4 and min_wall_distance < self.wall_hit_threshold * 2:
+                wall_hit_confidence += 0.4
+        
+        # Check for velocity change
+        velocity_change = self._calculate_velocity_change(recent_positions)
+        if velocity_change > 0.3:  # 30% velocity change
+            wall_hit_confidence += 0.2
+        
+        detected = wall_hit_confidence > 0.6
+        
+        return {
+            'detected': detected,
+            'confidence': wall_hit_confidence,
+            'details': {
+                'wall_type': wall_type,
+                'distance_to_wall': min_wall_distance,
+                'direction_change': direction_change if 'direction_change' in locals() else 0,
+                'velocity_change': velocity_change
+            }
+        }
+    
+    def _detect_floor_hit(self, trajectory, court_dimensions):
+        """Detect ball hitting floor/ground"""
+        if len(trajectory) < 5:
+            return {'detected': False, 'confidence': 0.0, 'details': {}}
+        
+        width, height = court_dimensions
+        recent_positions = trajectory[-5:]
+        
+        floor_hit_confidence = 0.0
+        
+        # Check if ball is in lower part of court
+        current_y = recent_positions[-1][1]
+        height_factor = current_y / height
+        
+        if height_factor > self.floor_hit_indicators['height_threshold']:
+            position_confidence = (height_factor - self.floor_hit_indicators['height_threshold']) / (1 - self.floor_hit_indicators['height_threshold'])
+            floor_hit_confidence += position_confidence * 0.4
+        
+        # Check for velocity decrease (ball slowing down)
+        velocity_change = self._calculate_velocity_change(recent_positions)
+        if velocity_change < -self.floor_hit_indicators['velocity_decrease']:  # Negative = slowing down
+            velocity_confidence = abs(velocity_change) / self.floor_hit_indicators['velocity_decrease']
+            floor_hit_confidence += velocity_confidence * 0.3
+        
+        # Check for bounce pattern (sudden upward movement after downward)
+        if len(recent_positions) >= 3:
+            bounce_detected = self._detect_bounce_pattern(recent_positions[-3:])
+            if bounce_detected:
+                floor_hit_confidence += 0.3
+        
+        detected = floor_hit_confidence > 0.5
+        
+        return {
+            'detected': detected,
+            'confidence': floor_hit_confidence,
+            'details': {
+                'height_factor': height_factor,
+                'velocity_change': velocity_change,
+                'bounce_detected': bounce_detected if 'bounce_detected' in locals() else False
+            }
+        }
+    
+    def _calculate_direction_change(self, positions):
+        """Calculate direction change between trajectory segments"""
+        if len(positions) < 3:
+            return 0.0
+        
+        p1, p2, p3 = positions[0], positions[1], positions[2]
+        
+        # Direction vectors
+        dir1 = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+        dir2 = math.atan2(p3[1] - p2[1], p3[0] - p2[0])
+        
+        # Calculate angle difference
+        angle_diff = abs(dir2 - dir1)
+        return min(angle_diff, 2*math.pi - angle_diff)
+    
+    def _calculate_velocity_change(self, positions):
+        """Calculate relative velocity change"""
+        if len(positions) < 4:
+            return 0.0
+        
+        # Calculate velocities for first and last segments
+        early_velocity = math.sqrt(
+            (positions[1][0] - positions[0][0])**2 + 
+            (positions[1][1] - positions[0][1])**2
+        )
+        
+        late_velocity = math.sqrt(
+            (positions[-1][0] - positions[-2][0])**2 + 
+            (positions[-1][1] - positions[-2][1])**2
+        )
+        
+        if early_velocity > 0:
+            return (late_velocity - early_velocity) / early_velocity
+        return 0.0
+    
+    def _detect_bounce_pattern(self, positions):
+        """Detect bounce pattern (down then up movement)"""
+        if len(positions) < 3:
+            return False
+        
+        p1, p2, p3 = positions[0], positions[1], positions[2]
+        
+        # Check for downward then upward movement
+        downward = p2[1] > p1[1]  # Y increases downward in screen coords
+        upward = p3[1] < p2[1]    # Y decreases upward
+        
+        return downward and upward
+
+# Initialize global shot tracker
+
 class ShotTracker:
     """
     Enhanced shot tracking system for identifying and visualizing complete shots
@@ -47,10 +827,13 @@ class ShotTracker:
         self.shot_id_counter = 0
         self.ball_hit_cooldown = 15  # Frames to wait before detecting next hit
         self.last_hit_frame = -999
+        self.shot_classification_model = ShotClassificationModel()
+        self.player_hit_detector = PlayerHitDetector()
+        self.phase_detector = ShotPhaseDetector()
         
-    def detect_shot_start(self, ball_hit, who_hit, frame_count, ball_pos, shot_type):
+    def detect_shot_start(self, ball_hit, who_hit, frame_count, ball_pos, shot_type, hit_confidence=0.0, hit_type="normal", past_ball_pos=None):
         """
-        Detect the start of a new shot
+        Enhanced shot start detection with improved player identification and shot classification
         """
         if not ball_hit or who_hit == 0:
             return False
@@ -59,22 +842,58 @@ class ShotTracker:
         if frame_count - self.last_hit_frame < self.ball_hit_cooldown:
             return False
             
-        # Start new shot
+        # Only register shots with sufficient confidence
+        if hit_confidence < 0.3:
+            return False
+            
+        # Use enhanced shot classification if past_ball_pos is provided
+        if hasattr(self, 'shot_classification_model') and past_ball_pos and len(past_ball_pos) > 3:
+            try:
+                enhanced_classification = self.shot_classification_model.classify_shot(
+                    past_ball_pos[-10:], (640, 360)  # Use recent trajectory
+                )
+                shot_type = enhanced_classification['type']
+                shot_features = enhanced_classification['features']
+                classification_confidence = enhanced_classification['confidence']
+            except Exception:
+                shot_features = {}
+                classification_confidence = 0.5
+        else:
+            shot_features = {}
+            classification_confidence = 0.5
+            
+        # Start new shot with enhanced tracking
         self.shot_id_counter += 1
         new_shot = {
             'id': self.shot_id_counter,
             'start_frame': frame_count,
             'player_who_hit': who_hit,
             'shot_type': shot_type,
+            'hit_confidence': hit_confidence,
+            'classification_confidence': classification_confidence,
+            'hit_type': hit_type,
             'trajectory': [ball_pos.copy()],
             'status': 'active',
             'color': self.get_shot_color(shot_type),
             'end_frame': None,
-            'final_shot_type': None
+            'final_shot_type': None,
+            'phase': 'start',  # Ball leaves racket
+            'wall_hit_frame': None,
+            'floor_hit_frame': None,
+            'phase_transitions': [],
+            'shot_features': shot_features,
+            'phase_history': [{'phase': 'start', 'frame': frame_count, 'confidence': 1.0}]
         }
         
         self.active_shots.append(new_shot)
         self.last_hit_frame = frame_count
+        
+        # Log enhanced shot information
+        print(f"🎾 Enhanced Shot {self.shot_id_counter} started:")
+        print(f"   Player: {who_hit}, Type: {shot_type}")
+        print(f"   Hit Confidence: {hit_confidence:.2f}, Classification: {classification_confidence:.2f}")
+        print(f"   Phase: START (ball leaves racket)")
+        
         return True
         
     def get_shot_color(self, shot_type):
@@ -103,9 +922,134 @@ class ShotTracker:
                 
         return color_map['default']
         
+    def update_shot_phases(self, shot, ball_pos, frame_count):
+        """
+        Enhanced shot phase tracking: start (ball leaves racket) -> middle (wall hit) -> end (floor hit)
+        """
+        if not hasattr(self, 'phase_detector'):
+            return
+            
+        current_phase = shot.get('phase', 'start')
+        
+        # Use enhanced phase detection
+        phase_result = self.phase_detector.detect_shot_phases(
+            shot['trajectory'], (640, 360), current_phase
+        )
+        
+        new_phase = phase_result['phase']
+        phase_confidence = phase_result['confidence']
+        transition = phase_result.get('transition', 'none')
+        
+        # Update phase if changed
+        if new_phase != current_phase and phase_confidence > 0.6:
+            shot['phase'] = new_phase
+            
+            # Log phase transition
+            if transition == 'start_to_middle':
+                shot['wall_hit_frame'] = frame_count
+                print(f"🏏 Shot {shot['id']}: MIDDLE phase (wall hit) - Frame {frame_count}")
+            elif transition == 'middle_to_end' or transition == 'start_to_end':
+                shot['floor_hit_frame'] = frame_count
+                print(f"🎯 Shot {shot['id']}: END phase (floor hit) - Frame {frame_count}")
+            
+            # Record phase transition
+            phase_transition = {
+                'from': current_phase,
+                'to': new_phase,
+                'frame': frame_count,
+                'position': ball_pos.copy(),
+                'confidence': phase_confidence,
+                'details': phase_result.get('details', {})
+            }
+            
+            if 'phase_transitions' not in shot:
+                shot['phase_transitions'] = []
+            shot['phase_transitions'].append(phase_transition)
+            
+            # Update phase history
+            if 'phase_history' not in shot:
+                shot['phase_history'] = []
+            shot['phase_history'].append({
+                'phase': new_phase,
+                'frame': frame_count,
+                'confidence': phase_confidence,
+                'details': phase_result.get('details', {})
+            })
+    
+    def detect_wall_hit(self, trajectory, current_pos):
+        """
+        Detect if ball has hit a wall based on trajectory analysis
+        """
+        if len(trajectory) < 3:
+            return False
+        
+        # Check last few positions for wall proximity and direction change
+        recent_positions = trajectory[-3:]
+        
+        # Check if near wall (within 30 pixels of edge)
+        court_width, court_height = 640, 360  # Default values
+        x, y = current_pos[0], current_pos[1]
+        
+        near_wall = (x < 30 or x > court_width - 30 or y < 30 or y > court_height - 30)
+        
+        if near_wall and len(recent_positions) >= 3:
+            # Check for direction change
+            p1, p2, p3 = recent_positions[-3], recent_positions[-2], recent_positions[-1]
+            
+            # Calculate direction vectors
+            dir1 = (p2[0] - p1[0], p2[1] - p1[1])
+            dir2 = (p3[0] - p2[0], p3[1] - p2[1])
+            
+            # Check for significant direction change
+            if abs(dir1[0]) > 5 and abs(dir2[0]) > 5:
+                # X direction change (left/right wall)
+                if (dir1[0] > 0) != (dir2[0] > 0):
+                    return True
+            
+            if abs(dir1[1]) > 5 and abs(dir2[1]) > 5:
+                # Y direction change (top/bottom wall)
+                if (dir1[1] > 0) != (dir2[1] > 0):
+                    return True
+        
+        return False
+    
+    def detect_floor_hit(self, trajectory, current_pos):
+        """
+        Detect if ball has hit the floor (or is about to hit)
+        """
+        if len(trajectory) < 5:
+            return False
+        
+        # Check if ball is moving downward and in lower part of court
+        recent_positions = trajectory[-5:]
+        
+        # Check if ball is in lower third of court
+        court_height = 360  # Default value
+        y = current_pos[1]
+        
+        if y > court_height * 0.7:  # In lower 30% of court
+            # Check if ball is moving slowly (coming to rest)
+            if len(recent_positions) >= 3:
+                velocities = []
+                for i in range(1, len(recent_positions)):
+                    p1, p2 = recent_positions[i-1], recent_positions[i]
+                    velocity = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+                    velocities.append(velocity)
+                
+                # Check if velocity is decreasing (ball slowing down)
+                if len(velocities) >= 2:
+                    avg_early_velocity = sum(velocities[:2]) / 2
+                    avg_late_velocity = sum(velocities[-2:]) / 2
+                    
+                    # Ball is slowing down significantly
+                    if avg_late_velocity < avg_early_velocity * 0.7:
+                        return True
+        
+        return False
+        
     def update_active_shots(self, ball_pos, frame_count, new_hit_detected=False, new_shot_type=None):
         """
-        Update trajectories of active shots with enhanced bounce detection
+        Update trajectories of active shots with improved phase tracking
         """
         if not ball_pos or len(ball_pos) < 2:
             return
@@ -115,28 +1059,17 @@ class ShotTracker:
                 # Add current ball position to trajectory
                 shot['trajectory'].append(ball_pos.copy())
                 
-                # Perform bounce detection on recent trajectory
+                # Track shot phases: start -> wall hit -> floor hit
+                self.update_shot_phases(shot, ball_pos, frame_count)
+                
+                # Use simple bounce detection for wall hits
                 if len(shot['trajectory']) >= 5:
-                    # Use the comprehensive bounce detection
-                    bounce_count, bounce_positions, bounce_details = detect_ball_bounces_comprehensive(
-                        shot['trajectory'], 
-                        640,  # Default court width, should be passed as parameter
-                        360,  # Default court height, should be passed as parameter
-                        confidence_threshold=0.6
-                    )
+                    wall_hits = count_wall_hits_legacy(shot['trajectory'])
+                    shot['wall_hits'] = wall_hits
                     
-                    # Update shot with bounce information
-                    shot['bounce_count'] = bounce_count
-                    shot['bounces'] = bounce_details
-                    
-                    # Update shot type based on bounce pattern
-                    if bounce_count > 2:
-                        shot['shot_type'] = f"{shot['shot_type']}_multi_bounce"
-                    elif bounce_count == 1:
-                        # Determine if it's a wall bounce or floor bounce
-                        if bounce_details:
-                            bounce_type = bounce_details[0].get('wall', 'floor')
-                            shot['shot_type'] = f"{shot['shot_type']}_{bounce_type}_bounce"
+                    # Update shot type based on wall hits and trajectory
+                    if wall_hits > 0:
+                        shot['shot_type'] = f"{shot['shot_type']}_wall_bounce"
                 
                 # Check if shot should end (new hit detected or trajectory completion)
                 if new_hit_detected or self.is_shot_complete(shot, frame_count):
@@ -194,17 +1127,9 @@ class ShotTracker:
         
     def save_shot_data(self, shot):
         """
-        Save shot data to file for later analysis
+        Save shot data to file for later analysis with phase information
         """
         try:
-            # Get bounce information for this shot
-            shot_bounces = []
-            if hasattr(bounce_detector, 'detected_bounces'):
-                shot_bounces = [
-                    b for b in bounce_detector.detected_bounces 
-                    if shot['start_frame'] <= b['frame_index'] <= shot.get('end_frame', shot['start_frame'] + 100)
-                ]
-            
             shot_data = {
                 'shot_id': shot['id'],
                 'start_frame': shot['start_frame'],
@@ -215,9 +1140,12 @@ class ShotTracker:
                 'final_shot_type': shot['final_shot_type'],
                 'trajectory_length': len(shot['trajectory']),
                 'trajectory': shot['trajectory'],  # Full trajectory data
-                'bounces_detected': len(shot_bounces),
-                'bounce_details': shot_bounces,
-                'shot_color': shot['color']
+                'wall_hits': shot.get('wall_hits', 0),
+                'shot_color': shot['color'],
+                'phase': shot.get('phase', 'unknown'),
+                'wall_hit_frame': shot.get('wall_hit_frame'),
+                'floor_hit_frame': shot.get('floor_hit_frame'),
+                'phase_transitions': shot.get('phase_transitions', [])
             }
             
             # Append to shots log file
@@ -229,7 +1157,7 @@ class ShotTracker:
             
     def draw_shot_trajectories(self, frame, ball_pos):
         """
-        Draw trajectories of active and recent shots with clear start/end markers
+        Draw trajectories of active and recent shots with phase information
         """
         try:
             # Draw active shots
@@ -252,186 +1180,141 @@ class ShotTracker:
                         cv2.circle(frame, start_pos, 15, color, 3)
                         cv2.circle(frame, start_pos, 8, (255, 255, 255), -1)
                         cv2.putText(frame, "START", 
-                                  (start_pos[0] - 25, start_pos[1] - 20),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                                (start_pos[0] - 25, start_pos[1] - 20),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                         
-                        # Draw shot info
-                        text = f"Shot {shot['id']}: P{shot['player_who_hit']} - {shot['shot_type']}"
+                        # Draw shot info with phase
+                        phase = shot.get('phase', 'unknown')
+                        hit_type = shot.get('hit_type', 'normal')
+                        confidence = shot.get('hit_confidence', 0.0)
+                        text = f"Shot {shot['id']}: P{shot['player_who_hit']} - {shot['shot_type']} ({phase})"
                         cv2.putText(frame, text, 
-                                  (start_pos[0] - 50, start_pos[1] - 40),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+                                (start_pos[0] - 50, start_pos[1] - 40),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
                         
-                        # Draw bounce markers if available
-                        if 'bounces' in shot and shot['bounces']:
-                            for bounce in shot['bounces']:
-                                bounce_pos = (int(bounce['position'][0]), int(bounce['position'][1]))
-                                # Yellow diamond for bounces
-                                cv2.circle(frame, bounce_pos, 8, (0, 255, 255), -1)
-                                cv2.circle(frame, bounce_pos, 12, (0, 255, 255), 2)
-                                cv2.putText(frame, "B", (bounce_pos[0] - 4, bounce_pos[1] + 4),
-                                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
-                                # Add confidence indicator
-                                confidence_text = f"{bounce['confidence']:.1f}"
-                                cv2.putText(frame, confidence_text, 
-                                           (bounce_pos[0] + 15, bounce_pos[1]),
-                                           cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 255), 1)
+                        # Draw confidence and hit type
+                        conf_text = f"Conf: {confidence:.2f} | Type: {hit_type}"
+                        cv2.putText(frame, conf_text, 
+                                (start_pos[0] - 50, start_pos[1] - 55),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
                         
-                    # Draw current position marker for active shots
-                    if len(shot['trajectory']) > 0:
-                        current_pos = (int(shot['trajectory'][-1][0]), int(shot['trajectory'][-1][1]))
-                        cv2.circle(frame, current_pos, 10, color, 2)
-                        cv2.circle(frame, current_pos, 5, (255, 255, 255), -1)
-                        cv2.putText(frame, "ACTIVE", 
-                                  (current_pos[0] + 15, current_pos[1] - 5),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
+                        # Draw phase transition markers
+                        if 'phase_transitions' in shot:
+                            for transition in shot['phase_transitions']:
+                                trans_pos = transition['position']
+                                trans_pos = (int(trans_pos[0]), int(trans_pos[1]))
+                                
+                                if transition['to'] == 'middle':
+                                    # Wall hit marker - square
+                                    cv2.rectangle(frame, 
+                                                (trans_pos[0]-6, trans_pos[1]-6),
+                                                (trans_pos[0]+6, trans_pos[1]+6),
+                                                (0, 255, 255), -1)  # Yellow
+                                    cv2.putText(frame, "WALL", 
+                                            (trans_pos[0] - 15, trans_pos[1] - 10),
+                                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 255, 255), 1)
+                                elif transition['to'] == 'end':
+                                    # Floor hit marker - triangle
+                                    cv2.circle(frame, trans_pos, 8, (0, 0, 255), -1)  # Red
+                                    cv2.putText(frame, "FLOOR", 
+                                            (trans_pos[0] - 15, trans_pos[1] - 10),
+                                            cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1)
                         
-            # Draw recently completed shots (last 3) with END markers
-            recent_completed = self.completed_shots[-3:] if len(self.completed_shots) > 3 else self.completed_shots
-            for shot in recent_completed:
+                        # Draw wall hits using simple detection
+                        wall_hits = shot.get('wall_hits', 0)
+                        if wall_hits > 0:
+                            cv2.putText(frame, f"Wall hits: {wall_hits}", 
+                                    (start_pos[0] - 50, start_pos[1] + 20),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+            
+            # Draw recent completed shots (last 3)
+            for shot in self.completed_shots[-3:]:
                 if len(shot['trajectory']) > 1:
-                    color = shot['color']
-                    thickness = 2  # Slightly thinner for completed shots
+                    color = tuple(int(c * 0.5) for c in shot['color'])  # Dimmed color
+                    thickness = 2
                     
-                    # Draw trajectory line with slight transparency effect
+                    # Draw dimmed trajectory
                     for i in range(1, len(shot['trajectory'])):
                         pt1 = (int(shot['trajectory'][i-1][0]), int(shot['trajectory'][i-1][1]))
                         pt2 = (int(shot['trajectory'][i][0]), int(shot['trajectory'][i][1]))
                         cv2.line(frame, pt1, pt2, color, thickness)
-                        
-                    # Draw START marker
-                    if len(shot['trajectory']) > 0:
-                        start_pos = (int(shot['trajectory'][0][0]), int(shot['trajectory'][0][1]))
-                        cv2.circle(frame, start_pos, 12, color, 2)
-                        cv2.circle(frame, start_pos, 6, (0, 255, 0), -1)  # Green center
-                        cv2.putText(frame, "S", 
-                                  (start_pos[0] - 5, start_pos[1] + 5),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
-                        
-                    # Draw END marker - Square with "END" text
+                    
+                    # Draw END marker for completed shots
                     if len(shot['trajectory']) > 0:
                         end_pos = (int(shot['trajectory'][-1][0]), int(shot['trajectory'][-1][1]))
-                        
-                        # Draw end marker as square
-                        cv2.rectangle(frame, 
-                                    (end_pos[0] - 12, end_pos[1] - 12),
-                                    (end_pos[0] + 12, end_pos[1] + 12),
-                                    color, 3)
-                        cv2.rectangle(frame, 
-                                    (end_pos[0] - 6, end_pos[1] - 6),
-                                    (end_pos[0] + 6, end_pos[1] + 6),
-                                    (0, 0, 255), -1)  # Red center
+                        cv2.circle(frame, end_pos, 10, color, 2)
+                        cv2.circle(frame, end_pos, 5, (128, 128, 128), -1)
                         cv2.putText(frame, "END", 
-                                  (end_pos[0] - 15, end_pos[1] + 25),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
-                        
-                        # Show shot completion info
-                        duration_text = f"D:{shot['duration']}f"
-                        cv2.putText(frame, duration_text, 
-                                  (end_pos[0] + 20, end_pos[1] + 10),
-                                  cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
-                        
-                        # Draw bounce markers for completed shots (dimmed)
-                        if 'bounces' in shot and shot['bounces']:
-                            for bounce in shot['bounces']:
-                                bounce_pos = (int(bounce['position'][0]), int(bounce['position'][1]))
-                                # Dimmed yellow diamond for completed shot bounces
-                                dimmed_color = (0, 180, 180)
-                                cv2.circle(frame, bounce_pos, 6, dimmed_color, -1)
-                                cv2.circle(frame, bounce_pos, 9, dimmed_color, 1)
-                                cv2.putText(frame, "b", (bounce_pos[0] - 3, bounce_pos[1] + 3),
-                                           cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1)
-                        
-            # Draw current ball position with enhanced highlighting
-            if ball_pos and len(ball_pos) >= 2:
-                ball_color = (255, 255, 255)  # Default white
-                ball_radius = 6
-                ball_status = "SEARCHING"
-                
-                # Check if ball is part of active shot
-                for shot in self.active_shots:
-                    if shot['status'] == 'active':
-                        ball_color = shot['color']
-                        ball_radius = 10
-                        ball_status = f"SHOT {shot['id']}"
-                        break
-                        
-                # Draw ball with pulsing effect for active shots
-                cv2.circle(frame, (int(ball_pos[0]), int(ball_pos[1])), 
-                          ball_radius + 3, ball_color, 2)
-                cv2.circle(frame, (int(ball_pos[0]), int(ball_pos[1])), 
-                          ball_radius, ball_color, -1)
-                
-                # Add status text
-                cv2.putText(frame, ball_status, 
-                          (int(ball_pos[0]) + 15, int(ball_pos[1]) - 5),
-                          cv2.FONT_HERSHEY_SIMPLEX, 0.3, ball_color, 1)
-                          
+                                (end_pos[0] - 15, end_pos[1] + 25),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+        
         except Exception as e:
             print(f"Error drawing shot trajectories: {e}")
-            
+    
     def get_shot_statistics(self):
         """
-        Get comprehensive statistics about tracked shots including bounce analysis
+        Get comprehensive shot statistics with phase information
         """
-        total_shots = len(self.completed_shots)
-        active_shots = len(self.active_shots)
-        
-        if total_shots == 0:
-            return {
-                'total_shots': 0,
-                'active_shots': active_shots,
-                'player1_shots': 0,
-                'player2_shots': 0,
-                'avg_duration': 0,
-                'shot_types': {},
-                'bounce_statistics': {
-                    'total_bounces': 0,
-                    'avg_bounces_per_shot': 0,
-                    'shots_with_bounces': 0,
-                    'bounce_confidence_avg': 0
-                }
-            }
-            
-        player1_shots = len([s for s in self.completed_shots if s['player_who_hit'] == 1])
-        player2_shots = len([s for s in self.completed_shots if s['player_who_hit'] == 2])
-        avg_duration = sum(s['duration'] for s in self.completed_shots) / total_shots
-        
-        # Count shot types
-        shot_types = {}
-        for shot in self.completed_shots:
-            shot_type = str(shot['final_shot_type'])
-            shot_types[shot_type] = shot_types.get(shot_type, 0) + 1
-        
-        # Bounce statistics
-        total_bounces = 0
-        shots_with_bounces = 0
-        bounce_confidences = []
-        
-        for shot in self.completed_shots:
-            shot_bounces = shot.get('bounces', [])
-            if shot_bounces:
-                shots_with_bounces += 1
-                total_bounces += len(shot_bounces)
-                for bounce in shot_bounces:
-                    bounce_confidences.append(bounce.get('confidence', 0))
-        
-        avg_bounces_per_shot = total_bounces / total_shots if total_shots > 0 else 0
-        avg_bounce_confidence = sum(bounce_confidences) / len(bounce_confidences) if bounce_confidences else 0
-            
-        return {
-            'total_shots': total_shots,
-            'active_shots': active_shots,
-            'player1_shots': player1_shots,
-            'player2_shots': player2_shots,
-            'avg_duration': avg_duration,
-            'shot_types': shot_types,
-            'bounce_statistics': {
-                'total_bounces': total_bounces,
-                'avg_bounces_per_shot': avg_bounces_per_shot,
-                'shots_with_bounces': shots_with_bounces,
-                'bounce_confidence_avg': avg_bounce_confidence
-            }
+        stats = {
+            'total_shots': len(self.completed_shots),
+            'active_shots': len(self.active_shots),
+            'shots_by_player': {1: 0, 2: 0},
+            'shots_by_type': {},
+            'shots_by_phase': {'start': 0, 'middle': 0, 'end': 0},
+            'average_shot_duration': 0,
+            'wall_hits_distribution': {},
+            'hit_confidence_average': 0.0,
+            'hit_types': {}
         }
+        
+        if not self.completed_shots:
+            return stats
+        
+        total_duration = 0
+        total_confidence = 0
+        confidence_count = 0
+        
+        for shot in self.completed_shots:
+            # Player statistics
+            player = shot.get('player_who_hit', 0)
+            if player in stats['shots_by_player']:
+                stats['shots_by_player'][player] += 1
+            
+            # Shot type statistics
+            shot_type = shot.get('final_shot_type', shot.get('shot_type', 'unknown'))
+            stats['shots_by_type'][shot_type] = stats['shots_by_type'].get(shot_type, 0) + 1
+            
+            # Phase statistics
+            phase = shot.get('phase', 'unknown')
+            if phase in stats['shots_by_phase']:
+                stats['shots_by_phase'][phase] += 1
+            
+            # Duration statistics
+            duration = shot.get('duration', 0)
+            total_duration += duration
+            
+            # Wall hits statistics
+            wall_hits = shot.get('wall_hits', 0)
+            stats['wall_hits_distribution'][wall_hits] = stats['wall_hits_distribution'].get(wall_hits, 0) + 1
+            
+            # Hit confidence statistics
+            hit_confidence = shot.get('hit_confidence', 0.0)
+            if hit_confidence > 0:
+                total_confidence += hit_confidence
+                confidence_count += 1
+            
+            # Hit type statistics
+            hit_type = shot.get('hit_type', 'normal')
+            stats['hit_types'][hit_type] = stats['hit_types'].get(hit_type, 0) + 1
+        
+        # Calculate averages
+        if self.completed_shots:
+            stats['average_shot_duration'] = total_duration / len(self.completed_shots)
+        
+        if confidence_count > 0:
+            stats['hit_confidence_average'] = total_confidence / confidence_count
+        
+        return stats
 
 # Initialize global shot tracker
 shot_tracker = ShotTracker()
@@ -1068,35 +1951,149 @@ def apply_homography(H, points, inverse=False):
 # These can now be customized by calling main() with custom frame_width and frame_height
 frame_height = 360  # Default value, can be overridden
 frame_width = 640   # Default value, can be overridden
-def shot_type(past_ball_pos, threshold=3):
-    # go through the past threshold number of past ball positions and see what kind of shot it is
-    # past_ball_pos ordered as [[x,y,frame_number], ...]
+def shot_type_enhanced(past_ball_pos, court_width=640, court_height=360, threshold=5):
+    """
+    Enhanced shot type detection with comprehensive classification
+    """
     if len(past_ball_pos) < threshold:
-        return None
-    threshballpos = past_ball_pos[-threshold:]
-    # check for crosscourt or straight shots
-    xdiff = threshballpos[-1][0] - threshballpos[0][0]
-    ydiff = threshballpos[-1][1] - threshballpos[0][1]
-    typeofshot = ""
-    if xdiff < 50 and ydiff < 50:
-        typeofshot = "straight"
+        return "unknown"
+    
+    # Use enhanced shot classification if available
+    try:
+        # Import shot_tracker from global scope if available
+        import inspect
+        frame = inspect.currentframe()
+        if frame and frame.f_back and 'shot_tracker' in frame.f_back.f_globals:
+            shot_tracker_ref = frame.f_back.f_globals['shot_tracker']
+            if hasattr(shot_tracker_ref, 'shot_classification_model'):
+                classification_result = shot_tracker_ref.shot_classification_model.classify_shot(
+                    past_ball_pos[-min(20, len(past_ball_pos)):], # Use recent trajectory
+                    (court_width, court_height)
+                )
+                
+                shot_type = classification_result['type']
+                confidence = classification_result['confidence']
+                
+                # Add confidence and context information
+                if confidence > 0.7:
+                    return f"{shot_type}_confident"
+                elif confidence > 0.4:
+                    return shot_type
+                else:
+                    # Fall back to legacy classification for low confidence
+                    return shot_type_enhanced_legacy(past_ball_pos, court_width, court_height, threshold)
+    except Exception:
+        # Fall back to legacy if enhanced classification fails
+        pass
+                
+    # Fallback to legacy enhanced classification
+    return shot_type_enhanced_legacy(past_ball_pos, court_width, court_height, threshold)
+
+def shot_type_enhanced_legacy(past_ball_pos, court_width=640, court_height=360, threshold=5):
+    """
+    Legacy enhanced shot type detection with better classification
+    """
+    if len(past_ball_pos) < threshold:
+        return "unknown"
+    
+    recent_positions = past_ball_pos[-threshold:]
+    
+    # Calculate trajectory characteristics
+    start_pos = recent_positions[0]
+    end_pos = recent_positions[-1]
+    
+    horizontal_movement = end_pos[0] - start_pos[0]
+    vertical_movement = end_pos[1] - start_pos[1]
+    
+    # Determine shot direction with better thresholds
+    shot_direction = ""
+    horizontal_ratio = abs(horizontal_movement) / court_width
+    
+    if horizontal_ratio > 0.4:  # Significant horizontal movement
+        shot_direction = "crosscourt"
+    elif horizontal_ratio < 0.08:  # Minimal horizontal movement  
+        shot_direction = "straight"
+    elif horizontal_ratio > 0.25:  # Medium horizontal movement
+        shot_direction = "wide_crosscourt"
     else:
-        typeofshot = "crosscourt"
-    # check how high the ball has moved
-    maxheight = 0
-    height = ""
-    for i in range(1, len(threshballpos)):
-        if threshballpos[i][1] > maxheight:
-            maxheight = threshballpos[i][1]
-            # print(f"{threshballpos[i]}")
-            # print(f'maxheight: {maxheight}')
-            # print(f'threshballpos[i][1]: {threshballpos[i][1]}')
-    if maxheight < (frame_height) / 1.35:
-        height += "lob"
-        # print(f'max height was {maxheight} and thresh was {(1.5*frame_height)/2}')
+        shot_direction = "angled"
+    
+    # Determine shot height/type with improved analysis
+    y_positions = [pos[1] for pos in recent_positions]
+    max_height = min(y_positions)  # Y is inverted in screen coords
+    min_height = max(y_positions)
+    height_variation = min_height - max_height
+    
+    # Calculate average height
+    avg_height = sum(y_positions) / len(y_positions)
+    height_ratio = avg_height / court_height
+    
+    shot_height = ""
+    if height_variation > court_height * 0.5:  # High trajectory variation
+        shot_height = "lob"
+    elif height_variation < court_height * 0.1:  # Very low trajectory
+        shot_height = "drive"
+    elif height_ratio < 0.3:  # Ends in upper court (short shot)
+        shot_height = "drop"
+    elif height_ratio > 0.8:  # Very low/floor shot
+        shot_height = "kill"
     else:
-        height += "drive"
-    return typeofshot + " " + height
+        shot_height = "mid"
+    
+    # Enhanced special shot detection
+    wall_hits = count_wall_hits_legacy(past_ball_pos)
+    
+    # Check for boast (side wall then front wall)
+    if wall_hits > 0:
+        # Analyze trajectory to determine boast vs regular wall shot
+        if horizontal_movement > 0 and abs(horizontal_movement) > court_width * 0.3:
+            return f"{shot_direction}_boast"
+        else:
+            return f"{shot_direction}_{shot_height}_wall"
+    
+    # Check for volley (high interception)
+    if len(recent_positions) >= 3 and height_ratio < 0.4:
+        # Check if ball was intercepted before natural trajectory completion
+        speed_changes = []
+        for i in range(1, len(recent_positions)):
+            p1, p2 = recent_positions[i-1], recent_positions[i]
+            speed = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+            speed_changes.append(speed)
+        
+        if len(speed_changes) >= 2:
+            early_speed = sum(speed_changes[:len(speed_changes)//2]) / (len(speed_changes)//2)
+            late_speed = sum(speed_changes[len(speed_changes)//2:]) / (len(speed_changes) - len(speed_changes)//2)
+            
+            # Sudden speed increase might indicate volley
+            if late_speed > early_speed * 1.5:
+                return f"{shot_direction}_volley"
+    
+    # Combine direction and height for final classification
+    final_shot_type = f"{shot_direction}_{shot_height}"
+    
+    # Add quality indicators based on trajectory smoothness
+    if len(recent_positions) >= 4:
+        # Calculate trajectory smoothness
+        direction_changes = 0
+        for i in range(2, len(recent_positions)):
+            p1, p2, p3 = recent_positions[i-2], recent_positions[i-1], recent_positions[i]
+            
+            dir1 = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+            dir2 = math.atan2(p3[1] - p2[1], p3[0] - p2[0])
+            
+            angle_diff = abs(dir2 - dir1)
+            angle_diff = min(angle_diff, 2*math.pi - angle_diff)
+            
+            if angle_diff > math.pi/6:  # 30 degrees
+                direction_changes += 1
+        
+        # Smooth shots are likely more controlled
+        if direction_changes == 0:
+            final_shot_type += "_clean"
+        elif direction_changes > 2:
+            final_shot_type += "_erratic"
+    
+    return final_shot_type
 def is_camera_angle_switched(frame, reference_image, threshold=0.5):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     reference_image_gray = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
@@ -1520,705 +2517,85 @@ def inference_slicing(model, frame, width=100, height=100, overlap=50):
     return results
 def classify_shot(past_ball_pos, court_width=640, court_height=360, previous_shot=None):
     """
-    Advanced shot classification with machine learning-inspired pattern recognition
-    Analyzes trajectory, velocity, court position, and temporal patterns
+    Simple shot classification using the enhanced shot type detection
     """
     try:
         if len(past_ball_pos) < 4:
             return ["straight", "drive", 0, 0]
-
-        # Use optimal trajectory length for analysis
-        trajectory_length = min(20, len(past_ball_pos))
-        trajectory = past_ball_pos[-trajectory_length:]
-
-        # Enhanced trajectory analysis
-        trajectory_metrics = analyze_trajectory_patterns(trajectory, court_width, court_height)
         
-        # Extract key metrics
-        horizontal_displacement = trajectory_metrics['horizontal_displacement']
-        vertical_displacement = trajectory_metrics['vertical_displacement']
-        direction_changes = trajectory_metrics['direction_changes']
-        velocity_profile = trajectory_metrics['velocity_profile']
-        court_coverage = trajectory_metrics['court_coverage']
-        wall_bounces = trajectory_metrics['wall_bounces']
+        # Use the enhanced shot type detection
+        shot_classification = shot_type_enhanced(past_ball_pos, court_width, court_height)
         
-        # Advanced shot type classification using multiple factors
-        shot_direction = classify_shot_direction(
-            horizontal_displacement, court_coverage, direction_changes, court_width
-        )
+        # Parse the shot classification
+        parts = shot_classification.split('_')
+        shot_direction = parts[0] if len(parts) > 0 else "straight"
+        shot_height = parts[1] if len(parts) > 1 else "drive"
+        shot_style = parts[2] if len(parts) > 2 else "normal"
         
-        shot_height = classify_shot_height(
-            vertical_displacement, velocity_profile, trajectory, court_height
-        )
+        # Count wall hits using legacy detection
+        wall_bounces = count_wall_hits_legacy(past_ball_pos)
         
-        shot_style = classify_shot_style(
-            velocity_profile, wall_bounces, direction_changes, trajectory
-        )
+        # Calculate simple trajectory metrics
+        start_pos = past_ball_pos[0]
+        end_pos = past_ball_pos[-1]
+        horizontal_displacement = abs(end_pos[0] - start_pos[0]) / court_width
         
-        # Calculate confidence score based on trajectory consistency
-        confidence_score = calculate_shot_confidence(trajectory_metrics, previous_shot)
+        # Simple confidence based on trajectory length and consistency
+        confidence_score = min(1.0, len(past_ball_pos) / 10.0)
         
-        # Return comprehensive shot analysis
         return [shot_direction, shot_height, shot_style, wall_bounces, 
-                horizontal_displacement, confidence_score, trajectory_metrics]
+                horizontal_displacement, confidence_score, {}]
 
     except Exception as e:
-        print(f"Error in advanced shot classification: {str(e)}")
-        return ["straight", "drive", "unknown", 0, 0, 0.5, {}]
+        print(f"Error in shot classification: {str(e)}")
+        return ["straight", "drive", "normal", 0, 0, 0.5, {}]
 
-def analyze_trajectory_patterns(trajectory, court_width, court_height):
+# Enhanced trajectory and shot analysis functions removed
+# Using simplified shot_type_enhanced and count_wall_hits_legacy instead
+
+# Legacy bounce detection - simple and reliable
+def count_wall_hits_legacy(past_ball_pos, threshold=15):
     """
-    Comprehensive trajectory pattern analysis
+    Simple legacy wall hit detection based on direction changes
     """
-    metrics = {}
-    
-    if len(trajectory) < 2:
-        return {key: 0 for key in ['horizontal_displacement', 'vertical_displacement', 
-                                'direction_changes', 'velocity_profile', 'court_coverage', 'wall_bounces']}
-    
-    # Basic displacement
-    start_x, start_y, _ = trajectory[0]
-    end_x, end_y, _ = trajectory[-1]
-    metrics['horizontal_displacement'] = (end_x - start_x) / court_width
-    metrics['vertical_displacement'] = (end_y - start_y) / court_height
-    
-    # Velocity and acceleration analysis
-    velocities = []
-    accelerations = []
-    
-    for i in range(1, len(trajectory)):
-        x1, y1, t1 = trajectory[i-1]
-        x2, y2, t2 = trajectory[i]
+    if len(past_ball_pos) < 4:
+        return 0
         
-        if t2 != t1:
-            velocity = math.sqrt((x2-x1)**2 + (y2-y1)**2) / (t2-t1)
-            velocities.append(velocity)
-            
-            if len(velocities) > 1:
-                acceleration = velocities[-1] - velocities[-2]
-                accelerations.append(acceleration)
-    
-    # Velocity profile analysis
-    if velocities:
-        metrics['velocity_profile'] = {
-            'avg_velocity': sum(velocities) / len(velocities),
-            'max_velocity': max(velocities),
-            'velocity_variance': np.var(velocities),
-            'velocity_trend': velocities[-1] - velocities[0] if len(velocities) > 1 else 0
-        }
-    else:
-        metrics['velocity_profile'] = {'avg_velocity': 0, 'max_velocity': 0, 'velocity_variance': 0, 'velocity_trend': 0}
-    
-    # Direction change analysis
+    wall_hits = 0
     direction_changes = 0
     last_direction_x = None
     last_direction_y = None
-    
-    for i in range(1, len(trajectory)):
-        x1, y1, _ = trajectory[i-1]
-        x2, y2, _ = trajectory[i]
-        
-        current_dir_x = 1 if x2 > x1 else -1 if x2 < x1 else 0
-        current_dir_y = 1 if y2 > y1 else -1 if y2 < y1 else 0
-        
-        if last_direction_x is not None and current_dir_x != 0 and current_dir_x != last_direction_x:
-            direction_changes += 1
-        if last_direction_y is not None and current_dir_y != 0 and current_dir_y != last_direction_y:
-            direction_changes += 1
-            
-        last_direction_x = current_dir_x if current_dir_x != 0 else last_direction_x
-        last_direction_y = current_dir_y if current_dir_y != 0 else last_direction_y
-    
-    metrics['direction_changes'] = direction_changes
-    
-    # Court coverage analysis
-    x_positions = [pos[0] for pos in trajectory]
-    y_positions = [pos[1] for pos in trajectory]
-    
-    x_range = max(x_positions) - min(x_positions)
-    y_range = max(y_positions) - min(y_positions)
-    
-    metrics['court_coverage'] = {
-        'x_coverage': x_range / court_width,
-        'y_coverage': y_range / court_height,
-        'total_coverage': (x_range * y_range) / (court_width * court_height)
-    }
-    
-    # Enhanced wall bounce detection using comprehensive system
-    detected_bounces = bounce_detector.detect_bounces_comprehensive(trajectory, court_width, court_height)
-    metrics['wall_bounces'] = len(detected_bounces)
-    metrics['wall_bounce_positions'] = [bounce['position'] for bounce in detected_bounces]
-    metrics['bounce_details'] = detected_bounces
-    
-    # GPU-accelerated bounce detection for better accuracy
-    gpu_bounces = detect_ball_bounces_gpu(trajectory)
-    metrics['gpu_detected_bounces'] = gpu_bounces
-    
-    return metrics
 
-def classify_shot_direction(horizontal_displacement, court_coverage, direction_changes, court_width):
-    """
-    Advanced direction classification using multiple factors
-    """
-    abs_displacement = abs(horizontal_displacement)
-    x_coverage = court_coverage.get('x_coverage', 0)
-    
-    # Multi-factor decision tree
-    if abs_displacement > 0.4 and x_coverage > 0.3:
-        if horizontal_displacement > 0.5 or horizontal_displacement < -0.5:
-            return "wide_crosscourt"
-        else:
-            return "crosscourt"
-    elif abs_displacement > 0.25 and direction_changes > 2:
-        return "angled_crosscourt"
-    elif abs_displacement > 0.15 and x_coverage > 0.2:
-        return "slight_crosscourt"
-    elif abs_displacement < 0.08 and x_coverage < 0.15:
-        return "tight_straight"
-    else:
-        return "straight"
+    for i in range(1, len(past_ball_pos)):
+        if i >= len(past_ball_pos) - 1:
+            break
+            
+        x1, y1 = past_ball_pos[i - 1][:2]
+        x2, y2 = past_ball_pos[i][:2]
 
-def classify_shot_height(vertical_displacement, velocity_profile, trajectory, court_height):
-    """
-    Enhanced height classification using trajectory analysis
-    """
-    if not trajectory or len(trajectory) < 3:
-        return "drive"
-    
-    # Find highest point in trajectory
-    max_height = min(pos[1] for pos in trajectory)  # Min because y=0 is top
-    trajectory_height = court_height - max_height
-    
-    avg_velocity = velocity_profile.get('avg_velocity', 0)
-    velocity_variance = velocity_profile.get('velocity_variance', 0)
-    
-    # Classification based on multiple factors
-    if trajectory_height > court_height * 0.4 and avg_velocity < 15:
-        return "lob"
-    elif trajectory_height < court_height * 0.15 and avg_velocity > 25:
-        return "drive"
-    elif velocity_variance > 100:  # High velocity variation suggests drops
-        return "drop"
-    else:
-        return "drive"
+        # Calculate direction
+        dir_x = x2 - x1
+        dir_y = y2 - y1
 
-def classify_shot_style(velocity_profile, wall_bounces, direction_changes, trajectory):
-    """
-    Classify shot style based on advanced metrics
-    """
-    avg_velocity = velocity_profile.get('avg_velocity', 0)
-    velocity_variance = velocity_profile.get('velocity_variance', 0)
-    
-    if wall_bounces > 2:
-        return "boast"
-    elif direction_changes > 4 and velocity_variance > 50:
-        return "nick"
-    elif avg_velocity > 30:
-        return "hard"
-    elif avg_velocity < 10 and len(trajectory) > 10:
-        return "soft"
-    else:
-        return "medium"
+        # Check for significant direction changes
+        if abs(dir_x) > threshold:
+            current_direction_x = 1 if dir_x > 0 else -1
+            if last_direction_x is not None and current_direction_x != last_direction_x:
+                direction_changes += 1
+            last_direction_x = current_direction_x
+            
+        if abs(dir_y) > threshold:
+            current_direction_y = 1 if dir_y > 0 else -1
+            if last_direction_y is not None and current_direction_y != last_direction_y:
+                direction_changes += 1
+            last_direction_y = current_direction_y
 
-class BounceDetector:
-    """
-    Enhanced bounce detection system with multiple algorithms and visualization
-    """
-    def __init__(self):
-        self.detected_bounces = []  # Store all detected bounces
-        self.bounce_confidence_threshold = 0.6
-        self.min_bounce_separation = 8  # Minimum frames between bounces
-        
-    def detect_bounces_comprehensive(self, trajectory, court_width, court_height):
-        """
-        Comprehensive bounce detection using multiple algorithms
-        """
-        if len(trajectory) < 6:
-            return []
-            
-        bounces = []
-        
-        # Algorithm 1: Physics-based detection
-        physics_bounces = self._detect_physics_bounces(trajectory, court_width, court_height)
-        
-        # Algorithm 2: Velocity vector analysis
-        velocity_bounces = self._detect_velocity_bounces(trajectory)
-        
-        # Algorithm 3: Wall proximity analysis
-        wall_bounces = self._detect_wall_bounces(trajectory, court_width, court_height)
-        
-        # Algorithm 4: Trajectory curvature analysis
-        curvature_bounces = self._detect_curvature_bounces(trajectory)
-        
-        # Combine and weight results
-        all_candidates = []
-        
-        # Add weighted candidates from each algorithm
-        for bounce in physics_bounces:
-            all_candidates.append({**bounce, 'algorithm': 'physics', 'base_weight': 0.3})
-            
-        for bounce in velocity_bounces:
-            all_candidates.append({**bounce, 'algorithm': 'velocity', 'base_weight': 0.25})
-            
-        for bounce in wall_bounces:
-            all_candidates.append({**bounce, 'algorithm': 'wall', 'base_weight': 0.25})
-            
-        for bounce in curvature_bounces:
-            all_candidates.append({**bounce, 'algorithm': 'curvature', 'base_weight': 0.2})
-        
-        # Merge nearby candidates and calculate final confidence
-        final_bounces = self._merge_and_score_candidates(all_candidates)
-        
-        # Apply confidence threshold and store
-        validated_bounces = [b for b in final_bounces if b['confidence'] >= self.bounce_confidence_threshold]
-        self.detected_bounces.extend(validated_bounces)
-        
-        return validated_bounces
-        
-    def _detect_physics_bounces(self, trajectory, court_width, court_height):
-        """
-        Physics-based bounce detection using acceleration and momentum
-        """
-        bounces = []
-        
-        if len(trajectory) < 6:
-            return bounces
-            
-        # Calculate velocities and accelerations
-        positions = [(pos[0], pos[1]) for pos in trajectory]
-        times = [pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)]
-        
-        velocities = []
-        accelerations = []
-        
-        # Calculate velocities
-        for i in range(1, len(positions)):
-            dt = max(times[i] - times[i-1], 1e-6)
-            vx = (positions[i][0] - positions[i-1][0]) / dt
-            vy = (positions[i][1] - positions[i-1][1]) / dt
-            velocities.append((vx, vy, math.sqrt(vx*vx + vy*vy)))
-            
-        # Calculate accelerations
-        for i in range(1, len(velocities)):
-            dt = max(times[i+1] - times[i], 1e-6)
-            ax = (velocities[i][0] - velocities[i-1][0]) / dt
-            ay = (velocities[i][1] - velocities[i-1][1]) / dt
-            accelerations.append((ax, ay, math.sqrt(ax*ax + ay*ay)))
-        
-        # Look for bounce signatures
-        for i in range(2, len(accelerations) - 2):
-            # High acceleration magnitude (impact)
-            accel_mag = accelerations[i][2]
-            
-            # Velocity direction change
-            if i < len(velocities) - 2:
-                vel_before = velocities[i-1]
-                vel_after = velocities[i+1]
-                
-                # Check for significant direction change
-                dot_product = vel_before[0]*vel_after[0] + vel_before[1]*vel_after[1]
-                mag_before = vel_before[2]
-                mag_after = vel_after[2]
-                
-                if mag_before > 0 and mag_after > 0:
-                    cos_angle = dot_product / (mag_before * mag_after)
-                    angle_change = math.degrees(math.acos(max(-1, min(1, cos_angle))))
-                    
-                    # Calculate confidence based on physics indicators
-                    confidence = 0.0
-                    
-                    # High acceleration indicates impact
-                    if accel_mag > 50:
-                        confidence += 0.4
-                        
-                    # Large angle change indicates bounce
-                    if angle_change > 45:
-                        confidence += 0.3
-                        
-                    # Velocity magnitude conservation (energy consideration)
-                    velocity_ratio = min(mag_after, mag_before) / max(mag_after, mag_before)
-                    if velocity_ratio > 0.5:  # Some energy preserved
-                        confidence += 0.2
-                        
-                    # Wall proximity bonus
-                    pos = positions[i+1]  # Position after potential bounce
-                    wall_distance = min(pos[0], court_width - pos[0], pos[1], court_height - pos[1])
-                    if wall_distance < 40:
-                        confidence += 0.1
-                        
-                    if confidence > 0.3:
-                        bounces.append({
-                            'frame_index': i + 1,
-                            'position': pos,
-                            'confidence': confidence,
-                            'angle_change': angle_change,
-                            'acceleration': accel_mag,
-                            'wall_distance': wall_distance
-                        })
-        
-        return bounces
-        
-    def _detect_velocity_bounces(self, trajectory):
-        """
-        Detect bounces based on velocity vector analysis
-        """
-        bounces = []
-        
-        if len(trajectory) < 5:
-            return bounces
-            
-        positions = [(pos[0], pos[1]) for pos in trajectory]
-        times = [pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)]
-        
-        # Calculate velocity vectors
-        velocities = []
-        for i in range(1, len(positions)):
-            dt = max(times[i] - times[i-1], 1e-6)
-            vx = (positions[i][0] - positions[i-1][0]) / dt
-            vy = (positions[i][1] - positions[i-1][1]) / dt
-            velocities.append((vx, vy))
-        
-        # Look for velocity reversals and sharp changes
-        for i in range(2, len(velocities) - 1):
-            v_prev = velocities[i-1]
-            v_curr = velocities[i]
-            v_next = velocities[i+1]
-            
-            confidence = 0.0
-            
-            # Check for component reversals
-            x_reversal = v_prev[0] * v_next[0] < 0
-            y_reversal = v_prev[1] * v_next[1] < 0
-            
-            if x_reversal:
-                confidence += 0.4
-            if y_reversal:
-                confidence += 0.4
-                
-            # Check for velocity magnitude changes
-            mag_prev = math.sqrt(v_prev[0]**2 + v_prev[1]**2)
-            mag_next = math.sqrt(v_next[0]**2 + v_next[1]**2)
-            
-            if mag_prev > 10 and mag_next > 10:  # Significant movement
-                velocity_change_ratio = abs(mag_next - mag_prev) / max(mag_prev, mag_next)
-                if velocity_change_ratio > 0.3:
-                    confidence += 0.2
-                    
-            if confidence > 0.3:
-                bounces.append({
-                    'frame_index': i + 1,
-                    'position': positions[i + 1],
-                    'confidence': confidence,
-                    'x_reversal': x_reversal,
-                    'y_reversal': y_reversal
-                })
-                
-        return bounces
-        
-    def _detect_wall_bounces(self, trajectory, court_width, court_height):
-        """
-        Detect bounces based on wall proximity and trajectory changes
-        """
-        bounces = []
-        wall_threshold = 35  # Distance from wall to consider a wall bounce
-        
-        for i in range(2, len(trajectory) - 2):
-            pos = (trajectory[i][0], trajectory[i][1])
-            
-            # Check wall proximity
-            wall_distances = [
-                pos[0],  # Left wall
-                court_width - pos[0],  # Right wall
-                pos[1],  # Top wall
-                court_height - pos[1]  # Bottom wall
-            ]
-            
-            min_wall_distance = min(wall_distances)
-            
-            if min_wall_distance < wall_threshold:
-                # Near wall, check for trajectory change
-                if i >= 2 and i < len(trajectory) - 2:
-                    prev_pos = (trajectory[i-2][0], trajectory[i-2][1])
-                    next_pos = (trajectory[i+2][0], trajectory[i+2][1])
-                    
-                    # Calculate approach and departure vectors
-                    approach_vec = (pos[0] - prev_pos[0], pos[1] - prev_pos[1])
-                    departure_vec = (next_pos[0] - pos[0], next_pos[1] - pos[1])
-                    
-                    # Calculate angle between vectors
-                    if (approach_vec[0] != 0 or approach_vec[1] != 0) and (departure_vec[0] != 0 or departure_vec[1] != 0):
-                        dot_product = approach_vec[0] * departure_vec[0] + approach_vec[1] * departure_vec[1]
-                        mag1 = math.sqrt(approach_vec[0]**2 + approach_vec[1]**2)
-                        mag2 = math.sqrt(departure_vec[0]**2 + departure_vec[1]**2)
-                        
-                        if mag1 > 0 and mag2 > 0:
-                            cos_angle = dot_product / (mag1 * mag2)
-                            angle = math.degrees(math.acos(max(-1, min(1, cos_angle))))
-                            
-                            # Calculate confidence
-                            wall_proximity_factor = 1.0 - (min_wall_distance / wall_threshold)
-                            angle_factor = angle / 180.0
-                            
-                            confidence = 0.5 * wall_proximity_factor + 0.5 * angle_factor
-                            
-                            if confidence > 0.4:
-                                bounces.append({
-                                    'frame_index': i,
-                                    'position': pos,
-                                    'confidence': confidence,
-                                    'wall_distance': min_wall_distance,
-                                    'angle_change': angle
-                                })
-        
-        return bounces
-        
-    def _detect_curvature_bounces(self, trajectory):
-        """
-        Detect bounces based on trajectory curvature analysis
-        """
-        bounces = []
-        
-        if len(trajectory) < 5:
-            return bounces
-            
-        positions = [(pos[0], pos[1]) for pos in trajectory]
-        
-        # Calculate curvature at each point
-        for i in range(2, len(positions) - 2):
-            # Use 5-point stencil for better curvature estimation
-            p1, p2, p3, p4, p5 = positions[i-2:i+3]
-            
-            # Calculate curvature using finite differences
-            # First derivatives
-            dx1 = (p3[0] - p1[0]) / 2
-            dy1 = (p3[1] - p1[1]) / 2
-            
-            # Second derivatives
-            dx2 = p4[0] - 2*p3[0] + p2[0]
-            dy2 = p4[1] - 2*p3[1] + p2[1]
-            
-            # Curvature formula: |x'y'' - y'x''| / (x'^2 + y'^2)^(3/2)
-            numerator = abs(dx1 * dy2 - dy1 * dx2)
-            denominator = (dx1*dx1 + dy1*dy1)**1.5
-            
-            if denominator > 1e-6:
-                curvature = numerator / denominator
-                
-                # High curvature indicates sharp direction change (potential bounce)
-                if curvature > 0.01:  # Threshold for significant curvature
-                    confidence = min(curvature * 10, 1.0)  # Scale curvature to confidence
-                    
-                    bounces.append({
-                        'frame_index': i,
-                        'position': positions[i],
-                        'confidence': confidence,
-                        'curvature': curvature
-                    })
-        
-        return bounces
-        
-    def _merge_and_score_candidates(self, candidates):
-        """
-        Merge nearby bounce candidates and calculate final confidence scores
-        """
-        if not candidates:
-            return []
-            
-        # Sort by frame index
-        candidates.sort(key=lambda x: x['frame_index'])
-        
-        merged_bounces = []
-        current_group = [candidates[0]]
-        
-        # Group nearby candidates
-        for i in range(1, len(candidates)):
-            if candidates[i]['frame_index'] - current_group[-1]['frame_index'] <= self.min_bounce_separation:
-                current_group.append(candidates[i])
-            else:
-                # Process current group
-                merged_bounce = self._process_candidate_group(current_group)
-                if merged_bounce:
-                    merged_bounces.append(merged_bounce)
-                current_group = [candidates[i]]
-        
-        # Process last group
-        if current_group:
-            merged_bounce = self._process_candidate_group(current_group)
-            if merged_bounce:
-                merged_bounces.append(merged_bounce)
-        
-        return merged_bounces
-        
-    def _process_candidate_group(self, group):
-        """
-        Process a group of nearby bounce candidates into a single bounce
-        """
-        if not group:
-            return None
-            
-        # Calculate weighted average position and frame
-        total_weight = sum(c['confidence'] * c['base_weight'] for c in group)
-        
-        if total_weight == 0:
-            return None
-            
-        avg_frame = sum(c['frame_index'] * c['confidence'] * c['base_weight'] for c in group) / total_weight
-        avg_x = sum(c['position'][0] * c['confidence'] * c['base_weight'] for c in group) / total_weight
-        avg_y = sum(c['position'][1] * c['confidence'] * c['base_weight'] for c in group) / total_weight
-        
-        # Calculate final confidence
-        algorithm_count = len(set(c['algorithm'] for c in group))
-        base_confidence = total_weight / len(group)
-        
-        # Bonus for multiple algorithms agreeing
-        multi_algorithm_bonus = 0.1 * (algorithm_count - 1)
-        final_confidence = min(base_confidence + multi_algorithm_bonus, 1.0)
-        
-        return {
-            'frame_index': int(avg_frame),
-            'position': (int(avg_x), int(avg_y)),
-            'confidence': final_confidence,
-            'algorithm_count': algorithm_count,
-            'supporting_algorithms': [c['algorithm'] for c in group]
-        }
-        
-    def draw_bounces(self, frame, trajectory, frame_index):
-        """
-        Draw detected bounces on the frame with enhanced visualization
-        """
-        try:
-            # Draw recent bounces (last 10)
-            recent_bounces = [b for b in self.detected_bounces if abs(b['frame_index'] - frame_index) <= 10]
-            
-            for bounce in recent_bounces:
-                pos = bounce['position']
-                confidence = bounce['confidence']
-                age = abs(frame_index - bounce['frame_index'])
-                
-                # Color based on confidence (green = high, yellow = medium, red = low)
-                if confidence > 0.8:
-                    color = (0, 255, 0)  # Green
-                elif confidence > 0.6:
-                    color = (0, 255, 255)  # Yellow
-                else:
-                    color = (0, 165, 255)  # Orange
-                
-                # Size based on age (newer bounces are larger)
-                radius = max(8 - age, 3)
-                
-                # Draw bounce marker
-                cv2.circle(frame, pos, radius + 3, color, 2)
-                cv2.circle(frame, pos, radius, (255, 255, 255), -1)
-                
-                # Draw confidence text
-                conf_text = f"{confidence:.2f}"
-                cv2.putText(frame, conf_text, 
-                          (pos[0] + 15, pos[1] - 5),
-                          cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
-                
-                # Draw algorithm indicator
-                algo_count = bounce.get('algorithm_count', 1)
-                algo_text = f"A:{algo_count}"
-                cv2.putText(frame, algo_text, 
-                          (pos[0] + 15, pos[1] + 10),
-                          cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
-        
-        except Exception as e:
-            print(f"Error drawing bounces: {e}")
+        # Count wall hits based on direction changes
+        if direction_changes >= 2:
+            wall_hits += 1
+            direction_changes = 0
 
-# Initialize global bounce detector
-bounce_detector = BounceDetector()
-
-def detect_ball_bounces_comprehensive(trajectory, court_width, court_height, confidence_threshold=0.7):
-    """
-    Comprehensive ball bounce detection using multiple algorithms and physics-based validation
-    
-    Returns:
-        tuple: (bounce_count, bounce_positions, bounce_details)
-    """
-    if len(trajectory) < 5:
-        return 0, [], []
-    
-    bounce_positions = []
-    bounce_details = []
-    
-    # Algorithm 1: Velocity Direction Change Detection
-    velocity_bounces = detect_bounces_by_velocity_change(trajectory)
-    
-    # Algorithm 2: Trajectory Angle Analysis
-    angle_bounces = detect_bounces_by_angle_analysis(trajectory)
-    
-    # Algorithm 3: Physics-Based Bounce Detection
-    physics_bounces = detect_bounces_by_physics(trajectory, court_width, court_height)
-    
-    # Algorithm 4: Wall Proximity Analysis
-    wall_bounces = detect_bounces_by_wall_proximity(trajectory, court_width, court_height)
-    
-    # Combine and validate bounces
-    all_potential_bounces = []
-    
-    # Add bounces from each algorithm with their source
-    for bounce in velocity_bounces:
-        all_potential_bounces.append({**bounce, 'source': 'velocity', 'weight': 0.3})
-    
-    for bounce in angle_bounces:
-        all_potential_bounces.append({**bounce, 'source': 'angle', 'weight': 0.25})
-        
-    for bounce in physics_bounces:
-        all_potential_bounces.append({**bounce, 'source': 'physics', 'weight': 0.3})
-        
-    for bounce in wall_bounces:
-        all_potential_bounces.append({**bounce, 'source': 'wall', 'weight': 0.15})
-    
-    # Cluster nearby bounces and calculate consensus
-    confirmed_bounces = validate_and_cluster_bounces(all_potential_bounces, trajectory, confidence_threshold)
-    
-    return len(confirmed_bounces), [b['position'] for b in confirmed_bounces], confirmed_bounces
-
-def detect_bounces_by_velocity_change(trajectory, velocity_threshold=10):
-    """Detect bounces by analyzing velocity direction changes"""
-    bounces = []
-    
-    if len(trajectory) < 4:
-        return bounces
-    
-    velocities = []
-    for i in range(1, len(trajectory)):
-        p1, p2 = trajectory[i-1], trajectory[i]
-        if len(p1) >= 3 and len(p2) >= 3:
-            dt = max(0.033, abs(p2[2] - p1[2]))  # Min 30fps
-            vel_x = (p2[0] - p1[0]) / dt
-            vel_y = (p2[1] - p1[1]) / dt
-            velocities.append((vel_x, vel_y, i))
-    
-    for i in range(1, len(velocities) - 1):
-        prev_vel = velocities[i-1]
-        curr_vel = velocities[i]
-        next_vel = velocities[i+1]
-        
-        # Check for significant velocity direction change
-        prev_dir_x = 1 if prev_vel[0] > 0 else -1
-        next_dir_x = 1 if next_vel[0] > 0 else -1
-        prev_dir_y = 1 if prev_vel[1] > 0 else -1
-        next_dir_y = 1 if next_vel[1] > 0 else -1
-        
-        # Significant direction change in either axis
-        if (prev_dir_x != next_dir_x and abs(prev_vel[0]) > velocity_threshold) or \
-           (prev_dir_y != next_dir_y and abs(prev_vel[1]) > velocity_threshold):
-            
-            frame_idx = curr_vel[2]
-            if frame_idx < len(trajectory):
-                position = trajectory[frame_idx][:2]
-                confidence = min(1.0, (abs(prev_vel[0]) + abs(prev_vel[1])) / 50)
-                
-                bounces.append({
-                    'position': position,
-                    'frame_index': frame_idx,
-                    'confidence': confidence,
-                    'type': 'velocity_change'
-                })
-    
-    return bounces
+    return wall_hits
 
 def detect_bounces_by_angle_analysis(trajectory, angle_threshold=45):
     """Detect bounces by analyzing trajectory angle changes"""
@@ -2247,580 +2624,45 @@ def detect_bounces_by_angle_analysis(trajectory, angle_threshold=45):
             max_angle_change = max(angles)
             if max_angle_change > angle_threshold:
                 position = trajectory[i][:2]
-                confidence = min(1.0, max_angle_change / 180)
-                
-                bounces.append({
-                    'position': position,
-                    'frame_index': i,
-                    'confidence': confidence,
-                    'type': 'angle_change',
-                    'angle': max_angle_change
-                })
-    
-    return bounces
+# Legacy bounce detection functions - simple and reliable
 
-def detect_bounces_by_physics(trajectory, court_width, court_height):
-    """Detect bounces using physics-based analysis"""
-    bounces = []
-    
-    if len(trajectory) < 6:
-        return bounces
-    
-    # Analyze trajectory for unnatural accelerations (bounces)
-    accelerations = []
-    for i in range(2, len(trajectory)):
-        if i >= 2 and len(trajectory[i]) >= 3:
-            p0, p1, p2 = trajectory[i-2], trajectory[i-1], trajectory[i]
-            
-            # Calculate acceleration
-            dt1 = max(0.033, abs(p1[2] - p0[2]))
-            dt2 = max(0.033, abs(p2[2] - p1[2]))
-            
-            v1_x, v1_y = (p1[0] - p0[0]) / dt1, (p1[1] - p0[1]) / dt1
-            v2_x, v2_y = (p2[0] - p1[0]) / dt2, (p2[1] - p1[1]) / dt2
-            
-            acc_x = (v2_x - v1_x) / dt2
-            acc_y = (v2_y - v1_y) / dt2
-            
-            acc_magnitude = math.sqrt(acc_x**2 + acc_y**2)
-            accelerations.append((acc_magnitude, i))
-    
-    # Find peaks in acceleration (potential bounces)
-    for i, (acc, frame_idx) in enumerate(accelerations):
-        if i > 0 and i < len(accelerations) - 1:
-            prev_acc = accelerations[i-1][0]
-            next_acc = accelerations[i+1][0]
-            
-            # Check if this is a local maximum
-            if acc > prev_acc and acc > next_acc and acc > 200:  # Threshold for significant acceleration
-                position = trajectory[frame_idx][:2]
-                confidence = min(1.0, acc / 1000)
-                
-                bounces.append({
-                    'position': position,
-                    'frame_index': frame_idx,
-                    'confidence': confidence,
-                    'type': 'physics_acceleration',
-                    'acceleration': acc
-                })
-    
-    return bounces
-
-def detect_bounces_by_wall_proximity(trajectory, court_width, court_height, wall_distance=30):
-    """Detect bounces by analyzing wall proximity and trajectory changes"""
-    bounces = []
-    
-    # Define wall boundaries with tolerance
-    walls = {
-        'left': wall_distance,
-        'right': court_width - wall_distance,
-        'top': wall_distance,
-        'bottom': court_height - wall_distance
-    }
-    
-    for i in range(1, len(trajectory) - 1):
-        pos = trajectory[i]
-        x, y = pos[0], pos[1]
-        
-        # Check proximity to walls
-        near_wall = False
-        wall_type = None
-        
-        if x <= walls['left']:
-            near_wall = True
-            wall_type = 'left'
-        elif x >= walls['right']:
-            near_wall = True
-            wall_type = 'right'
-        elif y <= walls['top']:
-            near_wall = True
-            wall_type = 'top'
-        elif y >= walls['bottom']:
-            near_wall = True
-            wall_type = 'bottom'
-        
-        if near_wall and i > 0 and i < len(trajectory) - 1:
-            # Check for direction change near wall
-            prev_pos = trajectory[i-1]
-            next_pos = trajectory[i+1]
-            
-            # Direction before and after
-            dir_before = (pos[0] - prev_pos[0], pos[1] - prev_pos[1])
-            dir_after = (next_pos[0] - pos[0], next_pos[1] - pos[1])
-            
-            # Check for appropriate direction change based on wall
-            direction_changed = False
-            if wall_type in ['left', 'right']:
-                if dir_before[0] * dir_after[0] < 0:  # X direction changed
-                    direction_changed = True
-            elif wall_type in ['top', 'bottom']:
-                if dir_before[1] * dir_after[1] < 0:  # Y direction changed
-                    direction_changed = True
-            
-            if direction_changed:
-                # Calculate distance to nearest wall
-                if wall_type == 'left':
-                    wall_dist = x
-                elif wall_type == 'right':
-                    wall_dist = court_width - x
-                elif wall_type == 'top':
-                    wall_dist = y
-                else:  # bottom
-                    wall_dist = court_height - y
-                
-                confidence = max(0.1, 1.0 - (wall_dist / wall_distance))
-                
-                bounces.append({
-                    'position': (x, y),
-                    'frame_index': i,
-                    'confidence': confidence,
-                    'type': 'wall_bounce',
-                    'wall': wall_type,
-                    'wall_distance': wall_dist
-                })
-    
-    return bounces
-
-def validate_and_cluster_bounces(potential_bounces, trajectory, confidence_threshold=0.7):
-    """Validate and cluster nearby bounce detections"""
-    if not potential_bounces:
-        return []
-    
-    # Sort by frame index
-    potential_bounces.sort(key=lambda x: x['frame_index'])
-    
-    # Cluster nearby bounces (within 3 frames and 20 pixels)
-    clusters = []
-    for bounce in potential_bounces:
-        added_to_cluster = False
-        
-        for cluster in clusters:
-            # Check if bounce is close to existing cluster
-            cluster_center = cluster[0]
-            frame_diff = abs(bounce['frame_index'] - cluster_center['frame_index'])
-            pos_diff = math.sqrt(
-                (bounce['position'][0] - cluster_center['position'][0])**2 +
-                (bounce['position'][1] - cluster_center['position'][1])**2
-            )
-            
-            if frame_diff <= 3 and pos_diff <= 20:
-                cluster.append(bounce)
-                added_to_cluster = True
-                break
-        
-        if not added_to_cluster:
-            clusters.append([bounce])
-    
-    # Validate each cluster and create consensus bounce
-    validated_bounces = []
-    for cluster in clusters:
-        if len(cluster) >= 2:  # At least 2 algorithms agree
-            # Calculate weighted average position and confidence
-            total_weight = sum(b['weight'] for b in cluster)
-            avg_x = sum(b['position'][0] * b['weight'] for b in cluster) / total_weight
-            avg_y = sum(b['position'][1] * b['weight'] for b in cluster) / total_weight
-            avg_confidence = sum(b['confidence'] * b['weight'] for b in cluster) / total_weight
-            avg_frame = int(sum(b['frame_index'] * b['weight'] for b in cluster) / total_weight)
-            
-            if avg_confidence >= confidence_threshold:
-                validated_bounces.append({
-                    'position': (avg_x, avg_y),
-                    'frame_index': avg_frame,
-                    'confidence': avg_confidence,
-                    'type': 'consensus',
-                    'sources': [b['source'] for b in cluster],
-                    'algorithm_count': len(cluster)
-                })
-    
-    return validated_bounces
-
-def detect_wall_bounces_advanced(trajectory, court_width, court_height):
+def count_wall_hits(past_ball_pos, threshold=12):
     """
-    Advanced wall bounce detection using trajectory analysis with bounce position tracking
+    Simple wall hit detection with improved accuracy and lower threshold
     """
-    bounces = 0
-    bounce_positions = []
-    
-    if len(trajectory) < 3:
-        return bounces, bounce_positions
-    
-    for i in range(1, len(trajectory) - 1):
-        x_prev, y_prev, _ = trajectory[i-1]
-        x_curr, y_curr, _ = trajectory[i]
-        x_next, y_next, _ = trajectory[i+1]
-        
-        # Calculate direction vectors
-        v1 = (x_curr - x_prev, y_curr - y_prev)
-        v2 = (x_next - x_curr, y_next - y_curr)
-        
-        # Check for sudden direction change (potential wall bounce)
-        if (abs(v1[0]) > 0 or abs(v1[1]) > 0) and (abs(v2[0]) > 0 or abs(v2[1]) > 0):
-            # Calculate angle between vectors
-            dot_product = v1[0]*v2[0] + v1[1]*v2[1]
-            mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
-            mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
-            
-            if mag1 > 0 and mag2 > 0:
-                cos_angle = dot_product / (mag1 * mag2)
-                cos_angle = max(-1, min(1, cos_angle))
-                angle = math.degrees(math.acos(cos_angle))
-                
-                # Check if near wall and direction change is significant
-                near_wall = (x_curr < 30 or x_curr > court_width - 30 or 
-                        y_curr < 30 or y_curr > court_height - 30)
-                
-                if angle > 60 and near_wall:
-                    bounces += 1
-                    bounce_positions.append((int(x_curr), int(y_curr)))
-    
-    return bounces, bounce_positions
-
-
-def detect_ball_bounces_gpu(trajectory, velocity_threshold=30.0, angle_threshold=45.0, court_width=640, court_height=360):
-    """
-    Enhanced GPU-optimized ball bounce detection with improved physics modeling and filtering
-    """
-    if len(trajectory) < 6:  # Need more points for reliable detection
-        return []
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
     try:
-        # Extract positions and convert to GPU tensors
-        positions = torch.tensor([[pos[0], pos[1]] for pos in trajectory], dtype=torch.float32, device=device)
-        times = torch.tensor([pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)], dtype=torch.float32, device=device)
-        
-        bounce_positions = []
-        
-        if len(positions) < 6:
-            return bounce_positions
-        
-        # 1. ENHANCED VELOCITY ANALYSIS
-        # Calculate velocities with time normalization
-        dt = times[1:] - times[:-1]
-        dt = torch.clamp(dt, min=1e-6)  # Prevent division by zero
-        
-        displacements = positions[1:] - positions[:-1]
-        velocities = displacements / dt.unsqueeze(1)
-        speeds = torch.norm(velocities, dim=1)
-        
-        # 2. ACCELERATION ANALYSIS (key for bounce detection)
-        dt_vel = times[2:] - times[:-2] 
-        dt_vel = torch.clamp(dt_vel, min=1e-6)
-        
-        accelerations = (velocities[1:] - velocities[:-1]) / dt_vel.unsqueeze(1)
-        acceleration_magnitudes = torch.norm(accelerations, dim=1)
-        
-        # 3. ENHANCED DIRECTION ANALYSIS
-        if len(velocities) >= 3:
-            # Normalize velocities to get directions
-            normalized_velocities = F.normalize(velocities + 1e-8, p=2, dim=1)
+        wall_hits = 0
+        direction_changes = 0
+        last_direction = None
+
+        for i in range(1, len(past_ball_pos) - 1):
+            x1, y1, _ = past_ball_pos[i - 1]
+            x2, y2, _ = past_ball_pos[i]
+            x3, y3, _ = past_ball_pos[i + 1]
+
+            # Calculate direction vectors with more precision
+            dir1 = x2 - x1
             
-            # Calculate angular changes between consecutive velocity vectors
-            dot_products = torch.sum(normalized_velocities[:-1] * normalized_velocities[1:], dim=1)
-            angles = torch.acos(torch.clamp(dot_products, -1.0, 1.0)) * 180.0 / math.pi
-            
-            # 4. ENHANCED WALL PROXIMITY WITH GRADIENT
-            wall_margin = 50
-            wall_distances = torch.min(torch.stack([
-                positions[:, 0],  # Distance from left wall
-                court_width - positions[:, 0],  # Distance from right wall  
-                positions[:, 1],  # Distance from top wall
-                court_height - positions[:, 1]  # Distance from bottom wall
-            ]), dim=0)[0]
-            
-            # Create wall proximity score (0 = at wall, 1 = far from wall)
-            wall_proximity_score = torch.clamp(wall_distances / wall_margin, 0, 1)
-            
-            # 5. PHYSICS-BASED BOUNCE DETECTION
-            # Look for characteristic bounce patterns
-            bounce_candidates = []
-            
-            for i in range(2, len(speeds) - 2):
-                # Skip if not enough data
-                if i >= len(angles) or i >= len(acceleration_magnitudes):
-                    continue
-                
-                # Multiple bounce indicators
-                indicators = []
-                
-                # A. Sudden direction change
-                if angles[i-1] > angle_threshold:
-                    indicators.append(('angle', angles[i-1].item(), 0.8))
-                
-                # B. Velocity magnitude change (deceleration then acceleration)
-                speed_change = abs(speeds[i+1] - speeds[i-1])
-                if speed_change > velocity_threshold:
-                    indicators.append(('velocity', speed_change.item(), 0.7))
-                
-                # C. High acceleration (impact detection)
-                if acceleration_magnitudes[i-1] > 100:  # Adjust threshold as needed
-                    indicators.append(('acceleration', acceleration_magnitudes[i-1].item(), 0.9))
-                
-                # D. Wall proximity factor
-                wall_factor = 1.0 - wall_proximity_score[i]
-                if wall_factor > 0.3:  # Near wall
-                    indicators.append(('wall_proximity', wall_factor.item(), 0.6))
-                
-                # E. Velocity reversal detection
-                if i > 0 and i < len(velocities) - 1:
-                    vel_before = velocities[i-1]
-                    vel_after = velocities[i+1]
-                    
-                    # Check for component reversal (especially important for wall bounces)
-                    x_reversal = vel_before[0] * vel_after[0] < 0
-                    y_reversal = vel_before[1] * vel_after[1] < 0
-                    
-                    if x_reversal or y_reversal:
-                        reversal_strength = 1.0 if (x_reversal and y_reversal) else 0.7
-                        indicators.append(('velocity_reversal', reversal_strength, 0.85))
-                
-                # F. Trajectory curvature analysis
-                if i >= 2 and i < len(positions) - 2:
-                    # Calculate curvature using three points
-                    p1, p2, p3 = positions[i-1], positions[i], positions[i+1]
-                    
-                    # Vector from p1 to p2
-                    v1 = p2 - p1
-                    # Vector from p2 to p3  
-                    v2 = p3 - p2
-                    
-                    # Cross product magnitude indicates curvature
-                    cross_product = v1[0] * v2[1] - v1[1] * v2[0]
-                    curvature = abs(cross_product) / (torch.norm(v1) * torch.norm(v2) + 1e-8)
-                    
-                    if curvature > 0.5:  # High curvature indicates direction change
-                        indicators.append(('curvature', curvature.item(), 0.6))
-                
-                # Calculate combined confidence score
-                if indicators:
-                    total_weight = sum(weight for _, _, weight in indicators)
-                    weighted_score = sum(weight for _, _, weight in indicators) / len(indicators)
-                    
-                    # Bonus for multiple indicators
-                    multi_indicator_bonus = min(0.3, 0.1 * (len(indicators) - 1))
-                    final_confidence = weighted_score + multi_indicator_bonus
-                    
-                    bounce_candidates.append({
-                        'index': i,
-                        'confidence': final_confidence,
-                        'indicators': indicators,
-                        'wall_factor': wall_factor.item()
-                    })
-            
-            # 6. BOUNCE FILTERING AND SELECTION
-            # Sort by confidence and apply non-maximum suppression
-            bounce_candidates.sort(key=lambda x: x['confidence'], reverse=True)
-            
-            # Non-maximum suppression to avoid duplicate detections
-            min_separation = 5  # Minimum frames between bounces
-            selected_bounces = []
-            
-            for candidate in bounce_candidates:
-                if candidate['confidence'] < 0.5:  # Confidence threshold
-                    continue
-                
-                # Check if too close to already selected bounces
-                too_close = False
-                for selected in selected_bounces:
-                    if abs(candidate['index'] - selected['index']) < min_separation:
-                        too_close = True
-                        break
-                
-                if not too_close:
-                    selected_bounces.append(candidate)
-            
-            # 7. CONVERT TO OUTPUT FORMAT
-            for bounce in selected_bounces:
-                idx = bounce['index']
-                if idx < len(trajectory):
-                    x, y = trajectory[idx][:2]
-                    
-                    # Ensure coordinates are properly converted
-                    if hasattr(x, 'cpu'):
-                        x = x.cpu()
-                    if hasattr(y, 'cpu'):
-                        y = y.cpu()
-                    
-                    bounce_positions.append({
-                        'position': (int(x), int(y)),
-                        'confidence': bounce['confidence'],
-                        'indicators': bounce['indicators'],
-                        'frame_index': idx
-                    })
-        
-        # Return just positions for compatibility, but include confidence info
-        return [bounce['position'] for bounce in bounce_positions]
-        
+            # More sensitive direction change detection
+            if abs(dir1) > threshold:
+                current_direction = 1 if dir1 > 0 else -1
+                if last_direction is not None and current_direction != last_direction:
+                    # Check if direction change is significant enough
+                    if abs(dir1) > threshold * 1.2:  # Additional threshold check
+                        direction_changes += 1
+                last_direction = current_direction
+
+            # Count wall hits with stricter criteria
+            if direction_changes >= 2:
+                wall_hits += 1
+                direction_changes = 0
+                last_direction = None
+
+        return wall_hits
+
     except Exception as e:
-        print(f"GPU bounce detection error: {e}, falling back to CPU")
-        return detect_ball_bounces_cpu_enhanced(trajectory, velocity_threshold, angle_threshold, court_width, court_height)
-
-def detect_ball_bounces_cpu_enhanced(trajectory, velocity_threshold=30.0, angle_threshold=45.0, court_width=640, court_height=360):
-    """
-    Enhanced CPU fallback with improved physics modeling
-    """
-    bounce_positions = []
-    
-    if len(trajectory) < 6:
-        return bounce_positions
-    
-    # Convert to numpy for efficient computation
-    positions = np.array([[pos[0], pos[1]] for pos in trajectory])
-    times = np.array([pos[2] if len(pos) > 2 else i for i, pos in enumerate(trajectory)])
-    
-    # Calculate velocities
-    dt = np.diff(times)
-    dt = np.maximum(dt, 1e-6)  # Prevent division by zero
-    
-    displacements = np.diff(positions, axis=0)
-    velocities = displacements / dt[:, np.newaxis]
-    speeds = np.linalg.norm(velocities, axis=1)
-    
-    # Calculate accelerations
-    if len(velocities) >= 2:
-        dt_vel = times[2:] - times[:-2]
-        dt_vel = np.maximum(dt_vel, 1e-6)
-        
-        accelerations = np.diff(velocities, axis=0) / dt_vel[:, np.newaxis]
-        acceleration_magnitudes = np.linalg.norm(accelerations, axis=1)
-        
-        # Enhanced bounce detection
-        for i in range(2, len(speeds) - 2):
-            bounce_score = 0
-            
-            # Check multiple bounce indicators
-            if i < len(velocities) - 1:
-                # Direction change
-                v1 = velocities[i-1]
-                v2 = velocities[i+1]
-                
-                if np.linalg.norm(v1) > 0 and np.linalg.norm(v2) > 0:
-                    cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-                    angle = np.arccos(np.clip(cos_angle, -1, 1)) * 180 / np.pi
-                    
-                    if angle > angle_threshold:
-                        bounce_score += 0.4
-                
-                # Velocity magnitude change
-                speed_change = abs(speeds[i+1] - speeds[i-1])
-                if speed_change > velocity_threshold:
-                    bounce_score += 0.3
-                
-                # Acceleration spike
-                if i-1 < len(acceleration_magnitudes) and acceleration_magnitudes[i-1] > 100:
-                    bounce_score += 0.3
-                
-                # Wall proximity
-                x, y = positions[i]
-                wall_distance = min(x, court_width - x, y, court_height - y)
-                if wall_distance < 50:
-                    bounce_score += 0.2 * (1 - wall_distance / 50)
-                
-                # Velocity component reversal
-                if (v1[0] * v2[0] < 0) or (v1[1] * v2[1] < 0):
-                    bounce_score += 0.3
-                
-                # Accept bounce if score is high enough
-                if bounce_score > 0.6:
-                    bounce_positions.append((int(positions[i][0]), int(positions[i][1])))
-    
-    return bounce_positions
-
-def smooth_trajectory_gpu(trajectory, window_size=5):
-    """
-    GPU-optimized trajectory smoothing to reduce noise before bounce detection
-    """
-    if len(trajectory) < window_size:
-        return trajectory
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
-    try:
-        positions = torch.tensor([[pos[0], pos[1]] for pos in trajectory], dtype=torch.float32, device=device)
-        
-        # Apply Gaussian smoothing
-        smoothed_positions = []
-        
-        for i in range(len(positions)):
-            start_idx = max(0, i - window_size // 2)
-            end_idx = min(len(positions), i + window_size // 2 + 1)
-            
-            window_positions = positions[start_idx:end_idx]
-            weights = torch.exp(-torch.linspace(-1, 1, len(window_positions))**2)
-            weights = weights / weights.sum()
-            
-            smoothed_pos = torch.sum(window_positions * weights.unsqueeze(1), dim=0)
-            smoothed_positions.append(smoothed_pos)
-        
-        # Convert back to original format
-        smoothed_trajectory = []
-        for i, pos in enumerate(smoothed_positions):
-            original_time = trajectory[i][2] if len(trajectory[i]) > 2 else i
-            smoothed_trajectory.append([pos[0].cpu().item(), pos[1].cpu().item(), original_time])
-        
-        return smoothed_trajectory
-        
-    except Exception as e:
-        print(f"GPU smoothing error: {e}, using CPU fallback")
-        return trajectory
-
-def detect_ball_bounces_with_preprocessing(trajectory, **kwargs):
-    """
-    Main function that combines preprocessing with enhanced bounce detection
-    """
-    if len(trajectory) < 6:
-        return []
-    
-    # 1. Smooth trajectory to reduce noise
-    smoothed_trajectory = smooth_trajectory_gpu(trajectory)
-    
-    # 2. Apply enhanced bounce detection
-    bounces = detect_ball_bounces_gpu(smoothed_trajectory, **kwargs)
-    
-    # 3. Post-process bounces (remove duplicates, validate physics)
-    validated_bounces = validate_bounces(bounces, smoothed_trajectory)
-    
-    return validated_bounces
-
-def validate_bounces(bounces, trajectory):
-    """
-    Validate detected bounces using physics constraints
-    """
-    if not bounces or len(trajectory) < 6:
-        return bounces
-    
-    validated = []
-    
-    for bounce in bounces:
-        # Extract position (handle both tuple and dict formats)
-        if isinstance(bounce, dict):
-            pos = bounce['position']
-        else:
-            pos = bounce
-        
-        # Find corresponding trajectory index
-        bounce_idx = None
-        for i, traj_pos in enumerate(trajectory):
-            if abs(traj_pos[0] - pos[0]) < 5 and abs(traj_pos[1] - pos[1]) < 5:
-                bounce_idx = i
-                break
-        
-        if bounce_idx is not None and bounce_idx > 2 and bounce_idx < len(trajectory) - 2:
-            # Validate physics: check if velocity pattern makes sense
-            before_pos = trajectory[bounce_idx - 2]
-            after_pos = trajectory[bounce_idx + 2]
-            
-            # Check if there's actual movement (not a false positive)
-            movement_before = math.sqrt((trajectory[bounce_idx][0] - before_pos[0])**2 + 
-                                     (trajectory[bounce_idx][1] - before_pos[1])**2)
-            movement_after = math.sqrt((after_pos[0] - trajectory[bounce_idx][0])**2 + 
-                                     (after_pos[1] - trajectory[bounce_idx][1])**2)
-            
-            if movement_before > 5 and movement_after > 5:  # Sufficient movement
-                validated.append(bounce)
-    
-    return validated
+        print(f"Error counting wall hits: {str(e)}")
+        return 0
 
 
 
@@ -2848,44 +2690,7 @@ def calculate_shot_confidence(trajectory_metrics, previous_shot):
             confidence += 0.1
     
     return min(1.0, max(0.1, confidence))
-def count_wall_hits(past_ball_pos, threshold=12):
-    """
-    Enhanced wall hit detection with improved accuracy and lower threshold
-    """
-    try:
-        wall_hits = 0
-        direction_changes = 0
-        last_direction = None
 
-        for i in range(1, len(past_ball_pos) - 1):
-            x1, y1, _ = past_ball_pos[i - 1]
-            x2, y2, _ = past_ball_pos[i]
-            x3, y3, _ = past_ball_pos[i + 1]
-
-            # Calculate direction vectors with more precision
-            dir1 = x2 - x1
-            
-
-            # More sensitive direction change detection
-            if abs(dir1) > threshold:
-                current_direction = 1 if dir1 > 0 else -1
-                if last_direction is not None and current_direction != last_direction:
-                    # Check if direction change is significant enough
-                    if abs(dir1) > threshold * 1.2:  # Additional threshold check
-                        direction_changes += 1
-                last_direction = current_direction
-
-            # Count wall hits with stricter criteria
-            if direction_changes >= 2:
-                wall_hits += 1
-                direction_changes = 0
-                last_direction = None
-
-        return wall_hits
-
-    except Exception as e:
-        print(f"Error counting wall hits: {str(e)}")
-        return 0
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45, min_size=5, max_size=50):
     """
     Enhanced false positive detection for ball tracking with multiple validation checks
@@ -2974,8 +2779,8 @@ def smooth_ball_trajectory(past_ball_pos, window_size=5):
         end_idx = min(len(past_ball_pos), i + window_size // 2 + 1)
         
         window_positions = past_ball_pos[start_idx:end_idx]
-        avg_x = sum(pos[0] for pos in window_positions) / len(window_positions)
-        avg_y = sum(pos[1] for pos in window_positions) / len(window_positions)
+        avg_x = sum(pos[0] for pos in window_positions) / len(window_positions) if window_positions and len(window_positions) > 0 else 0
+        avg_y = sum(pos[1] for pos in window_positions) / len(window_positions) if window_positions and len(window_positions) > 0 else 0
         
         smoothed_trajectory.append([int(avg_x), int(avg_y), past_ball_pos[i][2]])
     
@@ -3058,157 +2863,236 @@ def plot_coords(coords_list):
     ax.set_zlabel("Z axis")
 
     plt.show()
-def determine_ball_hit(
-    players, past_ball_pos, proximity_threshold=80
-):
+def determine_ball_hit_enhanced(players, past_ball_pos, proximity_threshold=100, velocity_threshold=20):
     """
-    Enhanced player ball hit detection with improved accuracy.
-    Uses multiple factors including proximity, velocity change, and trajectory analysis.
+    Enhanced player ball hit detection with improved accuracy and phase detection.
+    Returns: (player_id, hit_confidence, hit_type)
     """
     if len(past_ball_pos) < 4 or not players.get(1) or not players.get(2):
-        return 0
+        return 0, 0.0, "none"
 
-    # Get recent ball positions for analysis
+    # Use enhanced player hit detector if available
+    try:
+        # Import shot_tracker from global scope if available
+        import inspect
+        frame = inspect.currentframe()
+        if frame and frame.f_back and 'shot_tracker' in frame.f_back.f_globals:
+            shot_tracker_ref = frame.f_back.f_globals['shot_tracker']
+            if hasattr(shot_tracker_ref, 'player_hit_detector'):
+                frame_count = past_ball_pos[-1][2] if len(past_ball_pos[-1]) > 2 else 0
+                player_id, confidence, hit_type, details = shot_tracker_ref.player_hit_detector.detect_player_hit(
+                    players, past_ball_pos, frame_count
+                )
+                return player_id, confidence, hit_type
+    except Exception:
+        # Fall back to legacy detection if enhanced fails
+        pass
+    
+    # Fallback to original enhanced detection logic
     current_pos = past_ball_pos[-1]
-    prev_pos = past_ball_pos[-2]
+    prev_pos = past_ball_pos[-2] if len(past_ball_pos) >= 2 else current_pos
     
     # Enhanced trajectory analysis for hit detection
-    trajectory_change_detected = False
+    hit_detected = False
     velocity_change_detected = False
     angle_change = 0
+    hit_confidence = 0.0
+    closest_player = 0
+    hit_type = "none"
     
     if len(past_ball_pos) >= 4:
         # Analyze the last 4 positions for trajectory changes
         positions = past_ball_pos[-4:]
         
-        # Calculate velocity changes
+        # Calculate velocity changes and direction changes
         velocities = []
         for i in range(1, len(positions)):
             p1, p2 = positions[i-1], positions[i]
             if len(p1) >= 3 and len(p2) >= 3:
-                dt = p2[2] - p1[2] if p2[2] != p1[2] else 1
+                dt = max(0.033, abs(p2[2] - p1[2])) if p2[2] != p1[2] else 1
                 velocity = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2) / dt
-                velocities.append(velocity)
+                direction = math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+                velocities.append((velocity, direction))
         
         # Check for significant velocity change (potential hit)
         if len(velocities) >= 2:
-            velocity_change = abs(velocities[-1] - velocities[-2])
-            if velocity_change > 15:  # Threshold for significant velocity change
+            velocity_change = abs(velocities[-1][0] - velocities[-2][0])
+            direction_change = abs(velocities[-1][1] - velocities[-2][1])
+            
+            # Normalize direction change to 0-π range
+            direction_change = min(direction_change, 2*math.pi - direction_change)
+            
+            if velocity_change > velocity_threshold:
                 velocity_change_detected = True
-        
-        # Calculate trajectory angle change
-        if len(positions) >= 3:
-            p1, p2, p3 = positions[-3], positions[-2], positions[-1]
-            vec1 = (p2[0] - p1[0], p2[1] - p1[1])
-            vec2 = (p3[0] - p2[0], p3[1] - p2[1])
-            
-            # Calculate angle between vectors
-            dot_product = vec1[0] * vec2[0] + vec1[1] * vec2[1]
-            mag1 = math.sqrt(vec1[0] ** 2 + vec1[1] ** 2)
-            mag2 = math.sqrt(vec2[0] ** 2 + vec2[1] ** 2)
-            
-            if mag1 > 0 and mag2 > 0:
-                cos_angle = dot_product / (mag1 * mag2)
-                cos_angle = max(-1, min(1, cos_angle))
-                angle_change = math.degrees(math.acos(cos_angle))
-                if angle_change > 45:  # Significant direction change
-                    trajectory_change_detected = True
-
-    try:
-        # Enhanced player position calculation using multiple keypoints
-        def get_enhanced_player_pos(player):
-            pose = player.get_latest_pose()
-            if not pose or not hasattr(pose, 'xyn') or len(pose.xyn) == 0:
-                return None
+                hit_confidence += 0.4
                 
-            keypoints = pose.xyn[0]
+            if direction_change > math.pi/4:  # 45 degrees
+                angle_change = math.degrees(direction_change)
+                hit_confidence += 0.3
+        
+        # Enhanced player proximity analysis
+        player_distances = {}
+        player_hits = {}
+        
+        for player_id in [1, 2]:
+            if players.get(player_id):
+                player = players[player_id]
+                
+                # Get player position (try multiple keypoints for better accuracy)
+                player_pos = None
+                
+                # Try different keypoints in order of preference
+                keypoint_priorities = ['right_wrist', 'left_wrist', 'right_elbow', 'left_elbow', 
+                                    'right_shoulder', 'left_shoulder', 'nose']
+                
+                for keypoint in keypoint_priorities:
+                    if hasattr(player, keypoint) and player.__dict__[keypoint] is not None:
+                        kp = player.__dict__[keypoint]
+                        if len(kp) >= 2 and kp[0] > 0 and kp[1] > 0:  # Valid coordinates
+                            player_pos = (kp[0], kp[1])
+                            break
+                
+                if not player_pos and player.get_latest_pose():
+                    # Fallback to pose keypoints
+                    try:
+                        pose = player.get_latest_pose()
+                        if hasattr(pose, 'xyn') and len(pose.xyn) > 0:
+                            keypoints = pose.xyn[0]
+                            # Try wrists first (9, 10), then elbows (7, 8)
+                            for idx in [9, 10, 7, 8, 5, 6]:
+                                if idx < len(keypoints):
+                                    kp = keypoints[idx]
+                                    if len(kp) >= 2 and kp[0] > 0 and kp[1] > 0:
+                                        player_pos = (kp[0] * 640, kp[1] * 360)  # Convert to pixels
+                                        break
+                    except Exception:
+                        continue
+                
+                if player_pos:
+                    # Calculate distance to ball
+                    ball_distance = math.sqrt(
+                        (current_pos[0] - player_pos[0])**2 + 
+                        (current_pos[1] - player_pos[1])**2
+                    )
+                    player_distances[player_id] = ball_distance
+                    
+                    # Calculate hit probability based on multiple factors
+                    hit_probability = 0.0
+                    
+                    # Factor 1: Proximity to ball
+                    if ball_distance < proximity_threshold:
+                        proximity_score = 1.0 - (ball_distance / proximity_threshold)
+                        hit_probability += proximity_score * 0.4
+                    
+                    # Factor 2: Player movement towards ball
+                    if len(past_ball_pos) >= 3:
+                        prev_ball_pos = past_ball_pos[-3]
+                        prev_distance = math.sqrt(
+                            (prev_ball_pos[0] - player_pos[0])**2 + 
+                            (prev_ball_pos[1] - player_pos[1])**2
+                        )
+                        
+                        # Player is getting closer to ball
+                        if prev_distance > ball_distance:
+                            movement_score = min(0.3, (prev_distance - ball_distance) / 50)
+                            hit_probability += movement_score
+                    
+                    # Factor 3: Ball trajectory change when near player
+                    if ball_distance < proximity_threshold * 1.5 and (velocity_change_detected or angle_change > 30):
+                        trajectory_score = 0.3
+                        hit_probability += trajectory_score
+                    
+                    # Factor 4: Player arm/racket position (if wrist detected)
+                    if player_pos and any(hasattr(player, kp) for kp in ['right_wrist', 'left_wrist']):
+                        arm_score = 0.1  # Bonus for detected arm position
+                        hit_probability += arm_score
+                    
+                    player_hits[player_id] = hit_probability
+        
+        # Determine which player hit the ball
+        if player_hits:
+            best_player = max(player_hits.items(), key=lambda x: x[1])
+            closest_player = best_player[0]
+            player_hit_confidence = best_player[1]
             
-            # Use key body parts for better position estimation
-            # Priorities: racket hand (right wrist=10, left wrist=9), shoulders (5,6), hips (11,12)
-            priority_keypoints = [10, 9, 5, 6, 11, 12]  # Right wrist, left wrist, shoulders, hips
-            valid_points = []
-            
-            # Get priority keypoints first
-            for idx in priority_keypoints:
-                if idx < len(keypoints):
-                    kp = keypoints[idx]
-                    if not (kp[0] == 0 and kp[1] == 0):
-                        x = int(kp[0] * frame_width)
-                        y = int(kp[1] * frame_height)
-                        # Weight racket hand positions more heavily
-                        weight = 3 if idx in [9, 10] else 2 if idx in [5, 6] else 1
-                        for _ in range(weight):
-                            valid_points.append((x, y))
-            
-            # Add other valid keypoints with lower weight
-            for i, kp in enumerate(keypoints):
-                if i not in priority_keypoints and not (kp[0] == 0 and kp[1] == 0):
-                    x = int(kp[0] * frame_width)
-                    y = int(kp[1] * frame_height)
+            # Only consider it a hit if confidence is high enough
+            if player_hit_confidence > 0.3:
+                hit_detected = True
+                hit_confidence = min(1.0, hit_confidence + player_hit_confidence)
+                
+                # Determine hit type based on ball change characteristics
+                if velocity_change > velocity_threshold * 2:
+                    hit_type = "power_shot"
+                elif angle_change > 60:
+                    hit_type = "direction_change"
+                elif velocity_change > velocity_threshold:
+                    hit_type = "controlled_shot"
+                else:
+                    hit_type = "touch_shot"
+    
+    return closest_player if hit_detected else 0, hit_confidence, hit_type
+
+def get_enhanced_player_pos(player):
+    """Enhanced player position calculation using multiple keypoints"""
+    pose = player.get_latest_pose()
+    if not pose or not hasattr(pose, 'xyn') or len(pose.xyn) == 0:
+        return None
+        
+    keypoints = pose.xyn[0]
+    
+    # Use key body parts for better position estimation
+    # Priorities: racket hand (right wrist=10, left wrist=9), shoulders (5,6), hips (11,12)
+    priority_keypoints = [10, 9, 5, 6, 11, 12]  # Right wrist, left wrist, shoulders, hips
+    valid_points = []
+    
+    # Get priority keypoints first
+    for idx in priority_keypoints:
+        if idx < len(keypoints):
+            kp = keypoints[idx]
+            if not (kp[0] == 0 and kp[1] == 0):
+                x = int(kp[0] * 1920)  # Assuming standard frame width
+                y = int(kp[1] * 1080)  # Assuming standard frame height
+                # Weight racket hand positions more heavily
+                weight = 3 if idx in [9, 10] else 2 if idx in [5, 6] else 1
+                for _ in range(weight):
                     valid_points.append((x, y))
-            
-            if not valid_points:
-                return None
-            
-            # Calculate weighted average
-            avg_x = sum(p[0] for p in valid_points) / len(valid_points)
-            avg_y = sum(p[1] for p in valid_points) / len(valid_points)
-            return (avg_x, avg_y)
+    
+    # Add other valid keypoints with lower weight
+    for i, kp in enumerate(keypoints):
+        if i not in priority_keypoints and not (kp[0] == 0 and kp[1] == 0):
+            x = int(kp[0] * 1920)
+            y = int(kp[1] * 1080)
+            valid_points.append((x, y))
+    
+    if not valid_points:
+        return None
+    
+    # Calculate weighted average
+    avg_x = sum(p[0] for p in valid_points) / len(valid_points) if valid_points and len(valid_points) > 0 else 0
+    avg_y = sum(p[1] for p in valid_points) / len(valid_points) if valid_points and len(valid_points) > 0 else 0
+    return (avg_x, avg_y)
 
-        p1_pos = get_enhanced_player_pos(players[1])
-        p2_pos = get_enhanced_player_pos(players[2])
-
-        if p1_pos is None or p2_pos is None:
+def calculate_vector_angle(vec1, vec2):
+    """Calculate angle between two vectors in degrees"""
+    try:
+        # Calculate dot product
+        dot_product = vec1[0] * vec2[0] + vec1[1] * vec2[1]
+        
+        # Calculate magnitudes
+        mag1 = math.sqrt(vec1[0]**2 + vec1[1]**2)
+        mag2 = math.sqrt(vec2[0]**2 + vec2[1]**2)
+        
+        if mag1 == 0 or mag2 == 0:
             return 0
-
-        # Calculate distances to current and previous ball positions
-        p1_curr_distance = math.hypot(p1_pos[0] - current_pos[0], p1_pos[1] - current_pos[1])
-        p2_curr_distance = math.hypot(p2_pos[0] - current_pos[0], p2_pos[1] - current_pos[1])
         
-        p1_prev_distance = math.hypot(p1_pos[0] - prev_pos[0], p1_pos[1] - prev_pos[1])
-        p2_prev_distance = math.hypot(p2_pos[0] - prev_pos[0], p2_pos[1] - prev_pos[1])
+        # Calculate cosine of angle
+        cos_angle = dot_product / (mag1 * mag2)
+        cos_angle = max(-1, min(1, cos_angle))  # Clamp to [-1, 1]
         
-        # Enhanced scoring system for hit detection
-        p1_score = 0
-        p2_score = 0
-        
-        # Proximity scoring (closer = higher score)
-        if p1_curr_distance < proximity_threshold:
-            p1_score += (proximity_threshold - p1_curr_distance) / proximity_threshold * 50
-        if p2_curr_distance < proximity_threshold:
-            p2_score += (proximity_threshold - p2_curr_distance) / proximity_threshold * 50
-            
-        # Movement towards ball scoring
-        if p1_prev_distance > p1_curr_distance:  # Player 1 moving towards ball
-            p1_score += 20
-        if p2_prev_distance > p2_curr_distance:  # Player 2 moving towards ball
-            p2_score += 20
-            
-        # Trajectory change bonus (only if significant change detected)
-        if trajectory_change_detected or velocity_change_detected:
-            # Give bonus to closer player when trajectory changes
-            if p1_curr_distance < p2_curr_distance:
-                p1_score += 30
-            else:
-                p2_score += 30
-        
-        # Minimum threshold for hit detection
-        min_score_threshold = 25
-        
-        # Determine winner
-        if p1_score > p2_score and p1_score > min_score_threshold:
-            return 1
-        elif p2_score > p1_score and p2_score > min_score_threshold:
-            return 2
-        elif trajectory_change_detected or velocity_change_detected:
-            # If there's a clear trajectory change but no clear winner, pick closest
-            return 1 if p1_curr_distance < p2_curr_distance else 2
-
-    except Exception as e:
-        print(f"Error in enhanced determine_ball_hit: {e}")
+        # Return angle in degrees
+        return math.degrees(math.acos(cos_angle))
+    except:
         return 0
-
-    return 0  # No clear hit detected
 def create_court(court_width=400, court_height=610):
     # Create a blank image
     court = np.zeros((court_height, court_width, 3), np.uint8)
@@ -3288,14 +3172,29 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
     """
     Collect comprehensive data for autonomous coaching analysis
     """
+    # Ensure match_in_play is a dictionary, handle tuple case
+    if isinstance(match_in_play, tuple):
+        # Convert tuple to dict format if possible
+        match_in_play_dict = {}
+        if len(match_in_play) >= 1:
+            match_in_play_dict['in_play'] = bool(match_in_play[0])
+        if len(match_in_play) >= 2:
+            match_in_play_dict['ball_hit'] = bool(match_in_play[1])
+        if len(match_in_play) >= 3:
+            match_in_play_dict['player_movement'] = bool(match_in_play[2])
+    elif isinstance(match_in_play, dict):
+        match_in_play_dict = match_in_play
+    else:
+        match_in_play_dict = {'in_play': False, 'ball_hit': False, 'player_movement': False}
+    
     coaching_data = {
         'frame': frame_count,
         'timestamp': time.time(),
         'shot_type': type_of_shot,
         'player_who_hit': who_hit,
-        'match_active': match_in_play.get('in_play', False) if isinstance(match_in_play, dict) else False,
-        'ball_hit_detected': match_in_play.get('ball_hit', False) if isinstance(match_in_play, dict) else False,
-        'player_movement': match_in_play.get('player_movement', False) if isinstance(match_in_play, dict) else False,
+        'match_active': match_in_play_dict.get('in_play', False),
+        'ball_hit_detected': match_in_play_dict.get('ball_hit', False),
+        'player_movement': match_in_play_dict.get('player_movement', False),
     }
     
     # Add player position analysis
@@ -3332,13 +3231,13 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
         last_ball_pos = past_ball_pos[-1]
         if len(last_ball_pos) >= 2:
             coaching_data.update({
-                'ball_position': (float(last_ball_pos[0]), float(last_ball_pos[1])),
+                'ball_position': {'x': float(last_ball_pos[0]), 'y': float(last_ball_pos[1])},
                 'ball_trajectory_length': len(past_ball_pos),
                 'ball_speed': calculate_ball_speed(past_ball_pos) if len(past_ball_pos) > 1 else 0
             })
         else:
             coaching_data.update({
-                'ball_position': (0.0, 0.0),  # Default position
+                'ball_position': {'x': 0.0, 'y': 0.0},  # Default position
                 'ball_trajectory_length': len(past_ball_pos),
                 'ball_speed': 0
             })
@@ -3381,7 +3280,7 @@ def create_enhancement_summary():
         
         # Title
         cv2.putText(summary_img, "SQUASH ANALYSIS ENHANCEMENTS", (150, 50), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
         
         # Enhancement list
         enhancements = [
@@ -3426,7 +3325,7 @@ def create_enhancement_summary():
                 font_size = 0.4
                 
             cv2.putText(summary_img, line, (50, y_pos), 
-                       cv2.FONT_HERSHEY_SIMPLEX, font_size, color, 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, font_size, color, 1)
             y_pos += 25
             
         # Save summary
@@ -3485,7 +3384,7 @@ def analyze_shot_patterns(shots_file="output/shots_log.jsonl"):
         # Duration analysis
         durations = [shot.get('duration', 0) for shot in shots]
         if durations:
-            analysis['average_duration'] = sum(durations) / len(durations)
+            analysis['average_duration'] = sum(durations) / len(durations) if durations and len(durations) > 0 else 0
             analysis['longest_shot'] = max(shots, key=lambda x: x.get('duration', 0))
             analysis['shortest_shot'] = min(shots, key=lambda x: x.get('duration', 0))
         
@@ -3513,8 +3412,8 @@ def analyze_shot_patterns(shots_file="output/shots_log.jsonl"):
         analysis['bounce_analysis'].update({
             'total_bounces': total_bounces,
             'shots_with_bounces': shots_with_bounces,
-            'avg_bounces_per_shot': total_bounces / len(shots) if shots else 0,
-            'bounce_confidence_avg': sum(bounce_confidences) / len(bounce_confidences) if bounce_confidences else 0,
+            'avg_bounces_per_shot': total_bounces / len(shots) if shots and len(shots) > 0 else 0,
+            'bounce_confidence_avg': sum(bounce_confidences) / len(bounce_confidences) if bounce_confidences and len(bounce_confidences) > 0 else 0,
             'bounce_type_distribution': bounce_types
         })
             
@@ -3778,8 +3677,10 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 break
 
             if len(references1) != 0 and len(references2) != 0:
-                sum(references1) / len(references1)
-                sum(references2) / len(references2)
+                if len(references1) > 0:
+                    sum(references1) / len(references1)
+                if len(references2) > 0:
+                    sum(references2) / len(references2)
 
             running_frame += 1
             if running_frame == 1:
@@ -4281,54 +4182,28 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                         
                         # Enhanced comprehensive bounce detection and visualization
                         if len(past_ball_pos) >= 4:
-                            # Use comprehensive bounce detection system
+                            # Use legacy bounce detection system
                             trajectory_segment = past_ball_pos[-30:] if len(past_ball_pos) > 30 else past_ball_pos
                             
-                            detected_bounces = bounce_detector.detect_bounces_comprehensive(
-                                trajectory_segment, frame_width, frame_height
-                            )
+                            detected_bounces = count_wall_hits_legacy(trajectory_segment)
                             
-                            # Draw detected bounces with enhanced visualization
-                            bounce_detector.draw_bounces(annotated_frame, trajectory_segment, frame_count)
+                            # Legacy bounce detection complete
                             
-                            # Also use legacy GPU detection for comparison
-                            gpu_bounces = detect_ball_bounces_gpu(
-                                trajectory_segment, 
-                                velocity_threshold=3.0, 
-                                angle_threshold=30.0,
-                                court_width=frame_width,
-                                court_height=frame_height
-                            )
+                            # For display purposes, create empty list since legacy doesn't return positions
+                            gpu_bounces = []  # Legacy detection only counts, doesn't provide positions
                             
-                            # Draw legacy GPU bounces with different style for comparison
-                            for i, bounce_pos in enumerate(gpu_bounces):
-                                # Legacy bounce visualization (smaller, cyan)
-                                cv2.circle(annotated_frame, bounce_pos, 8, (255, 255, 0), 2)  # Cyan outline
-                                cv2.circle(annotated_frame, bounce_pos, 4, (255, 255, 255), -1)  # White center
-                                
-                                # Add legacy bounce label
-                                cv2.putText(annotated_frame, f"L{i+1}", 
-                                        (bounce_pos[0] - 8, bounce_pos[1] - 15),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 0), 1)
+                            # Skip bounce position visualization since legacy detection doesn't provide positions
                         
-                        # Enhanced comprehensive bounce statistics display
+                        # Legacy bounce statistics display
                         if len(past_ball_pos) >= 4:
-                            comprehensive_bounces = getattr(bounce_detector, 'detected_bounces', [])
-                            recent_bounces = [b for b in comprehensive_bounces if abs(b['frame_index'] - frame_count) <= 30]
+                            legacy_bounces = detected_bounces if 'detected_bounces' in locals() else 0
                             
-                            # Enhanced bounce counter with detailed info
-                            bounce_text = f"Enhanced Bounces: {len(recent_bounces)} | Total: {len(comprehensive_bounces)} | Legacy: {len(gpu_bounces)}"
+                            # Legacy bounce counter
+                            bounce_text = f"Wall Hits (Legacy): {legacy_bounces}"
                             text_size = cv2.getTextSize(bounce_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
                             cv2.rectangle(annotated_frame, (8, 75), (text_size[0] + 16, 105), (0, 0, 0), -1)
                             cv2.putText(annotated_frame, bounce_text, 
                                     (10, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-                            
-                            # Show confidence info for recent bounces
-                            if recent_bounces:
-                                avg_confidence = sum(b['confidence'] for b in recent_bounces) / len(recent_bounces)
-                                conf_text = f"Avg Confidence: {avg_confidence:.2f}"
-                                cv2.putText(annotated_frame, conf_text, 
-                                        (10, 115), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
                     
                     # Simple status display
                     if ball_detected:
@@ -4455,7 +4330,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                     importantdata = framepose_result[14] if len(framepose_result) > 14 else []
                     embeddings = framepose_result[15] if len(framepose_result) > 15 else [[],[]]
                     
-                    who_hit = determine_ball_hit(players, past_ball_pos)
+                    who_hit, hit_confidence, hit_type = determine_ball_hit_enhanced(players, past_ball_pos)
                     
                     # Save ReID statistics periodically
                     if frame_count % 500 == 0:
@@ -4563,9 +4438,24 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             who_hit = 0
             embeddings = [[],[]]
             plast = [[],[]]
+            
+            # Check if detections_result is iterable and has expected structure
+            if not isinstance(detections_result, (list, tuple)) or len(detections_result) < 22:
+                print(f"Warning: detections_result is not in expected format, using defaults")
+                # Use default values
+                detections_result = [
+                    frame, frame_count, annotated_frame, mainball, ball, ballmap,
+                    past_ball_pos, ball_false_pos, running_frame, otherTrackIds,
+                    updated, references1, references2, pixdiffs, players,
+                    player_last_positions, False, [], 0, [[],[]], [[],[]], None
+                ]
+            
             # Get values from detections_result with safe access
             def safe_get(arr, idx, default=None):
-                return arr[idx] if idx < len(arr) else default
+                try:
+                    return arr[idx] if isinstance(arr, (list, tuple)) and idx < len(arr) else default
+                except:
+                    return default
                 
             frame = safe_get(detections_result, 0, frame)
             frame_count = safe_get(detections_result, 1, frame_count)
@@ -4608,26 +4498,33 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 ball_velocity_thresh=2.0,               # Lower velocity threshold for subtle hits
                 advanced_analysis=True                  # Enable all advanced pattern recognition
             )
-            # Enhanced shot classification with comprehensive trajectory and pose analysis
-            type_of_shot = classify_shot(
+            # Enhanced shot classification with improved trajectory analysis
+            past_ball_pos_global = past_ball_pos  # Make past_ball_pos available globally
+            type_of_shot = shot_type_enhanced(
                 past_ball_pos=past_ball_pos, 
                 court_width=frame_width, 
                 court_height=frame_height,
-                previous_shot=getattr(type_of_shot, 'previous_shot', None) if 'type_of_shot' in locals() else None
+                threshold=5
             )
             
             # Enhanced shot tracking with visualization
             ball_hit = isinstance(match_in_play, dict) and match_in_play.get('ball_hit', False)
             current_ball_pos = past_ball_pos[-1] if past_ball_pos else None
             
-            # Detect shot start
+            # Enhanced hit detection with improved confidence
+            if len(past_ball_pos) >= 3:
+                who_hit, hit_confidence, hit_type = determine_ball_hit_enhanced(players, past_ball_pos)
+            else:
+                who_hit, hit_confidence, hit_type = 0, 0.0, "none"
+            
+            # Detect shot start with enhanced detection
             shot_started = False
-            if ball_hit and who_hit > 0 and current_ball_pos:
+            if ball_hit and who_hit > 0 and current_ball_pos and hit_confidence > 0.3:
                 shot_started = shot_tracker.detect_shot_start(
-                    ball_hit, who_hit, frame_count, current_ball_pos, type_of_shot
+                    ball_hit, who_hit, frame_count, current_ball_pos, type_of_shot, hit_confidence, hit_type, past_ball_pos
                 )
                 
-            # Update active shots
+            # Update active shots with enhanced phase tracking
             if current_ball_pos:
                 shot_tracker.update_active_shots(
                     current_ball_pos, frame_count, 
@@ -4687,15 +4584,11 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                     except Exception as vel_error:
                         print(f"Velocity calculation error: {vel_error}")
                         coaching_data['ball_velocity_profile'] = []
-                      # Safe wall bounce detection with fallback dimensions
+                    # Safe wall bounce detection with fallback dimensions
                     try:
-                        if 'frame_width' in locals() and 'frame_height' in locals():
-                            bounce_count, bounce_positions = detect_wall_bounces_advanced(past_ball_pos, frame_width, frame_height)
-                        else:
-                            # Use default dimensions or get from frame
-                            current_frame_width = getattr(frame, 'shape', [0, 640])[1] if 'frame' in locals() else 640
-                            current_frame_height = getattr(frame, 'shape', [360, 0])[0] if 'frame' in locals() else 360
-                            bounce_count, bounce_positions = detect_wall_bounces_advanced(past_ball_pos, current_frame_width, current_frame_height)
+                        # Use simple legacy wall hit detection
+                        bounce_count = count_wall_hits_legacy(past_ball_pos)
+                        bounce_positions = []  # Legacy detection doesn't return positions
                         coaching_data['wall_bounce_count'] = bounce_count
                         coaching_data['bounce_positions'] = bounce_positions
                     except Exception as bounce_error:
@@ -4764,16 +4657,81 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 1,
             )
             
-            # Display shot tracking statistics
+            # Display enhanced shot tracking statistics
             cv2.putText(
                 annotated_frame,
-                f"Shots: {shot_stats['total_shots']} | Active: {shot_stats['active_shots']} | P1: {shot_stats['player1_shots']} | P2: {shot_stats['player2_shots']}",
+                f"Shots: {shot_stats['total_shots']} | Active: {shot_stats['active_shots']} | P1: {shot_stats['shots_by_player'].get(1, 0)} | P2: {shot_stats['shots_by_player'].get(2, 0)}",
                 (10, 50),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
                 (255, 255, 0),
                 1,
             )
+            
+            # Display current shot phase information
+            if shot_tracker.active_shots:
+                current_shot = shot_tracker.active_shots[-1]  # Most recent active shot
+                phase = current_shot.get('phase', 'unknown')
+                shot_id = current_shot.get('id', 0)
+                shot_player = current_shot.get('player_who_hit', 0)
+                
+                phase_colors = {
+                    'start': (0, 255, 255),    # Yellow - ball leaves racket
+                    'middle': (255, 165, 0),   # Orange - ball hits wall  
+                    'end': (255, 0, 255),      # Magenta - ball hits floor
+                    'unknown': (128, 128, 128) # Gray
+                }
+                
+                phase_color = phase_colors.get(phase, (255, 255, 255))
+                cv2.putText(
+                    annotated_frame,
+                    f"Shot #{shot_id} | P{shot_player} | Phase: {phase.upper()}",
+                    (10, 70),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    phase_color,
+                    1,
+                )
+                
+                # Display phase transition information
+                if 'phase_transitions' in current_shot and current_shot['phase_transitions']:
+                    last_transition = current_shot['phase_transitions'][-1]
+                    transition_info = f"{last_transition['from']} -> {last_transition['to']} (F:{last_transition['frame']})"
+                    cv2.putText(
+                        annotated_frame,
+                        f"Last transition: {transition_info}",
+                        (10, 90),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3,
+                        (200, 200, 200),
+                        1,
+                    )
+            
+            # Display enhanced hit detection information
+            if who_hit > 0:
+                hit_info = f"Hit by P{who_hit} | Conf: {hit_confidence:.2f} | Type: {hit_type}"
+                cv2.putText(
+                    annotated_frame,
+                    hit_info,
+                    (frame_width - 350, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    (0, 255, 0),
+                    1,
+                )
+            
+            # Display current shot type with enhanced classification
+            if type_of_shot and type_of_shot != "unknown":
+                shot_display = type_of_shot.replace('_', ' ').title()
+                cv2.putText(
+                    annotated_frame,
+                    f"Shot Type: {shot_display}",
+                    (frame_width - 300, 70),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,
+                    (255, 255, 0),
+                    1,
+                )
             
             # Display tracking state and performance info
             tracking_state = "tracking" if len(past_ball_pos) > 0 else "searching"
@@ -5048,32 +5006,51 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                         #     f"ballx: {ballx}, bally: {bally}, appended to ballxy with length {len(ballxy)} and frame count as : {frame_count}"
                         # )
 
-            # Draw the ball trajectory
+            # Enhanced ball trajectory drawing with shot phase visualization
             if len(ballxy) > 2:
+                # Draw enhanced trajectory with phase-based coloring
+                shot_tracker.draw_shot_trajectories(annotated_frame, ballxy[-1] if ballxy else None)
+                
+                # Legacy trajectory drawing (keep as fallback)
                 for i in range(1, len(ballxy)):
                     if ballxy[i - 1] is None or ballxy[i] is None:
                         continue
                     if ballxy[i][2] - ballxy[i - 1][2] < 7:
                         if frame_count - ballxy[i][2] < 7:
+                            # Determine trajectory color based on current shot phase
+                            trajectory_color = (0, 255, 0)  # Default green
+                            
+                            # Check if this trajectory segment is part of an active shot
+                            if shot_tracker.active_shots:
+                                current_shot = shot_tracker.active_shots[-1]
+                                shot_phase = current_shot.get('phase', 'start')
+                                
+                                phase_colors = {
+                                    'start': (0, 255, 255),    # Yellow - ball leaves racket
+                                    'middle': (255, 165, 0),   # Orange - ball hits wall  
+                                    'end': (255, 0, 255),      # Magenta - ball hits floor
+                                }
+                                trajectory_color = phase_colors.get(shot_phase, (0, 255, 0))
+                            
                             cv2.line(
                                 annotated_frame,
                                 (ballxy[i - 1][0], ballxy[i - 1][1]),
                                 (ballxy[i][0], ballxy[i][1]),
-                                (0, 255, 0),
+                                trajectory_color,
                                 2,
                             )
                             cv2.circle(
                                 annotated_frame,
                                 (ballxy[i - 1][0], ballxy[i - 1][1]),
-                                5,
-                                (0, 255, 0),
+                                3,
+                                trajectory_color,
                                 -1,
                             )
                             cv2.circle(
                                 annotated_frame,
                                 (ballxy[i][0], ballxy[i][1]),
-                                5,
-                                (0, 255, 0),
+                                3,
+                                trajectory_color,
                                 -1,
                             )
 
@@ -5346,14 +5323,10 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                     csvstart = end
                     end += 100
                     
-                    # Generate periodic autonomous coaching reports for real-time insights
+                    # Save coaching data for final comprehensive analysis
+                    # Interim reports disabled to avoid duplicate AI analysis calls
                     if len(coaching_data_collection) > 50 and running_frame % 500 == 0:
-                        try:
-                            print(f"\n Generating interim coaching report at frame {running_frame}...")
-                            generate_coaching_report(coaching_data_collection, path, frame_count)
-                            print("✓ Interim coaching report updated.")
-                        except Exception as e:
-                            print(f"Warning: Error in interim coaching report: {e}")
+                        print(f"📊 Coaching data collected: {len(coaching_data_collection)} points (frame {running_frame})")
                             
                 except Exception as e:
                     print(f"error: {e}")
@@ -5419,13 +5392,15 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         except Exception:
             pass
         
-        # Generate autonomous coaching report using imported function
+        # Basic autonomous coaching report will be replaced by enhanced analysis below
+        basic_coaching_attempted = False
         try:
-            print("Generating coaching report...")
-            generate_coaching_report(coaching_data_collection, path, frame_count)
-            print("Coaching report generated successfully.")
+            print("Preparing coaching data for enhanced analysis...")
+            # Basic report generation will be handled by enhanced analysis
+            basic_coaching_attempted = True
+            print("Coaching data prepared successfully.")
         except Exception as e:
-            print(f"Error generating coaching report: {e}")
+            print(f"Error preparing coaching data: {e}")
         
         # Generate final analysis outputs
         try:
@@ -5483,10 +5458,9 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         try:
             shot_stats = shot_tracker.get_shot_statistics()
             
-            # Get bounce detection statistics
-            total_bounces = len(getattr(bounce_detector, 'detected_bounces', []))
-            recent_bounces = [b for b in getattr(bounce_detector, 'detected_bounces', []) 
-                            if abs(b['frame_index'] - frame_count) <= 100]
+            # Get legacy bounce detection statistics
+            total_bounces = shot_stats.get('wall_hits_distribution', {})
+            total_wall_hits = sum(total_bounces.values()) if total_bounces else 0
             
             # Create comprehensive shot analysis
             shot_analysis_report = f"""
@@ -5496,21 +5470,20 @@ ENHANCED SHOT TRACKING ANALYSIS
 📊 SHOT STATISTICS:
 -----------------
 • Total Shots Tracked: {shot_stats['total_shots']}
-• Player 1 Shots: {shot_stats['player1_shots']}
-• Player 2 Shots: {shot_stats['player2_shots']}
-• Average Shot Duration: {shot_stats['avg_duration']:.1f} frames
+• Player 1 Shots: {shot_stats['shots_by_player'].get(1, 0)}
+• Player 2 Shots: {shot_stats['shots_by_player'].get(2, 0)}
+• Average Shot Duration: {shot_stats['average_shot_duration']:.1f} frames
 
-🏓 BOUNCE DETECTION STATISTICS:
+🏓 WALL HIT DETECTION STATISTICS:
 ------------------------------
-• Total Bounces Detected: {total_bounces}
-• Recent Bounces (last 100 frames): {len(recent_bounces)}
-• Enhanced Detection Algorithms: 4 (Physics, Velocity, Wall, Curvature)
-• Average Bounce Confidence: {sum(b['confidence'] for b in recent_bounces) / len(recent_bounces):.2f if recent_bounces else 0:.2f}
+• Total Wall Hits Detected: {total_wall_hits}
+• Wall Hit Distribution: {total_bounces}
+• Legacy Detection Algorithm: Direction-based hit detection
 
 🎯 SHOT TYPE BREAKDOWN:
 ---------------------
 """
-            for shot_type, count in shot_stats['shot_types'].items():
+            for shot_type, count in shot_stats['shots_by_type'].items():
                 percentage = (count / shot_stats['total_shots'] * 100) if shot_stats['total_shots'] > 0 else 0
                 shot_analysis_report += f"• {shot_type}: {count} ({percentage:.1f}%)\n"
                 
@@ -5573,9 +5546,9 @@ ENHANCED SHOT TRACKING ANALYSIS
             print(f"⚠️ Error generating shot analysis: {e}")
         
         try:
-            # Initialize the enhanced autonomous coach
-            from autonomous_coaching import AutonomousSquashCoach
-            autonomous_coach = AutonomousSquashCoach()
+            # Get the global autonomous coach instance (avoid reloading models)
+            from autonomous_coaching import get_autonomous_coach
+            autonomous_coach = get_autonomous_coach()
             
             # Generate comprehensive coaching insights
             coaching_insights = autonomous_coach.analyze_match_data(coaching_data_collection)
@@ -5621,10 +5594,10 @@ SYSTEM PERFORMANCE:
 
 ================================================
 """
-              # Save enhanced report
+            # Save enhanced report
             with open("output/enhanced_autonomous_coaching_report.txt", "w", encoding='utf-8') as f:
                 f.write(enhanced_report)
-              # Save detailed coaching data with bounce information
+            # Save detailed coaching data with bounce information
             detailed_data = []
             for data_point in coaching_data_collection:
                 if isinstance(data_point, dict):
@@ -5637,9 +5610,6 @@ SYSTEM PERFORMANCE:
             print(f"Enhanced report saved: output/enhanced_autonomous_coaching_report.txt")
             print(f" Enhanced data saved: output/enhanced_coaching_data.json")
             print(f" Ball bounces analyzed: GPU-accelerated detection active")
-              # Also generate traditional report for compatibility
-            generate_coaching_report(coaching_data_collection, path, frame_count)
-            print("Traditional coaching report also generated for compatibility.")
             
             # Generate ReID system report if available
             try:
@@ -5683,10 +5653,6 @@ close proximity between players.
             except Exception as e:
                 print(f"Error generating ReID report: {e}")
             
-            # Also generate traditional report for compatibility
-            generate_coaching_report(coaching_data_collection, path, frame_count)
-            print("Traditional coaching report also generated for compatibility.")
-            
             # Generate comprehensive visualizations and analytics
             print("\nGenerating comprehensive visualizations and analytics...")
             try:
@@ -5706,12 +5672,16 @@ close proximity between players.
             
         except Exception as e:
             print(f"  Error in enhanced coaching analysis: {e}")
-            # Fallback to basic report
+            print("   Generating basic coaching report as fallback...")
+            # Fallback to basic coaching report if enhanced analysis fails
             try:
-                generate_coaching_report(coaching_data_collection, path, frame_count)
-                print(" Fallback coaching report generated successfully.")
+                if not basic_coaching_attempted:
+                    generate_coaching_report(coaching_data_collection, path, frame_count)
+                    print("✅ Basic coaching report generated successfully as fallback.")
+                else:
+                    print("   Basic coaching data was prepared, enhanced analysis failed.")
             except Exception as fallback_error:
-                print(f" Fallback coaching report error: {fallback_error}")
+                print(f"⚠️ Fallback coaching report also failed: {fallback_error}")
         
         print("\n ENHANCED PROCESSING COMPLETE!")
         print("=" * 50)
@@ -6031,7 +6001,7 @@ def calculate_3d_confidence(pixel_point, past_ball_pos, final_position, frame_co
         distances = []
         for i in range(1, len(recent_positions)):
             dist = np.sqrt((recent_positions[i][0] - recent_positions[i-1][0])**2 + 
-                          (recent_positions[i][1] - recent_positions[i-1][1])**2)
+                        (recent_positions[i][1] - recent_positions[i-1][1])**2)
             distances.append(dist)
         
         avg_distance = np.mean(distances)
@@ -6156,9 +6126,9 @@ def smooth_ball_trajectory_3d(past_ball_pos_3d, window_size=5):
         end_idx = min(len(past_ball_pos_3d), i + window_size // 2 + 1)
         
         window_positions = past_ball_pos_3d[start_idx:end_idx]
-        avg_x = sum(pos[0] for pos in window_positions) / len(window_positions)
-        avg_y = sum(pos[1] for pos in window_positions) / len(window_positions)
-        avg_z = sum(pos[2] for pos in window_positions) / len(window_positions)
+        avg_x = sum(pos[0] for pos in window_positions) / len(window_positions) if window_positions and len(window_positions) > 0 else 0
+        avg_y = sum(pos[1] for pos in window_positions) / len(window_positions) if window_positions and len(window_positions) > 0 else 0
+        avg_z = sum(pos[2] for pos in window_positions) / len(window_positions) if window_positions and len(window_positions) > 0 else 0
         
         smoothed_trajectory.append([avg_x, avg_y, avg_z, past_ball_pos_3d[i][3]])  # Keep frame number
     

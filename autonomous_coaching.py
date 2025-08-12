@@ -33,14 +33,29 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
     """
     Collect comprehensive data for autonomous coaching analysis
     """
+    # Ensure match_in_play is a dictionary, handle tuple case
+    if isinstance(match_in_play, tuple):
+        # Convert tuple to dict format if possible
+        match_in_play_dict = {}
+        if len(match_in_play) >= 1:
+            match_in_play_dict['in_play'] = bool(match_in_play[0])
+        if len(match_in_play) >= 2:
+            match_in_play_dict['ball_hit'] = bool(match_in_play[1])
+        if len(match_in_play) >= 3:
+            match_in_play_dict['player_movement'] = bool(match_in_play[2])
+    elif isinstance(match_in_play, dict):
+        match_in_play_dict = match_in_play
+    else:
+        match_in_play_dict = {'in_play': False, 'ball_hit': False, 'player_movement': False}
+    
     coaching_data = {
         'frame': frame_count,
         'timestamp': time.time(),
         'shot_type': type_of_shot,
         'player_who_hit': who_hit,
-        'match_active': match_in_play.get('in_play', False) if isinstance(match_in_play, dict) else False,
-        'ball_hit_detected': match_in_play.get('ball_hit', False) if isinstance(match_in_play, dict) else False,
-        'player_movement': match_in_play.get('player_movement', False) if isinstance(match_in_play, dict) else False,
+        'match_active': match_in_play_dict.get('in_play', False),
+        'ball_hit_detected': match_in_play_dict.get('ball_hit', False),
+        'player_movement': match_in_play_dict.get('player_movement', False),
     }
     
     # Add player position analysis
@@ -82,13 +97,28 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
     
     return coaching_data
 
+# Global coach instance to avoid reloading models
+_global_coach = None
+
+def get_autonomous_coach():
+    """Get or create the global autonomous coach instance"""
+    global _global_coach
+    if _global_coach is None:
+        _global_coach = AutonomousSquashCoach()
+    return _global_coach
+
+def reset_autonomous_coach():
+    """Reset the global coach instance (forces reload on next use)"""
+    global _global_coach
+    _global_coach = None
+
 def generate_coaching_report(coaching_data_collection, video_path, frame_count):
     """
     Generate comprehensive coaching report using the AutonomousSquashCoach
     """
     try:
-        # Initialize the autonomous coach
-        autonomous_coach = AutonomousSquashCoach()
+        # Get the global autonomous coach (avoid reloading models)
+        autonomous_coach = get_autonomous_coach()
         
         # Generate match analysis
         match_analysis = autonomous_coach.analyze_match_data(coaching_data_collection)
@@ -170,7 +200,7 @@ class SquashPatternAnalyzer:
         for i in range(len(actual_sequence) - pattern_len + 1):
             window = actual_sequence[i:i + pattern_len]
             matches = sum(1 for a, p in zip(window, pattern_sequence) if a == p)
-            score = matches / pattern_len
+            score = matches / pattern_len if pattern_len > 0 else 0
             max_score = max(max_score, score)
         
         return max_score
@@ -269,7 +299,7 @@ class TacticalAnalysisEngine:
             window = shot_sequence[i:i + pattern_len]
             matches = sum(1 for a, p in zip(window, pattern_shots) 
                          if self._shots_match(a, p))
-            match_score = matches / pattern_len
+            match_score = matches / pattern_len if pattern_len > 0 else 0
             max_match = max(max_match, match_score)
         
         return max_match
@@ -336,7 +366,7 @@ class TacticalAnalysisEngine:
         
         total_positions = sum(zone_time.values())
         if total_positions > 0:
-            zone_percentages = {zone: count/total_positions for zone, count in zone_time.items()}
+            zone_percentages = {zone: count/total_positions if total_positions > 0 else 0 for zone, count in zone_time.items()}
             
             # Analyze positioning patterns
             if zone_percentages['back_court'] > 0.6:
@@ -433,15 +463,34 @@ class AdvancedPerformanceAnalyzer:
             if isinstance(shot_type, str):
                 shot_types.append(shot_type)
             elif isinstance(shot_type, list) and len(shot_type) > 0:
-                shot_types.append(shot_type[0] if isinstance(shot_type[0], str) else str(shot_type[0]))
+                # Ensure the first element is also converted to string safely
+                first_element = shot_type[0]
+                if isinstance(first_element, (list, dict)):
+                    shot_types.append('complex_shot')
+                else:
+                    shot_types.append(str(first_element))
+            elif isinstance(shot_type, (list, dict)):
+                shot_types.append('complex_shot')
             else:
-                shot_types.append('unknown')
-        metrics['shot_variety'] = len(set(shot_types))
+                shot_types.append(str(shot_type))
+        
+        # Ensure all shot types are hashable strings
+        safe_shot_types = []
+        for shot_type in shot_types:
+            try:
+                # Test if it's hashable by trying to add to a set
+                test_set = {shot_type}
+                safe_shot_types.append(shot_type)
+            except TypeError:
+                # If not hashable, convert to string
+                safe_shot_types.append(str(shot_type))
+        
+        metrics['shot_variety'] = len(set(safe_shot_types))
         
         # Speed and power metrics
         ball_speeds = [data.get('ball_speed', 0) for data in coaching_data if data.get('ball_speed', 0) > 0]
         if ball_speeds:
-            metrics['avg_ball_speed'] = sum(ball_speeds) / len(ball_speeds)
+            metrics['avg_ball_speed'] = sum(ball_speeds) / len(ball_speeds) if ball_speeds else 0
             metrics['max_ball_speed'] = max(ball_speeds)
             metrics['speed_consistency'] = 1.0 - (np.std(ball_speeds) / np.mean(ball_speeds)) if np.mean(ball_speeds) > 0 else 0
         
@@ -466,7 +515,7 @@ class AdvancedPerformanceAnalyzer:
             
             if len(values) >= 2:
                 # Simple trend calculation
-                trend_slope = (values[-1] - values[0]) / len(values)
+                trend_slope = (values[-1] - values[0]) / len(values) if len(values) > 0 else 0
                 trends[metric] = {
                     'direction': 'improving' if trend_slope > 0 else 'declining' if trend_slope < 0 else 'stable',
                     'change_rate': trend_slope,
@@ -601,10 +650,20 @@ class PerformanceTracker:
         
         # Calculate movement efficiency
         movements = [shot.get('movement_intensity', 0) for shot in session_data]
-        movement_efficiency = sum(movements) / len(movements) if movements else 0
+        movement_efficiency = sum(movements) / len(movements) if movements and len(movements) > 0 else 0
         
         # Calculate tactical awareness (shot variety)
-        shot_types = set(shot.get('shot_type', 'unknown') for shot in session_data)
+        shot_types_raw = [shot.get('shot_type', 'unknown') for shot in session_data]
+        # Ensure all shot types are hashable
+        shot_types = set()
+        for shot_type in shot_types_raw:
+            try:
+                if isinstance(shot_type, (list, dict)):
+                    shot_types.add('complex_shot')
+                else:
+                    shot_types.add(str(shot_type))
+            except TypeError:
+                shot_types.add(str(shot_type))
         tactical_awareness = len(shot_types) / 10.0  # Normalize to 0-1 scale
         
         return {
@@ -639,7 +698,7 @@ class PerformanceTracker:
         
         successful = sum(1 for shot in quarter_data 
                         if shot.get('ball_position', (0, 0)) != (0, 0))
-        return successful / len(quarter_data)
+        return successful / len(quarter_data) if quarter_data and len(quarter_data) > 0 else 0
     
     def _calculate_court_coverage(self, session_data):
         """Calculate court coverage efficiency"""
@@ -805,9 +864,9 @@ class AutonomousSquashCoach:
         # Initialize AI models with fallback options
         self.models = {}
         self.model_priorities = [
+            "Qwen/Qwen2.5-3B-Instruct",  # Primary analysis model (best for coaching)
             "microsoft/DialoGPT-large",  # Conversation and analysis
-            "facebook/blenderbot-400M-distill",  # Coaching dialogue
-            "Qwen/Qwen2.5-3B-Instruct"  # Primary analysis model
+            "facebook/blenderbot-400M-distill"  # Coaching dialogue
         ]
         
         self.load_coaching_models()
@@ -969,7 +1028,16 @@ class AutonomousSquashCoach:
                 shot_types.append(shot_type[0] if isinstance(shot_type[0], str) else str(shot_type[0]))
             else:
                 shot_types.append('unknown')
-        unique_shots = set(shot_types)
+        # Ensure all shot types are hashable
+        unique_shots = set()
+        for shot_type in shot_types:
+            try:
+                if isinstance(shot_type, (list, dict)):
+                    unique_shots.add('complex_shot')
+                else:
+                    unique_shots.add(str(shot_type))
+            except TypeError:
+                unique_shots.add(str(shot_type))
         
         if len(unique_shots) < 3:
             strategic_insights.append({
@@ -992,7 +1060,7 @@ class AutonomousSquashCoach:
             
             if sequence_counts:
                 most_common_sequence = max(sequence_counts.values())
-                predictability = most_common_sequence / len(sequences)
+                predictability = most_common_sequence / len(sequences) if sequences and len(sequences) > 0 else 0
                 
                 if predictability > 0.3:
                     strategic_insights.append({
@@ -1007,7 +1075,7 @@ class AutonomousSquashCoach:
         pressure_shots = [shot for shot in shot_data if shot.get('ball_speed', 0) > 15]
         if len(pressure_shots) > 0:
             pressure_accuracy = sum(1 for shot in pressure_shots 
-                                  if shot.get('ball_position', (0, 0)) != (0, 0)) / len(pressure_shots)
+                                  if shot.get('ball_position', (0, 0)) != (0, 0)) / len(pressure_shots) if pressure_shots and len(pressure_shots) > 0 else 0
             
             if pressure_accuracy < 0.6:
                 strategic_insights.append({
@@ -1029,7 +1097,7 @@ class AutonomousSquashCoach:
         
         # Advanced shot accuracy analysis
         successful_shots = sum(1 for shot in shot_data if shot.get('success', False))
-        accuracy = successful_shots / len(shot_data)
+        accuracy = successful_shots / len(shot_data) if shot_data and len(shot_data) > 0 else 0
         
         # Shot type specific analysis
         shot_types = {}
@@ -1081,7 +1149,7 @@ class AutonomousSquashCoach:
         # Shot timing analysis
         shot_timings = [shot.get('timing', 0) for shot in shot_data if shot.get('timing')]
         if shot_timings:
-            avg_timing = sum(shot_timings) / len(shot_timings)
+            avg_timing = sum(shot_timings) / len(shot_timings) if shot_timings and len(shot_timings) > 0 else 0
             timing_variance = np.var(shot_timings) if len(shot_timings) > 1 else 0
             
             if timing_variance > 0.5:
@@ -1096,7 +1164,7 @@ class AutonomousSquashCoach:
         # Power and placement analysis
         power_levels = [shot.get('power', 0) for shot in shot_data if shot.get('power')]
         if power_levels:
-            avg_power = sum(power_levels) / len(power_levels)
+            avg_power = sum(power_levels) / len(power_levels) if power_levels and len(power_levels) > 0 else 0
             if avg_power < 0.4:
                 insights.append({
                     'type': 'power',
@@ -1217,7 +1285,16 @@ class AutonomousSquashCoach:
             if isinstance(shot_type, str) and shot_type != 'unknown':
                 shot_types.append(shot_type)
             elif isinstance(shot_type, list) and len(shot_type) > 0:
-                shot_types.append(str(shot_type[0]))
+                # Ensure the first element is also converted to string safely
+                first_element = shot_type[0]
+                if isinstance(first_element, (list, dict)):
+                    shot_types.append('complex_shot')
+                else:
+                    shot_types.append(str(first_element))
+            elif isinstance(shot_type, (list, dict)):
+                shot_types.append('complex_shot')
+            else:
+                shot_types.append(str(shot_type))
         
         from collections import Counter
         shot_distribution = Counter(shot_types)
@@ -1245,8 +1322,8 @@ class AutonomousSquashCoach:
                 ball_positions.append([ball_pos['x'], ball_pos['y']])
         
         if ball_positions:
-            avg_x = sum(pos[0] for pos in ball_positions) / len(ball_positions)
-            avg_y = sum(pos[1] for pos in ball_positions) / len(ball_positions)
+            avg_x = sum(pos[0] for pos in ball_positions) / len(ball_positions) if ball_positions else 0
+            avg_y = sum(pos[1] for pos in ball_positions) / len(ball_positions) if ball_positions else 0
             analysis['ball_analysis'] = {
                 'tracked_positions': len(ball_positions),
                 'average_position': [avg_x, avg_y],
@@ -1593,7 +1670,18 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         shot_types = [d.get('shot_type', 'unknown') for d in coaching_data 
                      if d.get('shot_type', 'unknown') != 'unknown']
         
-        if len(set(shot_types)) < 3:
+        # Ensure all shot types are hashable
+        safe_shot_types = set()
+        for shot_type in shot_types:
+            try:
+                if isinstance(shot_type, (list, dict)):
+                    safe_shot_types.add('complex_shot')
+                else:
+                    safe_shot_types.add(str(shot_type))
+            except TypeError:
+                safe_shot_types.add(str(shot_type))
+        
+        if len(safe_shot_types) < 3:
             actions.append("Practice different shot types (drives, drops, lobs)")
         
         # Check for player balance
