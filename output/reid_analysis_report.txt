@@ -10,7 +10,7 @@ Reference Feature Counts:
 - Player 1: 21 appearance features
 - Player 2: 21 appearance features
 
-Final Track Mappings: {1: 1, 5: 2}
+Final Track Mappings: {1: 1, 4: 2}
 
 System Performance:
 - Initialization frames: 100-150 (when players are separated)

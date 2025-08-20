@@ -143,7 +143,7 @@ END OF REPORT
         with open("output/enhanced_autonomous_coaching_report.txt", "w") as f:
             f.write(report)
             
-        print("✅ Enhanced coaching report saved to output/enhanced_autonomous_coaching_report.txt")
+        print(" Enhanced coaching report saved to output/enhanced_autonomous_coaching_report.txt")
         return report
         
     except Exception as e:
@@ -335,13 +335,13 @@ class TacticalAnalysisEngine:
         
         if confidence > 0.7:
             if pattern_type == 'attacking_patterns':
-                advice.append(f"✅ Excellent {pattern_name.replace('_', ' ')} execution!")
+                advice.append(f" Excellent {pattern_name.replace('_', ' ')} execution!")
                 advice.append("Continue this aggressive approach when opportunities arise.")
             elif pattern_type == 'defensive_patterns':
-                advice.append(f"✅ Good {pattern_name.replace('_', ' ')} - solid defensive play.")
+                advice.append(f" Good {pattern_name.replace('_', ' ')} - solid defensive play.")
                 advice.append("Look for chances to transition to attack.")
         elif confidence > 0.4:
-            advice.append(f"🔄 {pattern_name.replace('_', ' ')} partially executed.")
+            advice.append(f" {pattern_name.replace('_', ' ')} partially executed.")
             advice.append("Focus on completing the full tactical sequence.")
         
         return advice
@@ -370,14 +370,14 @@ class TacticalAnalysisEngine:
             
             # Analyze positioning patterns
             if zone_percentages['back_court'] > 0.6:
-                advice.append("🏃 Positioning: Spending too much time in back court.")
+                advice.append(" Positioning: Spending too much time in back court.")
                 advice.append("Work on moving forward after good length shots.")
             elif zone_percentages['front_court'] > 0.5:
-                advice.append("⚡ Positioning: Aggressive front court positioning.")
+                advice.append(" Positioning: Aggressive front court positioning.")
                 advice.append("Ensure you can recover for attacking shots.")
             
             if zone_percentages['mid_court'] > 0.4:
-                advice.append("🎯 Positioning: Good central court control.")
+                advice.append(" Positioning: Good central court control.")
                 advice.append("Maintain T-position dominance.")
         
         return advice
@@ -790,11 +790,11 @@ class PerformanceTracker:
 
 class AutonomousSquashCoach:
     def __init__(self):
-        print("🎾 Loading Advanced Squash Coaching AI with Multi-Model Architecture...")
+        print(" Loading Advanced Squash Coaching AI with Multi-Model Architecture...")
         
         # GPU optimization setup
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        print(f"🖥️  Coach compute device: {self.device}")
+        print(f"  Coach compute device: {self.device}")
         
         # Advanced squash-specific analysis parameters
         self.analysis_config = {
@@ -864,9 +864,7 @@ class AutonomousSquashCoach:
         # Initialize AI models with fallback options
         self.models = {}
         self.model_priorities = [
-            "Qwen/Qwen2.5-3B-Instruct",  # Primary analysis model (best for coaching)
-            "microsoft/DialoGPT-large",  # Conversation and analysis
-            "facebook/blenderbot-400M-distill"  # Coaching dialogue
+            "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF"  # DeepSeek R1 Thinking model
         ]
         
         self.load_coaching_models()
@@ -879,16 +877,16 @@ class AutonomousSquashCoach:
         # Performance tracking and improvement suggestions
         self.performance_tracker = PerformanceTracker()
         
-        print(f"🧠 Advanced Squash Coaching AI initialized with {len(self.models)} models loaded")
-        print("🎯 Tactical analysis engine: READY")
-        print("📊 Performance analysis engine: READY")
-        print("🔄 Pattern recognition system: READY")
+        print(f" Advanced Squash Coaching AI initialized with {len(self.models)} models loaded")
+        print(" Tactical analysis engine: READY")
+        print(" Performance analysis engine: READY")
+        print(" Pattern recognition system: READY")
 
     def load_coaching_models(self):
         """Load multiple AI models for comprehensive coaching analysis"""
         for model_name in self.model_priorities:
             try:
-                print(f"📥 Loading {model_name}...")
+                print(f" Loading {model_name}...")
                 tokenizer = AutoTokenizer.from_pretrained(model_name)
                 
                 # Handle tokenizer padding token
@@ -911,16 +909,16 @@ class AutonomousSquashCoach:
                     'loaded': True
                 }
                 
-                print(f"✅ {model_name} loaded successfully")
+                print(f" {model_name} loaded successfully")
                 break  # Use the first successfully loaded model
                 
             except Exception as e:
-                print(f"❌ Failed to load {model_name}: {e}")
+                print(f" Failed to load {model_name}: {e}")
                 continue
         
         # Fallback to rule-based system if no models load
         if not self.models:
-            print("⚠️  No AI models loaded - using advanced rule-based coaching system")
+            print("  No AI models loaded - using advanced rule-based coaching system")
             self.models['rule_based'] = {'model': None, 'tokenizer': None, 'loaded': False}
 
     def _get_shot_specific_advice(self, shot_type):
@@ -1242,20 +1240,20 @@ class AutonomousSquashCoach:
         total_bounces = bounce_patterns.get('total_bounces', 0)
         if total_bounces > 0:
             insights.append(" **Ball Bounce Analysis:**")
-            insights.append(f"   • Total bounces detected: {total_bounces}")
+            insights.append(f"    Total bounces detected: {total_bounces}")
             
             avg_bounces = bounce_patterns.get('avg_bounces_per_rally', 0)
-            insights.append(f"   • Average bounces per rally: {avg_bounces:.1f}")
+            insights.append(f"    Average bounces per rally: {avg_bounces:.1f}")
             
             bounce_freq = bounce_patterns.get('bounce_frequency', 'unknown')
-            insights.append(f"   • Bounce frequency: {bounce_freq}")
+            insights.append(f"    Bounce frequency: {bounce_freq}")
             
             if bounce_freq == 'high':
-                insights.append("   •  Consider working on shot placement to reduce unnecessary wall bounces")
-                insights.append("   •  Focus on straight drives and court positioning")
+                insights.append("     Consider working on shot placement to reduce unnecessary wall bounces")
+                insights.append("     Focus on straight drives and court positioning")
             elif bounce_freq == 'low':
-                insights.append("   • Good shot control with minimal wall bounces")
-                insights.append("   • Consider adding tactical boasts when appropriate")
+                insights.append("    Good shot control with minimal wall bounces")
+                insights.append("    Consider adding tactical boasts when appropriate")
         
         return "\n".join(insights)
 
@@ -1367,7 +1365,7 @@ class AutonomousSquashCoach:
             if model_info.get('loaded', False) and model_info.get('model') is not None:
                 active_model = model_info['model']
                 active_tokenizer = model_info['tokenizer']
-                print(f"🤖 Using {model_name} for advanced coaching analysis")
+                print(f" Using {model_name} for advanced coaching analysis")
                 break
         
         if not active_model:
@@ -1384,15 +1382,15 @@ MATCH STATISTICS:
 {analysis_text}
 
 BALL BOUNCE PATTERNS:
-• Total bounces detected: {bounce_patterns.get('total_bounces', 0)}
-• Average bounces per rally: {bounce_patterns.get('avg_bounces_per_rally', 0):.1f}
-• Bounce frequency: {bounce_patterns.get('bounce_frequency', 'unknown')}
+ Total bounces detected: {bounce_patterns.get('total_bounces', 0)}
+ Average bounces per rally: {bounce_patterns.get('avg_bounces_per_rally', 0):.1f}
+ Bounce frequency: {bounce_patterns.get('bounce_frequency', 'unknown')}
 
 PROFESSIONAL BENCHMARKS FOR COMPARISON:
-• Professional avg shot speed: 45 m/s
-• Professional avg rally length: 12 shots
-• Professional court coverage: 85%
-• Professional shot accuracy: 80%
+ Professional avg shot speed: 45 m/s
+ Professional avg rally length: 12 shots
+ Professional court coverage: 85%
+ Professional shot accuracy: 80%
 
 Provide expert-level coaching analysis covering:
 
@@ -1428,13 +1426,25 @@ Provide expert-level coaching analysis covering:
 
 Provide actionable, specific coaching advice that a player could implement immediately."""
 
-        # Replace generation block with improved device handling
+        # Replace generation block with improved chat template handling for DeepSeek R1
         try:
-            inputs = active_tokenizer(coaching_prompt, return_tensors="pt", truncation=True, max_length=3000)
+            # Use chat template format for DeepSeek R1 Thinking model
+            messages = [
+                {"role": "user", "content": coaching_prompt}
+            ]
+            
+            # Apply chat template and get inputs
+            inputs = active_tokenizer.apply_chat_template(
+                messages,
+                add_generation_prompt=True,
+                tokenize=True,
+                return_dict=True,
+                return_tensors="pt",
+            )
             
             # Ensure model and inputs are on the same device
             model_device = next(active_model.parameters()).device
-            inputs = {k: v.to(model_device) for k, v in inputs.items()}
+            inputs = inputs.to(model_device)
 
             # Attempt generation
             with torch.no_grad():
@@ -1448,14 +1458,17 @@ Provide actionable, specific coaching advice that a player could implement immed
                     pad_token_id=active_tokenizer.eos_token_id
                 )
 
-            response = active_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            generated_text = response[len(coaching_prompt):].strip()
+            # Decode only the generated portion (exclude input prompt)
+            generated_text = active_tokenizer.decode(
+                outputs[0][inputs["input_ids"].shape[-1]:], 
+                skip_special_tokens=True
+            ).strip()
 
             # Add enhanced rule-based insights
             rule_based_insights = self._compile_advanced_insights(coaching_data, analysis, bounce_patterns)
 
             # Combine AI analysis with rule-based insights
-            final_analysis = f"""🎾 AUTONOMOUS SQUASH COACHING ANALYSIS
+            final_analysis = f""" AUTONOMOUS SQUASH COACHING ANALYSIS
 {'='*60}
 
  AI COACHING INSIGHTS:
@@ -1492,35 +1505,35 @@ for maximum coaching effectiveness."""
         else:
             basic_stats = shot_analysis = player_analysis = ball_analysis = {}
         
-        fallback_report = f"""🎾 SQUASH COACHING ANALYSIS (Rule-Based)
+        fallback_report = f""" SQUASH COACHING ANALYSIS (Rule-Based)
 {'='*60}
 
-📊 MATCH OVERVIEW:
-• Total frames analyzed: {basic_stats.get('total_frames', 0)}
-• Active play frames: {basic_stats.get('active_play_frames', 0)}
-• Ball hits detected: {basic_stats.get('ball_hits_detected', 0)}
-• Activity rate: {basic_stats.get('activity_rate', 0)*100:.1f}%
+ MATCH OVERVIEW:
+ Total frames analyzed: {basic_stats.get('total_frames', 0)}
+ Active play frames: {basic_stats.get('active_play_frames', 0)}
+ Ball hits detected: {basic_stats.get('ball_hits_detected', 0)}
+ Activity rate: {basic_stats.get('activity_rate', 0)*100:.1f}%
 
-🏸 SHOT ANALYSIS:
-• Total shots: {shot_analysis.get('total_shots', 0)}
-• Shot variety: {shot_analysis.get('shot_variety', 0)} different types
-• Most common shot: {shot_analysis.get('most_common_shot', 'N/A')}
+ SHOT ANALYSIS:
+ Total shots: {shot_analysis.get('total_shots', 0)}
+ Shot variety: {shot_analysis.get('shot_variety', 0)} different types
+ Most common shot: {shot_analysis.get('most_common_shot', 'N/A')}
 
-👥 PLAYER PERFORMANCE:
-• Player 1 hits: {player_analysis.get('player1_hits', 0)}
-• Player 2 hits: {player_analysis.get('player2_hits', 0)}
-• Hit balance: {player_analysis.get('hit_balance', 0)} difference
+ PLAYER PERFORMANCE:
+ Player 1 hits: {player_analysis.get('player1_hits', 0)}
+ Player 2 hits: {player_analysis.get('player2_hits', 0)}
+ Hit balance: {player_analysis.get('hit_balance', 0)} difference
 
-🏃 BALL TRACKING:
-• Tracked positions: {ball_analysis.get('tracked_positions', 0)}
-• Court coverage: {ball_analysis.get('court_coverage', 0)*100:.1f}%
+ BALL TRACKING:
+ Tracked positions: {ball_analysis.get('tracked_positions', 0)}
+ Court coverage: {ball_analysis.get('court_coverage', 0)*100:.1f}%
 
-⚾ BOUNCE ANALYSIS:
-• Total bounces: {bounce_patterns.get('total_bounces', 0)}
-• Average bounces per rally: {bounce_patterns.get('avg_bounces_per_rally', 0):.1f}
-• Bounce frequency: {bounce_patterns.get('bounce_frequency', 'unknown')}
+ BOUNCE ANALYSIS:
+ Total bounces: {bounce_patterns.get('total_bounces', 0)}
+ Average bounces per rally: {bounce_patterns.get('avg_bounces_per_rally', 0):.1f}
+ Bounce frequency: {bounce_patterns.get('bounce_frequency', 'unknown')}
 
-🎯 COACHING RECOMMENDATIONS:
+ COACHING RECOMMENDATIONS:
 {self._generate_basic_recommendations(analysis, bounce_patterns)}
 
 Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
@@ -1538,23 +1551,23 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if 'basic_stats' in analysis:
             basic = analysis['basic_stats']
             formatted_lines.append("BASIC MATCH STATISTICS:")
-            formatted_lines.append(f"• Total frames: {basic.get('total_frames', 0)}")
-            formatted_lines.append(f"• Active play frames: {basic.get('active_play_frames', 0)}")
-            formatted_lines.append(f"• Ball hits detected: {basic.get('ball_hits_detected', 0)}")
-            formatted_lines.append(f"• Activity rate: {basic.get('activity_rate', 0)*100:.1f}%")
+            formatted_lines.append(f" Total frames: {basic.get('total_frames', 0)}")
+            formatted_lines.append(f" Active play frames: {basic.get('active_play_frames', 0)}")
+            formatted_lines.append(f" Ball hits detected: {basic.get('ball_hits_detected', 0)}")
+            formatted_lines.append(f" Activity rate: {basic.get('activity_rate', 0)*100:.1f}%")
             formatted_lines.append("")
         
         # Shot analysis
         if 'shot_analysis' in analysis:
             shots = analysis['shot_analysis']
             formatted_lines.append("SHOT ANALYSIS:")
-            formatted_lines.append(f"• Total shots: {shots.get('total_shots', 0)}")
-            formatted_lines.append(f"• Shot variety: {shots.get('shot_variety', 0)} different types")
-            formatted_lines.append(f"• Most common shot: {shots.get('most_common_shot', 'N/A')}")
+            formatted_lines.append(f" Total shots: {shots.get('total_shots', 0)}")
+            formatted_lines.append(f" Shot variety: {shots.get('shot_variety', 0)} different types")
+            formatted_lines.append(f" Most common shot: {shots.get('most_common_shot', 'N/A')}")
             
             # Shot distribution
             if 'shot_distribution' in shots and shots['shot_distribution']:
-                formatted_lines.append("• Shot distribution:")
+                formatted_lines.append(" Shot distribution:")
                 for shot_type, count in shots['shot_distribution'].items():
                     # Ensure both shot_type and count are safe to format
                     safe_shot_type = str(shot_type) if not isinstance(shot_type, str) else shot_type
@@ -1566,20 +1579,20 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if 'player_analysis' in analysis:
             players = analysis['player_analysis']
             formatted_lines.append("PLAYER PERFORMANCE:")
-            formatted_lines.append(f"• Player 1 hits: {players.get('player1_hits', 0)}")
-            formatted_lines.append(f"• Player 2 hits: {players.get('player2_hits', 0)}")
-            formatted_lines.append(f"• Hit balance difference: {players.get('hit_balance', 0)}")
+            formatted_lines.append(f" Player 1 hits: {players.get('player1_hits', 0)}")
+            formatted_lines.append(f" Player 2 hits: {players.get('player2_hits', 0)}")
+            formatted_lines.append(f" Hit balance difference: {players.get('hit_balance', 0)}")
             formatted_lines.append("")
         
         # Ball analysis
         if 'ball_analysis' in analysis:
             ball = analysis['ball_analysis']
             formatted_lines.append("BALL TRACKING:")
-            formatted_lines.append(f"• Tracked positions: {ball.get('tracked_positions', 0)}")
-            formatted_lines.append(f"• Court coverage: {ball.get('court_coverage', 0)*100:.1f}%")
+            formatted_lines.append(f" Tracked positions: {ball.get('tracked_positions', 0)}")
+            formatted_lines.append(f" Court coverage: {ball.get('court_coverage', 0)*100:.1f}%")
             if 'average_position' in ball:
                 avg_pos = ball['average_position']
-                formatted_lines.append(f"• Average position: ({avg_pos[0]:.1f}, {avg_pos[1]:.1f})")
+                formatted_lines.append(f" Average position: ({avg_pos[0]:.1f}, {avg_pos[1]:.1f})")
         
         return "\n".join(formatted_lines)
 
@@ -1591,46 +1604,46 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if isinstance(analysis, dict) and 'shot_analysis' in analysis:
             shot_variety = analysis['shot_analysis'].get('shot_variety', 0)
             if shot_variety < 3:
-                insights.append("⚠️ Limited shot variety detected - practice different shot types")
+                insights.append(" Limited shot variety detected - practice different shot types")
             elif shot_variety >= 5:
-                insights.append("✅ Excellent shot variety - good tactical awareness")
+                insights.append(" Excellent shot variety - good tactical awareness")
             else:
-                insights.append("📈 Moderate shot variety - room for improvement")
+                insights.append(" Moderate shot variety - room for improvement")
         
         # Player balance analysis
         if isinstance(analysis, dict) and 'player_analysis' in analysis:
             p1_hits = analysis['player_analysis'].get('player1_hits', 0)
             p2_hits = analysis['player_analysis'].get('player2_hits', 0)
             if abs(p1_hits - p2_hits) > p1_hits * 0.3:  # More than 30% difference
-                insights.append("⚠️ Unbalanced rally participation - encourage more active play")
+                insights.append(" Unbalanced rally participation - encourage more active play")
             else:
-                insights.append("✅ Good rally balance between players")
+                insights.append(" Good rally balance between players")
         
         # Court coverage analysis
         if isinstance(analysis, dict) and 'ball_analysis' in analysis:
             coverage = analysis['ball_analysis'].get('court_coverage', 0)
             if coverage < 0.3:
-                insights.append("📍 Limited court coverage - work on court movement")
+                insights.append(" Limited court coverage - work on court movement")
             elif coverage > 0.7:
-                insights.append("✅ Excellent court coverage - good mobility")
+                insights.append(" Excellent court coverage - good mobility")
             else:
-                insights.append("📈 Moderate court coverage - room for improvement")
+                insights.append(" Moderate court coverage - room for improvement")
         
         # Bounce pattern insights
         bounce_freq = bounce_patterns.get('bounce_frequency', 'unknown')
         if bounce_freq == 'high':
-            insights.append("⚠️ High bounce frequency suggests poor shot control")
+            insights.append(" High bounce frequency suggests poor shot control")
         elif bounce_freq == 'low':
-            insights.append("✅ Good shot control with minimal wall bounces")
+            insights.append(" Good shot control with minimal wall bounces")
         
-        return "\n".join(f"• {insight}" for insight in insights)
+        return "\n".join(f" {insight}" for insight in insights)
 
     def _generate_performance_benchmarks(self, coaching_data):
         """Generate performance benchmarks against professional standards"""
         benchmarks = []
         
         if not coaching_data:
-            return "• No data available for benchmarking"
+            return " No data available for benchmarking"
         
         # Calculate basic metrics
         total_shots = len([d for d in coaching_data if d.get('shot_type', 'unknown') != 'unknown'])
@@ -1640,31 +1653,31 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if active_frames > 0:
             shot_rate = total_shots / active_frames
             if shot_rate > 0.1:  # Professional level
-                benchmarks.append("✅ Shot rate: Professional level")
+                benchmarks.append(" Shot rate: Professional level")
             elif shot_rate > 0.05:  # Club level
-                benchmarks.append("📈 Shot rate: Club level - aim for more aggressive play")
+                benchmarks.append(" Shot rate: Club level - aim for more aggressive play")
             else:
-                benchmarks.append("⚠️ Shot rate: Beginner level - increase shot frequency")
+                benchmarks.append(" Shot rate: Beginner level - increase shot frequency")
         
         # Activity level benchmark
         total_frames = len(coaching_data)
         if total_frames > 0:
             activity_rate = active_frames / total_frames
             if activity_rate > 0.7:
-                benchmarks.append("✅ Activity rate: Excellent match intensity")
+                benchmarks.append(" Activity rate: Excellent match intensity")
             elif activity_rate > 0.5:
-                benchmarks.append("📈 Activity rate: Good - maintain momentum")
+                benchmarks.append(" Activity rate: Good - maintain momentum")
             else:
-                benchmarks.append("⚠️ Activity rate: Low - increase match intensity")
+                benchmarks.append(" Activity rate: Low - increase match intensity")
         
-        return "\n".join(f"• {benchmark}" for benchmark in benchmarks)
+        return "\n".join(f" {benchmark}" for benchmark in benchmarks)
 
     def _generate_action_items(self, coaching_data):
         """Generate specific action items for improvement"""
         actions = []
         
         if not coaching_data:
-            return "• Review video footage for technical analysis"
+            return " Review video footage for technical analysis"
         
         # Analyze shot patterns
         shot_types = [d.get('shot_type', 'unknown') for d in coaching_data 
@@ -1702,7 +1715,7 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if not actions:
             actions.append("Continue current training routine - good performance detected")
         
-        return "\n".join(f"• {action}" for action in actions)
+        return "\n".join(f" {action}" for action in actions)
 
     def _generate_progress_tracking(self, coaching_data):
         """Generate progress tracking recommendations"""
@@ -1719,7 +1732,7 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
             recommendations.append(f"Current session: {shot_count} shots analyzed")
             recommendations.append("Compare with previous sessions for improvement trends")
         
-        return "\n".join(f"• {rec}" for rec in recommendations)
+        return "\n".join(f" {rec}" for rec in recommendations)
 
     def _generate_basic_recommendations(self, analysis, bounce_patterns):
         """Generate basic coaching recommendations"""
@@ -1744,7 +1757,7 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         if not recommendations:
             recommendations.append("Continue current training routine")
         
-        return "\n".join(f"• {rec}" for rec in recommendations)
+        return "\n".join(f" {rec}" for rec in recommendations)
 
 def create_graphics():
     """Create comprehensive graphics and visualizations from squash analysis data"""
@@ -1757,7 +1770,7 @@ def create_graphics():
         import plotly.express as px
         from plotly.subplots import make_subplots
         
-        print("📊 Creating comprehensive squash analytics visualizations...")
+        print(" Creating comprehensive squash analytics visualizations...")
         
         # Check for available data files
         data_files = {
@@ -1771,12 +1784,12 @@ def create_graphics():
         for name, path in data_files.items():
             if os.path.exists(path):
                 available_files[name] = path
-                print(f"✅ Found {name}: {path}")
+                print(f" Found {name}: {path}")
             else:
-                print(f"⚠️ Missing {name}: {path}")
+                print(f" Missing {name}: {path}")
         
         if not available_files:
-            print("❌ No data files available for visualization")
+            print(" No data files available for visualization")
             return
         
         # Create output directory for graphics
@@ -1817,10 +1830,10 @@ def create_graphics():
                     plt.close()
                     visualizations_created.append(shot_dist_path)
                 
-                print(f"✅ Generated {len(visualizations_created)} basic visualizations")
+                print(f" Generated {len(visualizations_created)} basic visualizations")
                 
             except Exception as e:
-                print(f"⚠️ Error creating CSV-based visualizations: {e}")
+                print(f" Error creating CSV-based visualizations: {e}")
         
         # Generate shot tracking visualizations if available
         if 'shots_log' in available_files:
@@ -1857,16 +1870,16 @@ def create_graphics():
                     trajectory_path = f"{graphics_dir}/shot_trajectories.html"
                     fig.write_html(trajectory_path)
                     visualizations_created.append(trajectory_path)
-                    print("✅ Generated shot trajectory visualization")
+                    print(" Generated shot trajectory visualization")
                 
             except Exception as e:
-                print(f"⚠️ Error creating shot tracking visualizations: {e}")
+                print(f" Error creating shot tracking visualizations: {e}")
         
-        print(f"🎨 Created {len(visualizations_created)} total visualizations in {graphics_dir}/")
+        print(f" Created {len(visualizations_created)} total visualizations in {graphics_dir}/")
         return visualizations_created
         
     except Exception as e:
-        print(f"❌ Error in create_graphics: {e}")
+        print(f" Error in create_graphics: {e}")
         return []
 
 def view_all_graphics():
@@ -1876,7 +1889,7 @@ def view_all_graphics():
         graphics_dir = "output/graphics"
         
         if not os.path.exists(graphics_dir):
-            print("❌ No graphics directory found")
+            print(" No graphics directory found")
             return
         
         graphics_files = []
@@ -1885,10 +1898,10 @@ def view_all_graphics():
                 graphics_files.append(file)
         
         if not graphics_files:
-            print("❌ No graphics files found")
+            print(" No graphics files found")
             return
         
-        print(f"\n📊 GENERATED VISUALIZATIONS SUMMARY")
+        print(f"\n GENERATED VISUALIZATIONS SUMMARY")
         print("=" * 50)
         
         for i, file in enumerate(graphics_files, 1):
@@ -1901,11 +1914,11 @@ def view_all_graphics():
             print(f"    Path: {file_path}")
             print()
         
-        print(f"✅ Total graphics generated: {len(graphics_files)}")
-        print(f"📁 Graphics directory: {graphics_dir}")
+        print(f" Total graphics generated: {len(graphics_files)}")
+        print(f" Graphics directory: {graphics_dir}")
         
         # Display basic analytics
-        print(f"\n📈 ANALYTICS SUMMARY")
+        print(f"\n ANALYTICS SUMMARY")
         print("=" * 30)
         
         # Check for data files and show summary stats
@@ -1913,23 +1926,23 @@ def view_all_graphics():
             try:
                 import pandas as pd
                 df = pd.read_csv("output/final.csv")
-                print(f"• Total data points: {len(df):,}")
-                print(f"• Columns available: {len(df.columns)}")
+                print(f" Total data points: {len(df):,}")
+                print(f" Columns available: {len(df.columns)}")
                 if 'shot_type' in df.columns:
                     unique_shots = df['shot_type'].nunique()
-                    print(f"• Unique shot types: {unique_shots}")
+                    print(f" Unique shot types: {unique_shots}")
             except Exception as e:
-                print(f"• CSV analysis error: {e}")
+                print(f" CSV analysis error: {e}")
         
         if os.path.exists("output/shots_log.jsonl"):
             try:
                 with open("output/shots_log.jsonl", 'r') as f:
                     shot_count = sum(1 for line in f if line.strip())
-                print(f"• Shot logs recorded: {shot_count}")
+                print(f" Shot logs recorded: {shot_count}")
             except Exception as e:
-                print(f"• Shot log analysis error: {e}")
+                print(f" Shot log analysis error: {e}")
                 
     except Exception as e:
-        print(f"❌ Error in view_all_graphics: {e}")
+        print(f" Error in view_all_graphics: {e}")
 
     # ...existing code...

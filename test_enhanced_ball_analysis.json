@@ -1,0 +1,71 @@
+{
+  "detection_events": [
+    {
+      "phase": "RALLY_END",
+      "timestamp": 1755119310.0203357,
+      "frame_number": 25,
+      "confidence": 1.0,
+      "position": [
+        "120",
+        "90"
+      ],
+      "details": {
+        "average_movement": 0.0,
+        "max_movement": 0,
+        "analysis_duration": 15,
+        "stillness_quality": 1.0
+      }
+    },
+    {
+      "phase": "RALLY_END",
+      "timestamp": 1755119310.0205925,
+      "frame_number": 26,
+      "confidence": 1.0,
+      "position": [
+        "120",
+        "90"
+      ],
+      "details": {
+        "average_movement": 0.0,
+        "max_movement": 0,
+        "analysis_duration": 15,
+        "stillness_quality": 1.0
+      }
+    },
+    {
+      "phase": "RALLY_END",
+      "timestamp": 1755119310.0208411,
+      "frame_number": 27,
+      "confidence": 1.0,
+      "position": [
+        "120",
+        "90"
+      ],
+      "details": {
+        "average_movement": 0.0,
+        "max_movement": 0,
+        "analysis_duration": 15,
+        "stillness_quality": 1.0
+      }
+    }
+  ],
+  "completed_shots": [],
+  "statistics": {
+    "total_shots": 0,
+    "shot_types": {},
+    "average_duration": 0,
+    "detection_accuracy": 0,
+    "events_detected": 3
+  },
+  "configuration": {
+    "min_trajectory_length": 5,
+    "wall_proximity_threshold": 20,
+    "floor_proximity_threshold": 30,
+    "velocity_change_threshold": 0.3,
+    "direction_change_threshold": 0.5235987755982988,
+    "noise_filter_window": 3,
+    "confidence_threshold": 0.7,
+    "physics_validation": true,
+    "temporal_consistency": true
+  }
+}

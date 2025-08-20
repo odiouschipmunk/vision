@@ -2,56 +2,54 @@
 ENHANCED SHOT TRACKING ANALYSIS
 =======================================
 
-📊 SHOT STATISTICS:
+SHOT STATISTICS:
 -----------------
-• Total Shots Tracked: 7
-• Player 1 Shots: 0
-• Player 2 Shots: 7
-• Average Shot Duration: 0.0 frames
+Total Shots Tracked: 0
+Player 1 Shots: 0
+Player 2 Shots: 0
+Average Shot Duration: 0.0 frames
 
-🏓 WALL HIT DETECTION STATISTICS:
+WALL HIT DETECTION STATISTICS:
 ------------------------------
-• Total Wall Hits Detected: 7
-• Wall Hit Distribution: {0: 7}
-• Legacy Detection Algorithm: Direction-based hit detection
+Total Wall Hits Detected: 0
+Wall Hit Distribution: {}
+Legacy Detection Algorithm: Direction-based hit detection
 
-🎯 SHOT TYPE BREAKDOWN:
+SHOT TYPE BREAKDOWN:
 ---------------------
-• crosscourt: 2 (28.6%)
-• straight_drive: 5 (71.4%)
 
 
-📈 ENHANCED VISUALIZATION FEATURES:
+ENHANCED VISUALIZATION FEATURES:
 ----------------------------------
-• Real-time trajectory visualization with color coding
-• Clear shot START markers: Large circles with "START" text
-• Clear shot END markers: Square markers with "END" text  
-• Active shot indicators: "ACTIVE" labels on current ball
-• Crosscourt shots: Green trajectory lines
-• Straight shots: Yellow trajectory lines  
-• Boast shots: Magenta trajectory lines
-• Drop shots: Orange trajectory lines
-• Lob shots: Blue trajectory lines
-• Bounce visualization: Multi-colored confidence-based markers
+Real-time trajectory visualization with color coding
+Clear shot START markers: Large circles with "START" text
+Clear shot END markers: Square markers with "END" text  
+Active shot indicators: "ACTIVE" labels on current ball
+Crosscourt shots: Green trajectory lines
+Straight shots: Yellow trajectory lines  
+Boast shots: Magenta trajectory lines
+Drop shots: Orange trajectory lines
+Lob shots: Blue trajectory lines
+Bounce visualization: Multi-colored confidence-based markers
 
-🔬 TECHNICAL IMPROVEMENTS:
+TECHNICAL IMPROVEMENTS:
 -------------------------
-• Enhanced player-ball hit detection using weighted keypoints
-• Multi-factor scoring system (proximity + movement + trajectory)
-• Real-time shot classification with trajectory analysis
-• Automatic shot completion detection
-• Comprehensive 4-algorithm bounce detection system
-• Physics-based bounce validation
-• Velocity vector analysis for precise hit detection
-• Wall proximity analysis with gradient scoring
-• Trajectory curvature analysis for direction changes
-• Complete shot data with bounce information saved to: output/shots_log.jsonl
+Enhanced player-ball hit detection using weighted keypoints
+Multi-factor scoring system (proximity + movement + trajectory)
+Real-time shot classification with trajectory analysis
+Automatic shot completion detection
+Comprehensive 4-algorithm bounce detection system
+Physics-based bounce validation
+Velocity vector analysis for precise hit detection
+Wall proximity analysis with gradient scoring
+Trajectory curvature analysis for direction changes
+Complete shot data with bounce information saved to: output/shots_log.jsonl
 
-🎨 VISUAL MARKERS LEGEND:
+VISUAL MARKERS LEGEND:
 ------------------------
-• START: Large circle with white center and colored border
-• END: Square marker with red center and colored border  
-• ACTIVE: Current ball position with enhanced highlighting
-• Bounces: Color-coded by confidence (Green=High, Yellow=Medium, Orange=Low)
-• Shot Duration: Displayed next to END markers
-• Algorithm Count: Shows how many detection algorithms agreed
+START: Large circle with white center and colored border
+END: Square marker with red center and colored border  
+ACTIVE: Current ball position with enhanced highlighting
+Bounces: Color-coded by confidence (Green=High, Yellow=Medium, Orange=Low)
+Shot Duration: Displayed next to END markers
+Algorithm Count: Shows how many detection algorithms agreed
