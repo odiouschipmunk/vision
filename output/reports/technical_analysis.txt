@@ -1,0 +1,12 @@
+
+TECHNICAL ANALYSIS REPORT
+Frame: 21
+
+BALL TRACKING:
+- Current ball position: [132, 137, 20]
+- Trajectory length: 7
+- Recent movement: Active
+
+PLAYER ANALYSIS:
+- Player 1: Position (172.1, 242.3)
+- Player 2: Position (340.8, 206.0)

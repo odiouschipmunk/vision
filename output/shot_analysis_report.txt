@@ -4,21 +4,19 @@ ENHANCED SHOT TRACKING ANALYSIS
 
 📊 SHOT STATISTICS:
 -----------------
-• Total Shots Tracked: 7
+• Total Shots Tracked: 0
 • Player 1 Shots: 0
-• Player 2 Shots: 7
+• Player 2 Shots: 0
 • Average Shot Duration: 0.0 frames
 
 🏓 WALL HIT DETECTION STATISTICS:
 ------------------------------
-• Total Wall Hits Detected: 7
-• Wall Hit Distribution: {0: 7}
+• Total Wall Hits Detected: 0
+• Wall Hit Distribution: {}
 • Legacy Detection Algorithm: Direction-based hit detection
 
 🎯 SHOT TYPE BREAKDOWN:
 ---------------------
-• crosscourt: 2 (28.6%)
-• straight_drive: 5 (71.4%)
 
 
 📈 ENHANCED VISUALIZATION FEATURES:

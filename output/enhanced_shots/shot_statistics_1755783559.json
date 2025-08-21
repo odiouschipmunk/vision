@@ -1,0 +1,15 @@
+{
+  "system_performance": {
+    "total_frames_processed": 437,
+    "enhanced_detections": 437,
+    "legacy_fallbacks": 0,
+    "total_shots_detected": 0,
+    "total_events_detected": 1179
+  },
+  "shot_detection": {
+    "total_shots": 0,
+    "analysis": "No shots detected yet"
+  },
+  "frame_processing_rate": 437.0,
+  "detection_success_rate": 1.0
+}

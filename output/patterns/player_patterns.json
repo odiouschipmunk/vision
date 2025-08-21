@@ -1,0 +1,18 @@
+{
+  "player_1": {
+    "position": [
+      172.067138671875,
+      242.32781982421875
+    ],
+    "court_zone": "back_left",
+    "timestamp": 1755811192.366182
+  },
+  "player_2": {
+    "position": [
+      340.7818908691406,
+      205.95608520507812
+    ],
+    "court_zone": "back_right",
+    "timestamp": 1755811192.366194
+  }
+}

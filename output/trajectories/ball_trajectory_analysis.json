@@ -1,0 +1,9 @@
+{
+  "total_positions": 0,
+  "recent_trajectory": [],
+  "trajectory_smoothness": "Limited",
+  "movement_detected": false,
+  "average_movement": 0,
+  "max_movement": 0,
+  "total_distance": 0
+}

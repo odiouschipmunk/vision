@@ -886,6 +886,18 @@ class AutonomousSquashCoach:
 
     def load_coaching_models(self):
         """Load multiple AI models for comprehensive coaching analysis"""
+        # Check available GPU memory first
+        if torch.cuda.is_available():
+            available_memory = torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated(0)
+            available_gb = available_memory / 1e9
+            print(f"💾 Available GPU memory: {available_gb:.2f} GB")
+            
+            # If less than 4GB available, skip AI models
+            if available_gb < 4.0:
+                print("⚠️  Insufficient GPU memory for AI models, using rule-based system")
+                self.models['rule_based'] = {'model': None, 'tokenizer': None, 'loaded': False}
+                return
+        
         for model_name in self.model_priorities:
             try:
                 print(f"📥 Loading {model_name}...")

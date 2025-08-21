@@ -1,0 +1,66 @@
+
+🎾 COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
+Generated: 2025-08-21 17:23:18
+Video: self2.mp4
+Total Frames Processed: 21
+
+📁 OUTPUT CATEGORIES AND FILES:
+
+Graphics & Visualizations (3 files):
+  • court_positioning.png (110,625 bytes)
+  • shot_analysis.png (65,241 bytes)
+  • basic_statistics.png (76,030 bytes)
+
+Heatmaps (1 files):
+  • player_positions.png (8,089 bytes)
+
+Clips & Highlights (1 files):
+  • rally_statistics.json (103 bytes)
+
+Patterns (1 files):
+  • player_patterns.json (343 bytes)
+
+Raw Data (2 files):
+  • frame_data.json (654 bytes)
+  • ball_trajectory.json (425 bytes)
+
+Statistics (2 files):
+  • overall_statistics.json (162 bytes)
+  • performance_metrics.json (119 bytes)
+
+Reports (2 files):
+  • session_summary.txt (490 bytes)
+  • technical_analysis.txt (244 bytes)
+
+Enhanced Visualizations (2 files):
+  • 3d_court_visualization.png (425,392 bytes)
+  • performance_dashboard.png (195,860 bytes)
+
+AI Analysis (1 files):
+  • movement_analysis.json (1,404 bytes)
+
+
+📊 SESSION STATISTICS:
+• Total outputs generated: 15
+• Processing completed: 2025-08-21 17:23:18
+• Video duration: 0.7 seconds (assuming 30fps)
+• Output categories: 9
+
+🎯 WHAT YOU GET:
+1. 📈 Real-time analytics and visualizations
+2. 🎨 Interactive graphics and heatmaps
+3. 📹 Shot and rally highlights
+4. 📊 Performance statistics and reports
+5. 🎾 Ball and player trajectory analysis
+6. 🔍 Pattern recognition and insights
+7. 📋 Comprehensive coaching recommendations
+8. 🚀 Enhanced 3D visualizations
+
+💡 NEXT STEPS:
+• Review generated reports for coaching insights
+• Analyze shot patterns and player positioning
+• Use heatmaps to understand court coverage
+• Examine trajectory data for technique improvement
+• Share highlights and clips for training purposes
+
+🎾 SQUASH COACHING ANALYSIS COMPLETE! 🎾

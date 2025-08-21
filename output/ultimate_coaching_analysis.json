@@ -1,0 +1,90 @@
+{
+  "meta_analysis": {
+    "match_intensity_analysis": {
+      "average_intensity": 0.0,
+      "peak_moments": [],
+      "low_periods": [],
+      "intensity_variance": 0.0,
+      "consistency_rating": 1.0
+    },
+    "momentum_shifts": [],
+    "critical_moments": [],
+    "consistency_patterns": {}
+  },
+  "advanced_patterns": {
+    "attacking_sequences": [],
+    "defensive_patterns": [],
+    "transition_moments": [],
+    "pressure_responses": [],
+    "tactical_adaptations": []
+  },
+  "performance_insights": {
+    "technical_assessment": {
+      "shot_accuracy": 0.4,
+      "shot_variety": 1,
+      "accuracy_rating": 0.4705882352941177,
+      "variety_rating": 0.125,
+      "overall_score": 0.2977941176470589,
+      "benchmark_comparison": {
+        "accuracy_vs_pro": 0.4705882352941177,
+        "variety_vs_pro": 0.125
+      }
+    },
+    "tactical_evaluation": {
+      "pattern_complexity": 0.5,
+      "shot_selection_quality": 0.6,
+      "positional_awareness": 0.5,
+      "overall_score": 0.5333333333333333,
+      "tactical_recommendations": []
+    },
+    "physical_analysis": {
+      "movement_frequency": 0.0,
+      "court_coverage": 0.06989148259162903,
+      "endurance_estimate": 0.7,
+      "overall_score": 0.2566304941972097,
+      "physical_recommendations": []
+    },
+    "mental_game_insights": {
+      "pressure_performance": 0.5,
+      "concentration": 0.6,
+      "match_awareness": 0.5,
+      "overall_score": 0.5333333333333333,
+      "mental_recommendations": []
+    },
+    "overall_rating": 0.40527281962773376,
+    "key_strengths": [],
+    "priority_improvements": [
+      "Technical skills development",
+      "Physical fitness"
+    ]
+  },
+  "improvement_roadmap": {
+    "immediate_focus": [],
+    "short_term_goals": [
+      {
+        "area": "Shot Variety",
+        "target": "Master 3 additional shot types",
+        "approach": "Progressive skill building",
+        "timeline": "4-6 weeks"
+      }
+    ],
+    "long_term_objectives": [
+      {
+        "area": "Advanced Tactics",
+        "target": "Develop signature playing style",
+        "approach": "Pattern analysis and strategic development",
+        "timeline": "3-6 months"
+      }
+    ],
+    "specific_drills": [],
+    "training_schedule": {},
+    "progress_metrics": []
+  },
+  "competitive_analysis": {
+    "playing_level_assessment": "Intermediate",
+    "competitive_readiness": 0.6,
+    "match_strategy_recommendations": [],
+    "opponent_type_analysis": {}
+  },
+  "enhancement_timestamp": 1755811398.6054897
+}
