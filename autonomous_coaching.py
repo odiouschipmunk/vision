@@ -1,5 +1,5 @@
 """
-Autonomous Squash Coaching Pipeline - Clean Implementation
+Autonomous Squash Coaching Pipeline - Clean Implementation with Enhanced Memory Management
 Integrates ball detection, pose estimation, shot classification, and AI coaching using Qwen3
 """
 
@@ -12,6 +12,8 @@ import numpy as np
 import logging
 import ast
 import os
+import gc
+import psutil
 from collections import defaultdict
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import pandas as pd
@@ -97,20 +99,81 @@ def collect_coaching_data(players, past_ball_pos, type_of_shot, who_hit, match_i
     
     return coaching_data
 
-# Global coach instance to avoid reloading models
+# Global coach instance to avoid reloading models - enhanced with memory management
 _global_coach = None
+_coach_memory_threshold = 0.85  # Cleanup when memory usage exceeds 85%
+
+def check_memory_usage():
+    """Check current memory usage"""
+    try:
+        # System RAM
+        ram = psutil.virtual_memory()
+        ram_percent = ram.percent / 100.0
+        
+        # GPU memory if available
+        gpu_percent = 0.0
+        if torch.cuda.is_available():
+            allocated = torch.cuda.memory_allocated(0)
+            total = torch.cuda.get_device_properties(0).total_memory
+            gpu_percent = allocated / total
+        
+        return max(ram_percent, gpu_percent)
+    except:
+        return 0.5  # Default to 50% if unable to check
+
+def cleanup_coach_memory():
+    """Cleanup coach memory aggressively"""
+    global _global_coach
+    print("🧹 Cleaning up coaching model memory...")
+    
+    if _global_coach:
+        # Clear models from coach
+        if hasattr(_global_coach, 'models'):
+            for model_name in list(_global_coach.models.keys()):
+                if 'model' in _global_coach.models[model_name]:
+                    del _global_coach.models[model_name]['model']
+                if 'tokenizer' in _global_coach.models[model_name]:
+                    del _global_coach.models[model_name]['tokenizer']
+            _global_coach.models.clear()
+    
+    # Force garbage collection
+    for _ in range(3):
+        gc.collect()
+    
+    # Clear GPU cache
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+    
+    print("✅ Coach memory cleanup completed")
 
 def get_autonomous_coach():
-    """Get or create the global autonomous coach instance"""
+    """Get or create the global autonomous coach instance with memory checks"""
     global _global_coach
+    
+    # Check memory usage before creating coach
+    memory_usage = check_memory_usage()
+    if memory_usage > _coach_memory_threshold:
+        print(f"⚠️ High memory usage ({memory_usage*100:.1f}%) - cleaning up before coach creation")
+        cleanup_coach_memory()
+    
     if _global_coach is None:
+        print("🧠 Creating new autonomous coach instance...")
         _global_coach = AutonomousSquashCoach()
     return _global_coach
 
 def reset_autonomous_coach():
-    """Reset the global coach instance (forces reload on next use)"""
+    """Reset the global coach instance with memory cleanup"""
     global _global_coach
+    print("🔄 Resetting autonomous coach...")
+    
+    if _global_coach:
+        # Clear models before deletion
+        cleanup_coach_memory()
+        del _global_coach
+    
     _global_coach = None
+    print("✅ Autonomous coach reset completed")
 
 def generate_coaching_report(coaching_data_collection, video_path, frame_count):
     """
@@ -298,7 +361,7 @@ class TacticalAnalysisEngine:
         for i in range(len(shot_sequence) - pattern_len + 1):
             window = shot_sequence[i:i + pattern_len]
             matches = sum(1 for a, p in zip(window, pattern_shots) 
-                         if self._shots_match(a, p))
+                        if self._shots_match(a, p))
             match_score = matches / pattern_len if pattern_len > 0 else 0
             max_match = max(max_match, match_score)
         
@@ -450,7 +513,7 @@ class AdvancedPerformanceAnalyzer:
         # Basic metrics
         total_shots = len(coaching_data)
         successful_shots = sum(1 for data in coaching_data 
-                             if data.get('ball_position', [0, 0]) != [0, 0])
+                            if data.get('ball_position', [0, 0]) != [0, 0])
         
         metrics['shot_success_rate'] = successful_shots / total_shots if total_shots > 0 else 0
         metrics['total_shots'] = total_shots
@@ -645,7 +708,7 @@ class PerformanceTracker:
         # Calculate shot accuracy
         total_shots = len(session_data)
         successful_shots = sum(1 for shot in session_data 
-                             if shot.get('ball_position', (0, 0)) != (0, 0))
+                            if shot.get('ball_position', (0, 0)) != (0, 0))
         shot_accuracy = successful_shots / total_shots if total_shots > 0 else 0
         
         # Calculate movement efficiency
@@ -790,11 +853,18 @@ class PerformanceTracker:
 
 class AutonomousSquashCoach:
     def __init__(self):
-        print("🎾 Loading Advanced Squash Coaching AI with Multi-Model Architecture...")
+        print("🎾 Loading Advanced Squash Coaching AI with Enhanced Memory Management...")
+        
+        # Memory management setup
+        self.memory_threshold = 0.8  # 80% memory usage threshold
+        self.max_model_memory_gb = 4.0  # Maximum memory per model
         
         # GPU optimization setup
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f"🖥️  Coach compute device: {self.device}")
+        
+        # Check initial memory
+        self.print_memory_status()
         
         # Advanced squash-specific analysis parameters
         self.analysis_config = {
@@ -869,6 +939,7 @@ class AutonomousSquashCoach:
             "facebook/blenderbot-400M-distill"  # Coaching dialogue
         ]
         
+        # Load models with memory monitoring
         self.load_coaching_models()
         
         # Advanced pattern recognition and analysis systems
@@ -882,11 +953,87 @@ class AutonomousSquashCoach:
         print(f"🧠 Advanced Squash Coaching AI initialized with {len(self.models)} models loaded")
         print("🎯 Tactical analysis engine: READY")
         print("📊 Performance analysis engine: READY")
+        
+        # Final memory check
+        self.print_memory_status()
+
+    def print_memory_status(self):
+        """Print current memory status"""
+        try:
+            # System RAM
+            ram = psutil.virtual_memory()
+            ram_used_gb = ram.used / (1024**3)
+            ram_total_gb = ram.total / (1024**3)
+            
+            print(f"💾 RAM: {ram_used_gb:.1f}GB/{ram_total_gb:.1f}GB ({ram.percent:.1f}%)")
+            
+            # GPU memory
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                reserved = torch.cuda.memory_reserved(0) / (1024**3)
+                total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                print(f"🖥️  GPU: {allocated:.1f}GB/{total:.1f}GB allocated, {reserved:.1f}GB reserved")
+        except Exception as e:
+            print(f"Memory status check failed: {e}")
+
+    def check_memory_before_operation(self, operation_name="operation"):
+        """Check memory before major operations"""
+        try:
+            ram = psutil.virtual_memory()
+            gpu_percent = 0
+            
+            if torch.cuda.is_available():
+                allocated = torch.cuda.memory_allocated(0)
+                total = torch.cuda.get_device_properties(0).total_memory
+                gpu_percent = (allocated / total) * 100
+            
+            ram_percent = ram.percent
+            
+            if ram_percent > 85 or gpu_percent > 85:
+                print(f"⚠️ High memory usage before {operation_name}: RAM {ram_percent:.1f}%, GPU {gpu_percent:.1f}%")
+                self.emergency_cleanup()
+                return False
+            
+            return True
+        except:
+            return True  # Proceed if unable to check
+
+    def emergency_cleanup(self):
+        """Emergency memory cleanup"""
+        print("🚨 Performing emergency memory cleanup...")
+        
+        # Clear model instances but keep structure
+        for model_name in list(self.models.keys()):
+            if 'model' in self.models[model_name] and self.models[model_name]['model']:
+                del self.models[model_name]['model']
+                self.models[model_name]['model'] = None
+                self.models[model_name]['loaded'] = False
+            
+        # Aggressive garbage collection
+        for _ in range(3):
+            gc.collect()
+        
+        # Clear GPU memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+        
+        print("✅ Emergency cleanup completed")
+        self.print_memory_status()
         print("🔄 Pattern recognition system: READY")
 
     def load_coaching_models(self):
-        """Load multiple AI models for comprehensive coaching analysis"""
-        # Check available GPU memory first
+        """Load AI models with enhanced memory management"""
+        print("🤖 Loading coaching models with memory monitoring...")
+        
+        # Check available memory first
+        memory_ok = self.check_memory_before_operation("model loading")
+        if not memory_ok:
+            print("⚠️ Insufficient memory for AI models, using rule-based system only")
+            self.models['rule_based'] = {'model': None, 'tokenizer': None, 'loaded': False}
+            return
+        
+        # Check available GPU memory
         if torch.cuda.is_available():
             available_memory = torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_allocated(0)
             available_gb = available_memory / 1e9
@@ -894,24 +1041,33 @@ class AutonomousSquashCoach:
             
             # If less than 4GB available, skip AI models
             if available_gb < 4.0:
-                print("⚠️  Insufficient GPU memory for AI models, using rule-based system")
+                print("⚠️ Insufficient GPU memory for AI models, using rule-based system")
                 self.models['rule_based'] = {'model': None, 'tokenizer': None, 'loaded': False}
                 return
         
         for model_name in self.model_priorities:
             try:
                 print(f"📥 Loading {model_name}...")
+                print("💾 Pre-model memory status:")
+                self.print_memory_status()
+                
                 tokenizer = AutoTokenizer.from_pretrained(model_name)
                 
                 # Handle tokenizer padding token
                 if tokenizer.pad_token is None:
                     tokenizer.pad_token = tokenizer.eos_token
                 
+                # Check memory before loading model
+                if not self.check_memory_before_operation(f"loading {model_name}"):
+                    print(f"❌ Skipping {model_name} due to memory constraints")
+                    continue
+                
                 model = AutoModelForCausalLM.from_pretrained(
                     model_name,
                     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
                     device_map=None,  # Don't use auto device mapping
-                    trust_remote_code=True
+                    trust_remote_code=True,
+                    low_cpu_mem_usage=True  # Enable memory-efficient loading
                 )
                 
                 # Explicitly move model to the correct device
@@ -924,15 +1080,23 @@ class AutonomousSquashCoach:
                 }
                 
                 print(f"✅ {model_name} loaded successfully")
-                break  # Use the first successfully loaded model
+                print("💾 Post-model memory status:")
+                self.print_memory_status()
+                
+                # Only load one model to conserve memory
+                break
                 
             except Exception as e:
                 print(f"❌ Failed to load {model_name}: {e}")
+                # Clean up any partial loading
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 continue
         
         # Fallback to rule-based system if no models load
         if not self.models:
-            print("⚠️  No AI models loaded - using advanced rule-based coaching system")
+            print("⚠️ No AI models loaded - using advanced rule-based coaching system")
             self.models['rule_based'] = {'model': None, 'tokenizer': None, 'loaded': False}
 
     def _get_shot_specific_advice(self, shot_type):
@@ -1087,7 +1251,7 @@ class AutonomousSquashCoach:
         pressure_shots = [shot for shot in shot_data if shot.get('ball_speed', 0) > 15]
         if len(pressure_shots) > 0:
             pressure_accuracy = sum(1 for shot in pressure_shots 
-                                  if shot.get('ball_position', (0, 0)) != (0, 0)) / len(pressure_shots) if pressure_shots and len(pressure_shots) > 0 else 0
+                                if shot.get('ball_position', (0, 0)) != (0, 0)) / len(pressure_shots) if pressure_shots and len(pressure_shots) > 0 else 0
             
             if pressure_accuracy < 0.6:
                 strategic_insights.append({
@@ -1361,9 +1525,18 @@ class AutonomousSquashCoach:
         return min(coverage, 1.0)  # Cap at 100%
 
     def analyze_match_data(self, coaching_data):
-        """Enhanced match data analysis with advanced AI coaching insights"""
+        """Enhanced match data analysis with memory-optimized AI coaching insights"""
         if not coaching_data:
             return "No match data available for analysis"
+        
+        print("🎾 Starting match data analysis...")
+        print("💾 Pre-analysis memory check:")
+        self.print_memory_status()
+        
+        # Check memory before major operations
+        if not self.check_memory_before_operation("match analysis"):
+            print("⚠️ Memory constraints detected, using simplified analysis")
+            return self.emergency_fallback_analysis(coaching_data)
         
         # Generate comprehensive analysis
         analysis = self.prepare_match_analysis(coaching_data)
@@ -1371,18 +1544,24 @@ class AutonomousSquashCoach:
         # Enhanced bounce pattern analysis
         bounce_patterns = self.analyze_bounce_patterns(coaching_data)
         
-        # Get the active model for analysis
+        # Get the active model for analysis with memory checks
         active_model = None
         active_tokenizer = None
         
         for model_name, model_info in self.models.items():
             if model_info.get('loaded', False) and model_info.get('model') is not None:
+                # Check memory before using model
+                if not self.check_memory_before_operation(f"using {model_name}"):
+                    print(f"⚠️ Insufficient memory for {model_name}, trying fallback...")
+                    continue
+                    
                 active_model = model_info['model']
                 active_tokenizer = model_info['tokenizer']
                 print(f"🤖 Using {model_name} for advanced coaching analysis")
                 break
         
         if not active_model:
+            print("🔄 No AI model available, using rule-based analysis")
             return self.fallback_analysis_with_bounces(analysis, bounce_patterns)
 
         # Convert analysis dictionary to readable string format
@@ -1409,59 +1588,87 @@ PROFESSIONAL BENCHMARKS FOR COMPARISON:
 Provide expert-level coaching analysis covering:
 
 1. TECHNICAL ANALYSIS:
-   - Shot accuracy assessment with specific improvement areas
-   - Ball striking technique evaluation
-   - Movement patterns and court positioning efficiency
-   - Tactical shot selection analysis
+- Shot accuracy assessment with specific improvement areas
+- Ball striking technique evaluation
+- Movement patterns and court positioning efficiency
+- Tactical shot selection analysis
 
 2. STRATEGIC INSIGHTS:
-   - Pattern recognition in shot sequences
-   - Predictability assessment of playing style
-   - Court positioning strategy evaluation
-   - Pressure situation performance
+- Pattern recognition in shot sequences
+- Predictability assessment of playing style
+- Court positioning strategy evaluation
+- Pressure situation performance
 
 3. PHYSICAL ASSESSMENT:
-   - Movement efficiency and court coverage
-   - Endurance indicators throughout the match
-   - Speed and agility observations
-   - Recovery between points
+- Movement efficiency and court coverage
+- Endurance indicators throughout the match
+- Speed and agility observations
+- Recovery between points
 
 4. SPECIFIC IMPROVEMENT RECOMMENDATIONS:
-   - Priority areas for immediate focus (ranked 1-3)
-   - Detailed drill suggestions with durations
-   - Training regimen recommendations
-   - Mental game and tactical development areas
+- Priority areas for immediate focus (ranked 1-3)
+- Detailed drill suggestions with durations
+- Training regimen recommendations
+- Mental game and tactical development areas
 
 5. MATCH-SPECIFIC OBSERVATIONS:
-   - Key moments of strength and weakness
-   - Adaptation strategies during play
-   - Consistency patterns over time
-   - Areas of competitive advantage
+- Key moments of strength and weakness
+- Adaptation strategies during play
+- Consistency patterns over time
+- Areas of competitive advantage
 
 Provide actionable, specific coaching advice that a player could implement immediately."""
 
-        # Replace generation block with improved device handling
+        # Memory-optimized generation with enhanced error handling
         try:
-            inputs = active_tokenizer(coaching_prompt, return_tensors="pt", truncation=True, max_length=3000)
+            print("💾 Pre-generation memory check:")
+            self.print_memory_status()
+            
+            # Check memory before tokenization
+            if not self.check_memory_before_operation("tokenization"):
+                print("⚠️ Insufficient memory for AI generation, using fallback")
+                return self.fallback_analysis_with_bounces(analysis, bounce_patterns)
+            
+            inputs = active_tokenizer(coaching_prompt, return_tensors="pt", truncation=True, max_length=2500)  # Reduced to save memory
             
             # Ensure model and inputs are on the same device
             model_device = next(active_model.parameters()).device
             inputs = {k: v.to(model_device) for k, v in inputs.items()}
 
-            # Attempt generation
+            print("💾 Pre-AI-generation memory check:")
+            self.print_memory_status()
+            
+            # Check memory before generation
+            if not self.check_memory_before_operation("AI text generation"):
+                print("⚠️ Insufficient memory for AI generation, using fallback")
+                del inputs  # Clean up inputs
+                gc.collect()
+                return self.fallback_analysis_with_bounces(analysis, bounce_patterns)
+
+            # Attempt generation with reduced parameters to save memory
             with torch.no_grad():
                 outputs = active_model.generate(
                     **inputs,
-                    max_new_tokens=800,
+                    max_new_tokens=400,  # Reduced from 800 to save memory
                     temperature=0.8,
                     do_sample=True,
                     top_p=0.9,
                     repetition_penalty=1.1,
-                    pad_token_id=active_tokenizer.eos_token_id
+                    pad_token_id=active_tokenizer.eos_token_id,
+                    use_cache=False  # Disable caching to save memory
                 )
 
             response = active_tokenizer.decode(outputs[0], skip_special_tokens=True)
             generated_text = response[len(coaching_prompt):].strip()
+            
+            # Clean up generation outputs immediately
+            del outputs, inputs
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            print("💾 Post-generation memory check:")
+            self.print_memory_status()
 
             # Add enhanced rule-based insights
             rule_based_insights = self._compile_advanced_insights(coaching_data, analysis, bounce_patterns)
@@ -1470,29 +1677,56 @@ Provide actionable, specific coaching advice that a player could implement immed
             final_analysis = f"""🎾 AUTONOMOUS SQUASH COACHING ANALYSIS
 {'='*60}
 
- AI COACHING INSIGHTS:
+🤖 AI COACHING INSIGHTS:
 {generated_text}
 
- DETAILED TECHNICAL ANALYSIS:
+📊 DETAILED TECHNICAL ANALYSIS:
 {rule_based_insights}
 
- PERFORMANCE BENCHMARKING:
+📈 PERFORMANCE BENCHMARKING:
 {self._generate_performance_benchmarks(coaching_data)}
 
- IMMEDIATE ACTION ITEMS:
+✅ IMMEDIATE ACTION ITEMS:
 {self._generate_action_items(coaching_data)}
 
- PROGRESS TRACKING RECOMMENDATIONS:
+📝 PROGRESS TRACKING RECOMMENDATIONS:
 {self._generate_progress_tracking(coaching_data)}
 
 Note: This analysis combines advanced AI coaching with comprehensive rule-based insights 
 for maximum coaching effectiveness."""
             
+            print("✅ AI coaching analysis completed successfully")
             return final_analysis
             
         except Exception as e:
-            print(f"AI coaching generation error: {e}")
+            print(f"❌ AI coaching generation error: {e}")
+            # Emergency cleanup on error
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             return self.fallback_analysis_with_bounces(analysis, bounce_patterns)
+    
+    def emergency_fallback_analysis(self, coaching_data):
+        """Ultra-lightweight analysis for extreme memory constraints"""
+        try:
+            total_data = len(coaching_data)
+            active_frames = sum(1 for d in coaching_data if d.get('match_active', False))
+            shot_frames = sum(1 for d in coaching_data if d.get('shot_type'))
+            
+            return f"""🎾 EMERGENCY SQUASH ANALYSIS (Memory-Optimized)
+{'='*50}
+
+📊 BASIC STATISTICS:
+• Total data points: {total_data}
+• Active play frames: {active_frames}
+• Frames with shots: {shot_frames}
+• Activity rate: {(active_frames/total_data)*100:.1f}%
+
+⚠️ Note: Full AI analysis unavailable due to memory constraints.
+Consider running with more available memory for comprehensive insights.
+"""
+        except Exception as e:
+            return f"Unable to generate analysis due to severe memory constraints: {e}"
 
     def fallback_analysis_with_bounces(self, analysis, bounce_patterns):
         """Provide comprehensive fallback analysis when AI models are unavailable"""
@@ -1680,7 +1914,7 @@ Note: Advanced AI analysis unavailable - using rule-based coaching insights."""
         
         # Analyze shot patterns
         shot_types = [d.get('shot_type', 'unknown') for d in coaching_data 
-                     if d.get('shot_type', 'unknown') != 'unknown']
+                    if d.get('shot_type', 'unknown') != 'unknown']
         
         # Ensure all shot types are hashable
         safe_shot_types = set()
@@ -1943,5 +2177,3 @@ def view_all_graphics():
                 
     except Exception as e:
         print(f"❌ Error in view_all_graphics: {e}")
-
-    # ...existing code...

@@ -1,5 +1,8 @@
 import time
 import torch
+import gc
+import psutil
+import sys
 start = time.time()
 import cv2
 import csv
@@ -23,6 +26,7 @@ import matplotlib.pyplot as plt
 from ultralytics import YOLO
 from squash import Referencepoints, Functions  # Ensure Functions is imported
 from matplotlib import pyplot as plt
+from matplotlib import patches
 from squash.Ball import Ball
 from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
 from torchvision import transforms
@@ -31,96 +35,235 @@ from autonomous_coaching import collect_coaching_data, generate_coaching_report,
 # Import enhanced ball physics and shot detection system
 from enhanced_ball_physics import create_enhanced_shot_detector, BallPosition, ShotEvent
 from enhanced_shot_integration import integrate_enhanced_detection_into_pipeline
+# Import enhanced shot classification system
+from enhanced_shot_classifier import create_enhanced_shot_classifier, EnhancedShotClassifier
 # Import ultimate coaching enhancement system
 from enhanced_coaching_config import apply_ultimate_enhancement
 # Import Llama coaching enhancement system
 from llama_coaching_enhancement import initialize_llama_enhancement, get_llama_enhancer
 import json
 import numpy as np
+from collections import defaultdict
 
 class MemoryEfficientLLMManager:
-    """Manages LLM loading to prevent memory conflicts"""
+    """Enhanced LLM manager with comprehensive memory management"""
     
     def __init__(self):
         self.current_model = None
         self.model_instances = {}
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.memory_threshold_gb = 0.8  # Start cleanup when 80% memory used
+        self.max_models_in_memory = 1  # Only allow one model at a time
+        print(f" Memory Manager initialized - Device: {self.device}")
+        
+    def check_system_memory(self):
+        """Check system RAM and GPU memory"""
+        # System RAM
+        ram = psutil.virtual_memory()
+        ram_used_gb = ram.used / (1024**3)
+        ram_total_gb = ram.total / (1024**3)
+        ram_percent = ram.percent
+        
+        # GPU memory
+        gpu_allocated_gb = 0
+        gpu_reserved_gb = 0
+        gpu_total_gb = 0
+        
+        if torch.cuda.is_available():
+            gpu_allocated_gb = torch.cuda.memory_allocated(0) / (1024**3)
+            gpu_reserved_gb = torch.cuda.memory_reserved(0) / (1024**3)
+            gpu_total_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        
+        return {
+            'ram_used_gb': ram_used_gb,
+            'ram_total_gb': ram_total_gb,
+            'ram_percent': ram_percent,
+            'gpu_allocated_gb': gpu_allocated_gb,
+            'gpu_reserved_gb': gpu_reserved_gb,
+            'gpu_total_gb': gpu_total_gb
+        }
+        
+    def force_cleanup(self):
+        """Force aggressive memory cleanup"""
+        print(" Starting aggressive memory cleanup...")
+        
+        # Clear all model instances
+        for model_name in list(self.model_instances.keys()):
+            print(f"   Clearing {model_name}...")
+            del self.model_instances[model_name]
+        
+        self.model_instances.clear()
+        self.current_model = None
+        
+        # Clear YOLO models if they exist
+        if hasattr(self, 'yolo_model'):
+            del self.yolo_model
+            
+        # Clear PyTorch cache
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            
+        # Clear TensorFlow memory
+        try:
+            tf.keras.backend.clear_session()
+        except:
+            pass
+            
+        # Force garbage collection multiple times
+        for _ in range(3):
+            gc.collect()
+            
+        # Clear matplotlib cache
+        plt.close('all')
+        
+        print(" Aggressive cleanup completed")
+        self.print_memory_status()
+        
+    def print_memory_status(self):
+        """Print current memory status"""
+        memory_info = self.check_system_memory()
+        print(f" Memory Status:")
+        print(f"   RAM: {memory_info['ram_used_gb']:.1f}GB/{memory_info['ram_total_gb']:.1f}GB ({memory_info['ram_percent']:.1f}%)")
+        if torch.cuda.is_available():
+            print(f"   GPU: {memory_info['gpu_allocated_gb']:.1f}GB/{memory_info['gpu_total_gb']:.1f}GB allocated")
+            print(f"        {memory_info['gpu_reserved_gb']:.1f}GB reserved")
+        
+    def should_cleanup(self):
+        """Check if memory cleanup is needed"""
+        memory_info = self.check_system_memory()
+        
+        # Check RAM usage
+        if memory_info['ram_percent'] > 85:
+            return True, "High RAM usage"
+            
+        # Check GPU usage
+        if torch.cuda.is_available():
+            gpu_percent = (memory_info['gpu_allocated_gb'] / memory_info['gpu_total_gb']) * 100
+            if gpu_percent > 80:
+                return True, "High GPU usage"
+                
+        # Check number of models in memory
+        if len(self.model_instances) > self.max_models_in_memory:
+            return True, "Too many models loaded"
+            
+        return False, "Memory OK"
         
     def load_model(self, model_type):
-        """Load a specific model type, unloading others first"""
-        if self.current_model == model_type:
-            return self.model_instances.get(model_type)
+        """Load a specific model type with enhanced memory management"""
+        print(f" Request to load model: {model_type}")
+        
+        # Check if model is already loaded
+        if self.current_model == model_type and model_type in self.model_instances:
+            print(f" Model {model_type} already loaded")
+            return self.model_instances[model_type]
         
         # Check memory before loading
-        print("💾 Checking memory before loading model...")
-        self.check_memory_usage()
+        print(" Pre-load memory check:")
+        self.print_memory_status()
         
-        # Unload current model to free memory
-        self.unload_current_model()
+        # Check if cleanup is needed
+        needs_cleanup, reason = self.should_cleanup()
+        if needs_cleanup:
+            print(f"  Memory cleanup needed: {reason}")
+            self.force_cleanup()
+        
+        # Unload current model to ensure only one is loaded
+        if self.current_model and self.current_model != model_type:
+            self.unload_current_model()
         
         try:
             if model_type == 'llama':
-                print("🤖 Loading Llama enhancement model...")
-                initialize_llama_enhancement()
-                llama_enhancer = get_llama_enhancer()
-                if llama_enhancer and llama_enhancer.is_initialized:
-                    self.model_instances[model_type] = llama_enhancer
-                    self.current_model = model_type
-                    print("✅ Llama model loaded successfully")
-                    print("💾 Memory after loading Llama model:")
-                    self.check_memory_usage()
-                    return llama_enhancer
-                else:
-                    print("⚠️ Llama model failed to initialize")
+                print(" Loading Llama enhancement model...")
+                try:
+                    initialize_llama_enhancement()
+                    llama_enhancer = get_llama_enhancer()
+                    if llama_enhancer and llama_enhancer.is_initialized:
+                        self.model_instances[model_type] = llama_enhancer
+                        self.current_model = model_type
+                        print(" Llama model loaded successfully")
+                        self.print_memory_status()
+                        return llama_enhancer
+                    else:
+                        print(" Llama model failed to initialize")
+                        return None
+                except Exception as e:
+                    print(f" Llama model loading failed: {e}")
                     return None
                     
             elif model_type == 'autonomous_coaching':
-                print("🧠 Loading autonomous coaching models...")
-                from autonomous_coaching import get_autonomous_coach
-                autonomous_coach = get_autonomous_coach()
-                if autonomous_coach:
-                    self.model_instances[model_type] = autonomous_coach
-                    self.current_model = model_type
-                    print("✅ Autonomous coaching models loaded successfully")
-                    print("💾 Memory after loading autonomous coaching models:")
-                    self.check_memory_usage()
-                    return autonomous_coach
-                else:
-                    print("⚠️ Autonomous coaching models failed to initialize")
+                print(" Loading autonomous coaching models...")
+                try:
+                    # Import and reset coach to ensure clean state
+                    from autonomous_coaching import reset_autonomous_coach, get_autonomous_coach
+                    reset_autonomous_coach()  # Clear any existing instance
+                    
+                    autonomous_coach = get_autonomous_coach()
+                    if autonomous_coach:
+                        self.model_instances[model_type] = autonomous_coach
+                        self.current_model = model_type
+                        print(" Autonomous coaching models loaded successfully")
+                        self.print_memory_status()
+                        return autonomous_coach
+                    else:
+                        print(" Autonomous coaching models failed to initialize")
+                        return None
+                except Exception as e:
+                    print(f" Autonomous coaching model loading failed: {e}")
                     return None
                     
         except Exception as e:
-            print(f"❌ Failed to load {model_type} model: {e}")
+            print(f" Failed to load {model_type} model: {e}")
             return None
     
     def unload_current_model(self):
-        """Unload current model to free memory"""
+        """Enhanced model unloading with memory cleanup"""
         if self.current_model:
-            print(f"🗑️ Unloading {self.current_model} model to free memory...")
+            print(f" Unloading {self.current_model} model...")
+            
+            # Special handling for autonomous coaching
+            if self.current_model == 'autonomous_coaching':
+                try:
+                    from autonomous_coaching import reset_autonomous_coach
+                    reset_autonomous_coach()
+                except Exception as e:
+                    print(f"Warning: Could not reset autonomous coach: {e}")
+            
+            # Remove from instances
             if self.current_model in self.model_instances:
                 del self.model_instances[self.current_model]
+            
             self.current_model = None
             
-            # Clear GPU cache
+            # Aggressive memory cleanup
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                print(f"🧹 GPU memory cleared: {torch.cuda.memory_allocated(0) / 1e6:.1f} MB")
+                torch.cuda.synchronize()
+                
+            # Multiple garbage collections
+            for _ in range(2):
+                gc.collect()
+                
+            print(" Model unloaded and memory cleaned")
+            self.print_memory_status()
     
     def get_model(self, model_type):
-        """Get model instance, loading if necessary"""
-        if model_type in self.model_instances:
+        """Get model instance with memory checks"""
+        # Pre-flight memory check
+        needs_cleanup, reason = self.should_cleanup()
+        if needs_cleanup:
+            print(f"  Pre-flight cleanup needed: {reason}")
+            self.force_cleanup()
+            
+        if model_type in self.model_instances and self.current_model == model_type:
             return self.model_instances[model_type]
         return self.load_model(model_type)
     
-    def check_memory_usage(self):
-        """Check current memory usage"""
-        if torch.cuda.is_available():
-            allocated = torch.cuda.memory_allocated(0) / 1e9
-            reserved = torch.cuda.memory_reserved(0) / 1e9
-            total = torch.cuda.get_device_properties(0).total_memory / 1e9
-            print(f"💾 GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved, {total:.2f}GB total")
-            return allocated, reserved, total
-        return 0, 0, 0
+    def cleanup_and_exit(self):
+        """Final cleanup before exit"""
+        print(" Performing final memory cleanup...")
+        self.force_cleanup()
+        print(" Final cleanup completed")
 
 # Global LLM manager instance
 llm_manager = MemoryEfficientLLMManager()
@@ -936,6 +1079,19 @@ class ShotTracker:
         self.player_hit_detector = PlayerHitDetector()
         self.phase_detector = ShotPhaseDetector()
         
+        # Initialize enhanced shot classifier
+        try:
+            self.enhanced_classifier = create_enhanced_shot_classifier((640, 360))
+            print(" Enhanced shot classifier integrated into ShotTracker")
+        except Exception as e:
+            print(f"  Enhanced shot classifier initialization failed: {e}")
+            self.enhanced_classifier = None
+            
+        # Shot pattern tracking
+        self.shot_patterns = []
+        self.player_statistics = {1: defaultdict(int), 2: defaultdict(int)}
+        self.rally_statistics = []
+        
     def detect_shot_start(self, ball_hit, who_hit, frame_count, ball_pos, shot_type, hit_confidence=0.0, hit_type="normal", past_ball_pos=None):
         """
         Enhanced shot start detection with improved player identification and shot classification
@@ -950,23 +1106,62 @@ class ShotTracker:
         # Only register shots with sufficient confidence
         if hit_confidence < 0.3:
             return False
-            
-        # Use enhanced shot classification if past_ball_pos is provided
-        if hasattr(self, 'shot_classification_model') and past_ball_pos and len(past_ball_pos) > 3:
+        
+        enhanced_classification = None
+        shot_features = {}
+        classification_confidence = 0.5
+        
+        # Use enhanced shot classification if available and past_ball_pos is provided
+        if self.enhanced_classifier and past_ball_pos and len(past_ball_pos) > 5:
             try:
-                enhanced_classification = self.shot_classification_model.classify_shot(
-                    past_ball_pos[-10:], (640, 360)  # Use recent trajectory
+                # Convert past_ball_pos to trajectory format for classifier
+                trajectory = [(pos[0], pos[1]) for pos in past_ball_pos[-15:]]
+                
+                # Get player position if available
+                player_position = None
+                if who_hit in [1, 2]:
+                    # Try to get player position from ball_pos or estimate
+                    player_position = (ball_pos[0], ball_pos[1])
+                
+                # Classify the shot using enhanced classifier
+                enhanced_classification = self.enhanced_classifier.classify_shot_from_trajectory(
+                    trajectory, player_position
                 )
-                shot_type = enhanced_classification['type']
-                shot_features = enhanced_classification['features']
-                classification_confidence = enhanced_classification['confidence']
-            except Exception:
+                
+                shot_type = enhanced_classification.shot_type
+                classification_confidence = enhanced_classification.confidence
+                shot_features = {
+                    'difficulty_score': enhanced_classification.difficulty_score,
+                    'effectiveness_score': enhanced_classification.effectiveness_score,
+                    'tactical_context': enhanced_classification.tactical_context,
+                    'subtypes': enhanced_classification.subtypes,
+                    'trajectory_length': enhanced_classification.features.trajectory_length,
+                    'wall_hits': enhanced_classification.features.wall_hits,
+                    'court_coverage': enhanced_classification.features.court_coverage,
+                    'ball_speed_avg': enhanced_classification.features.ball_speed_avg,
+                    'ball_speed_max': enhanced_classification.features.ball_speed_max
+                }
+                
+                print(f" Enhanced Classification: {shot_type} (confidence: {classification_confidence:.2f})")
+                
+            except Exception as e:
+                print(f"Enhanced classification error: {e}")
                 shot_features = {}
                 classification_confidence = 0.5
-        else:
-            shot_features = {}
-            classification_confidence = 0.5
-            
+        
+        # Fallback to legacy classification if enhanced failed
+        if not enhanced_classification:
+            try:
+                if hasattr(self, 'shot_classification_model') and past_ball_pos and len(past_ball_pos) > 3:
+                    legacy_classification = self.shot_classification_model.classify_shot(
+                        past_ball_pos[-10:], (640, 360)  # Use recent trajectory
+                    )
+                    shot_type = legacy_classification['type']
+                    shot_features = legacy_classification['features']
+                    classification_confidence = legacy_classification['confidence']
+            except Exception:
+                pass
+                
         # Start new shot with enhanced tracking
         self.shot_id_counter += 1
         new_shot = {
@@ -987,16 +1182,24 @@ class ShotTracker:
             'floor_hit_frame': None,
             'phase_transitions': [],
             'shot_features': shot_features,
-            'phase_history': [{'phase': 'start', 'frame': frame_count, 'confidence': 1.0}]
+            'phase_history': [{'phase': 'start', 'frame': frame_count, 'confidence': 1.0}],
+            'enhanced_classification': enhanced_classification
         }
         
         self.active_shots.append(new_shot)
         self.last_hit_frame = frame_count
         
+        # Update player statistics
+        self.player_statistics[who_hit]['shots_played'] += 1
+        self.player_statistics[who_hit][f'{shot_type}_shots'] += 1
+        
         # Log enhanced shot information
-        print(f"🎾 Enhanced Shot {self.shot_id_counter} started:")
+        print(f" Enhanced Shot {self.shot_id_counter} started:")
         print(f"   Player: {who_hit}, Type: {shot_type}")
         print(f"   Hit Confidence: {hit_confidence:.2f}, Classification: {classification_confidence:.2f}")
+        if shot_features:
+            print(f"   Difficulty: {shot_features.get('difficulty_score', 0):.2f}")
+            print(f"   Effectiveness: {shot_features.get('effectiveness_score', 0):.2f}")
         print(f"   Phase: START (ball leaves racket)")
         
         return True
@@ -1052,10 +1255,10 @@ class ShotTracker:
             # Log phase transition
             if transition == 'start_to_middle':
                 shot['wall_hit_frame'] = frame_count
-                print(f"🏏 Shot {shot['id']}: MIDDLE phase (wall hit) - Frame {frame_count}")
+                print(f" Shot {shot['id']}: MIDDLE phase (wall hit) - Frame {frame_count}")
             elif transition == 'middle_to_end' or transition == 'start_to_end':
                 shot['floor_hit_frame'] = frame_count
-                print(f"🎯 Shot {shot['id']}: END phase (floor hit) - Frame {frame_count}")
+                print(f" Shot {shot['id']}: END phase (floor hit) - Frame {frame_count}")
             
             # Record phase transition
             phase_transition = {
@@ -1358,7 +1561,7 @@ class ShotTracker:
     
     def get_shot_statistics(self):
         """
-        Get comprehensive shot statistics with phase information
+        Get comprehensive shot statistics with enhanced classification and phase information
         """
         stats = {
             'total_shots': len(self.completed_shots),
@@ -1369,7 +1572,19 @@ class ShotTracker:
             'average_shot_duration': 0,
             'wall_hits_distribution': {},
             'hit_confidence_average': 0.0,
-            'hit_types': {}
+            'hit_types': {},
+            'enhanced_stats': {
+                'avg_difficulty': 0.0,
+                'avg_effectiveness': 0.0,
+                'tactical_patterns': {},
+                'court_coverage_avg': 0.0,
+                'ball_speed_stats': {'avg': 0.0, 'max': 0.0},
+                'classification_confidence_avg': 0.0
+            },
+            'player_performance': {
+                1: {'shots': 0, 'avg_difficulty': 0.0, 'avg_effectiveness': 0.0, 'preferred_shots': {}},
+                2: {'shots': 0, 'avg_difficulty': 0.0, 'avg_effectiveness': 0.0, 'preferred_shots': {}}
+            }
         }
         
         if not self.completed_shots:
@@ -1378,16 +1593,29 @@ class ShotTracker:
         total_duration = 0
         total_confidence = 0
         confidence_count = 0
+        enhanced_count = 0
+        total_difficulty = 0.0
+        total_effectiveness = 0.0
+        total_court_coverage = 0.0
+        total_ball_speed_avg = 0.0
+        total_ball_speed_max = 0.0
+        total_classification_confidence = 0.0
         
         for shot in self.completed_shots:
             # Player statistics
             player = shot.get('player_who_hit', 0)
             if player in stats['shots_by_player']:
                 stats['shots_by_player'][player] += 1
+                stats['player_performance'][player]['shots'] += 1
             
             # Shot type statistics
             shot_type = shot.get('final_shot_type', shot.get('shot_type', 'unknown'))
             stats['shots_by_type'][shot_type] = stats['shots_by_type'].get(shot_type, 0) + 1
+            
+            # Update player preferred shots
+            if player in [1, 2]:
+                player_prefs = stats['player_performance'][player]['preferred_shots']
+                player_prefs[shot_type] = player_prefs.get(shot_type, 0) + 1
             
             # Phase statistics
             phase = shot.get('phase', 'unknown')
@@ -1411,6 +1639,57 @@ class ShotTracker:
             # Hit type statistics
             hit_type = shot.get('hit_type', 'normal')
             stats['hit_types'][hit_type] = stats['hit_types'].get(hit_type, 0) + 1
+            
+            # Enhanced classification statistics
+            shot_features = shot.get('shot_features', {})
+            enhanced_classification = shot.get('enhanced_classification')
+            
+            if shot_features or enhanced_classification:
+                enhanced_count += 1
+                
+                # Extract enhanced metrics
+                if enhanced_classification:
+                    difficulty = enhanced_classification.difficulty_score
+                    effectiveness = enhanced_classification.effectiveness_score
+                    court_coverage = enhanced_classification.features.court_coverage
+                    ball_speed_avg = enhanced_classification.features.ball_speed_avg
+                    ball_speed_max = enhanced_classification.features.ball_speed_max
+                    classification_conf = enhanced_classification.confidence
+                    
+                    # Tactical context
+                    tactical_intent = enhanced_classification.tactical_context.get('tactical_intent', 'unknown')
+                    stats['enhanced_stats']['tactical_patterns'][tactical_intent] = \
+                        stats['enhanced_stats']['tactical_patterns'].get(tactical_intent, 0) + 1
+                        
+                elif shot_features:
+                    difficulty = shot_features.get('difficulty_score', 0.0)
+                    effectiveness = shot_features.get('effectiveness_score', 0.0)
+                    court_coverage = shot_features.get('court_coverage', 0.0)
+                    ball_speed_avg = shot_features.get('ball_speed_avg', 0.0)
+                    ball_speed_max = shot_features.get('ball_speed_max', 0.0)
+                    classification_conf = shot.get('classification_confidence', 0.0)
+                    
+                    # Tactical context from features
+                    tactical_context = shot_features.get('tactical_context', {})
+                    tactical_intent = tactical_context.get('tactical_intent', 'unknown')
+                    stats['enhanced_stats']['tactical_patterns'][tactical_intent] = \
+                        stats['enhanced_stats']['tactical_patterns'].get(tactical_intent, 0) + 1
+                
+                total_difficulty += difficulty
+                total_effectiveness += effectiveness
+                total_court_coverage += court_coverage
+                total_ball_speed_avg += ball_speed_avg
+                total_ball_speed_max += ball_speed_max
+                total_classification_confidence += classification_conf
+                
+                # Player-specific enhanced stats
+                if player in [1, 2]:
+                    player_stats = stats['player_performance'][player]
+                    player_count = player_stats['shots']
+                    if player_count > 0:
+                        # Running average for difficulty and effectiveness
+                        player_stats['avg_difficulty'] = ((player_stats['avg_difficulty'] * (player_count-1)) + difficulty) / player_count
+                        player_stats['avg_effectiveness'] = ((player_stats['avg_effectiveness'] * (player_count-1)) + effectiveness) / player_count
         
         # Calculate averages
         if self.completed_shots:
@@ -1418,6 +1697,14 @@ class ShotTracker:
         
         if confidence_count > 0:
             stats['hit_confidence_average'] = total_confidence / confidence_count
+            
+        if enhanced_count > 0:
+            stats['enhanced_stats']['avg_difficulty'] = total_difficulty / enhanced_count
+            stats['enhanced_stats']['avg_effectiveness'] = total_effectiveness / enhanced_count
+            stats['enhanced_stats']['court_coverage_avg'] = total_court_coverage / enhanced_count
+            stats['enhanced_stats']['ball_speed_stats']['avg'] = total_ball_speed_avg / enhanced_count
+            stats['enhanced_stats']['ball_speed_stats']['max'] = total_ball_speed_max / enhanced_count
+            stats['enhanced_stats']['classification_confidence_avg'] = total_classification_confidence / enhanced_count
         
         return stats
 
@@ -1590,9 +1877,9 @@ def cleanwrite():
     # Initialize bounce analysis log  
     with open("output/bounce_analysis.jsonl", "w") as f:
         f.write("")  # Clear the file
-    print("✅ Enhanced shot tracking initialized")
-    print("📊 Shot data will be logged to output/shots_log.jsonl")
-    print("🎾 Bounce analysis will be logged to output/bounce_analysis.jsonl")
+    print(" Enhanced shot tracking initialized")
+    print(" Shot data will be logged to output/shots_log.jsonl")
+    print(" Bounce analysis will be logged to output/bounce_analysis.jsonl")
 def get_data(length):
     # go through the data in the file output/final.csv and then return all the data in a list
     for i in range(0, length):
@@ -3024,7 +3311,7 @@ def determine_ball_hit_enhanced(players, past_ball_pos, proximity_threshold=100,
             velocity_change = abs(velocities[-1][0] - velocities[-2][0])
             direction_change = abs(velocities[-1][1] - velocities[-2][1])
             
-            # Normalize direction change to 0-π range
+            # Normalize direction change to 0- range
             direction_change = min(direction_change, 2*math.pi - direction_change)
             
             if velocity_change > velocity_threshold:
@@ -3154,7 +3441,7 @@ def get_enhanced_player_pos(player):
     for idx in priority_keypoints:
         if idx < len(keypoints):
             kp = keypoints[idx]
-            if not (kp[0] == 0 and kp[1] == 0):
+            if len(kp) >= 2 and not (kp[0] == 0 and kp[1] == 0):
                 x = int(kp[0] * 1920)  # Assuming standard frame width
                 y = int(kp[1] * 1080)  # Assuming standard frame height
                 # Weight racket hand positions more heavily
@@ -3164,7 +3451,7 @@ def get_enhanced_player_pos(player):
     
     # Add other valid keypoints with lower weight
     for i, kp in enumerate(keypoints):
-        if i not in priority_keypoints and not (kp[0] == 0 and kp[1] == 0):
+        if i not in priority_keypoints and len(kp) >= 2 and not (kp[0] == 0 and kp[1] == 0):
             x = int(kp[0] * 1920)
             y = int(kp[1] * 1080)
             valid_points.append((x, y))
@@ -3435,7 +3722,7 @@ def create_enhancement_summary():
             
         # Save summary
         cv2.imwrite("output/enhancement_summary.png", summary_img)
-        print("📊 Enhancement summary saved to output/enhancement_summary.png")
+        print(" Enhancement summary saved to output/enhancement_summary.png")
         
     except Exception as e:
         print(f"Error creating enhancement summary: {e}")
@@ -3539,61 +3826,70 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
     # Initialize frame counter early so exception handlers can access it
     frame_count = 0
     
-    # 🚀 AGGRESSIVE PERFORMANCE OPTIMIZATIONS
-    print("🚀 INITIALIZING ULTRA-FAST GPU-OPTIMIZED SQUASH COACHING PIPELINE")
+    #  ENHANCED MEMORY-OPTIMIZED SQUASH COACHING PIPELINE
+    print(" INITIALIZING MEMORY-OPTIMIZED GPU SQUASH COACHING PIPELINE")
     print("=" * 70)
     
-    # GPU optimization setup with aggressive settings
+    # Initial memory status
+    print(" Initial system memory status:")
+    llm_manager.print_memory_status()
+    
+    # GPU optimization setup with memory management
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f" Primary compute device: {device}")
+    print(f"  Primary compute device: {device}")
     
     if torch.cuda.is_available():
-        print(f" GPU: {torch.cuda.get_device_name(0)}")
-        print(f" GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        print(f"  GPU: {torch.cuda.get_device_name(0)}")
+        total_gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
+        print(f"  GPU Memory: {total_gpu_memory:.1f} GB")
         
-        # 🚀 AGGRESSIVE GPU OPTIMIZATIONS
+        # Clear any existing GPU memory
         torch.cuda.empty_cache()
+        
+        #  MEMORY-OPTIMIZED GPU SETTINGS
         torch.backends.cudnn.benchmark = True  # Optimize for fixed input sizes
         torch.backends.cudnn.deterministic = False  # Speed over reproducibility
         torch.backends.cudnn.enabled = True
         
-        # Set memory fraction for optimal performance
-        torch.cuda.set_per_process_memory_fraction(0.9)  # Use 90% of GPU memory
+        # Conservative memory allocation for stability
+        memory_fraction = 0.7 if total_gpu_memory >= 8.0 else 0.6  # Use less memory if GPU is smaller
+        torch.cuda.set_per_process_memory_fraction(memory_fraction)
         
-        # Enable mixed precision for 2x speedup
+        # Enable mixed precision for memory efficiency
         torch.backends.cuda.matmul.allow_tf32 = True
         torch.backends.cudnn.allow_tf32 = True
         
-        print(f" 🚀 GPU Memory allocated: {torch.cuda.memory_allocated(0) / 1e6:.1f} MB")
-        print(f" 🚀 GPU Memory cached: {torch.cuda.memory_reserved(0) / 1e6:.1f} MB")
-        print(" 🚀 CUDA optimizations enabled: benchmark=True, mixed_precision=True")
+        print(f" GPU Memory allocated: {torch.cuda.memory_allocated(0) / 1e6:.1f} MB")
+        print(f" GPU Memory cached: {torch.cuda.memory_reserved(0) / 1e6:.1f} MB")
+        print(f" Memory fraction set to: {memory_fraction*100:.0f}%")
+        print(" CUDA optimizations enabled: benchmark=True, mixed_precision=True")
     else:
-        print(" ⚠️  No GPU detected - using CPU (performance may be slower)")
+        print("  No GPU detected - using CPU (performance may be slower)")
     
-    # 🚀 MODEL OPTIMIZATION SETTINGS
+    #  MEMORY-OPTIMIZED MODEL SETTINGS
     model_optimizations = {
         'conf': 0.3,  # Higher confidence threshold for faster processing
         'iou': 0.5,   # Higher IoU threshold
-        'max_det': 10,  # Limit detections for speed
+        'max_det': 8,  # Reduced detections to save memory
         'agnostic_nms': True,  # Faster NMS
-        'half': True if torch.cuda.is_available() else False,  # FP16 for 2x speedup
+        'half': True if torch.cuda.is_available() else False,  # FP16 for memory efficiency
     }
     
-    print(" 🚀 Model optimizations applied:")
+    print(" Memory-optimized model settings:")
     for key, value in model_optimizations.items():
-        print(f"   • {key}: {value}")
+        print(f"    {key}: {value}")
     
-    # 🔥 INITIALIZE ENHANCED BALL PHYSICS AND SHOT DETECTION
+    #  INITIALIZE ENHANCED BALL PHYSICS AND SHOT DETECTION
     try:
         from enhanced_shot_integration import integrate_enhanced_detection_into_pipeline
         enhanced_integrator = integrate_enhanced_detection_into_pipeline(
             frame_width=input_frame_width, 
             frame_height=input_frame_height
         )
-        print("🔥 Enhanced Ball Physics System: ACTIVATED")
+        print(" Enhanced Ball Physics System: ACTIVATED")
         enhanced_detection_enabled = True
     except Exception as e:
-        print(f"⚠️  Enhanced detection initialization failed: {e}")
+        print(f"  Enhanced detection initialization failed: {e}")
         print("   Falling back to legacy detection system")
         enhanced_integrator = None
         enhanced_detection_enabled = False
@@ -3612,10 +3908,10 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             # Optimize GPU memory usage
             torch.cuda.empty_cache()
             # Monitor GPU memory usage
-            print(f" 🚀 GPU Memory allocated: {torch.cuda.memory_allocated(0) / 1e6:.1f} MB")
-            print(f" 🚀 GPU Memory cached: {torch.cuda.memory_reserved(0) / 1e6:.1f} MB")
+            print(f"  GPU Memory allocated: {torch.cuda.memory_allocated(0) / 1e6:.1f} MB")
+            print(f"  GPU Memory cached: {torch.cuda.memory_reserved(0) / 1e6:.1f} MB")
         else:
-            print(" ⚠️  No GPU detected - using CPU (performance may be slower)")
+            print("   No GPU detected - using CPU (performance may be slower)")
         
         csvstart = 0
         end = csvstart + 100
@@ -3649,8 +3945,8 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         # Initialize output files
         cleanwrite()
         
-        # 🚀 ULTRA-FAST MODEL LOADING WITH OPTIMIZATIONS
-        print(" 🚀 Loading optimized YOLO models with maximum GPU acceleration...")
+        #  ULTRA-FAST MODEL LOADING WITH OPTIMIZATIONS
+        print("  Loading optimized YOLO models with maximum GPU acceleration...")
         
         # Load pose model with aggressive optimizations
         pose_model = YOLO("models/yolo11n-pose.pt")
@@ -3659,7 +3955,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             # Apply aggressive optimizations
             pose_model.fuse()  # Fuse layers for speed
             pose_model.half()  # Use FP16 for 2x speedup
-            print(" 🚀 Pose model loaded on GPU with FP16 optimization")
+            print("  Pose model loaded on GPU with FP16 optimization")
         else:
             print(" Pose model loaded on CPU")
         
@@ -3670,17 +3966,17 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             # Apply aggressive optimizations
             ballmodel.fuse()  # Fuse layers for speed
             ballmodel.half()  # Use FP16 for 2x speedup
-            print(" 🚀 Ball detection model loaded on GPU with FP16 optimization")
+            print("  Ball detection model loaded on GPU with FP16 optimization")
         else:
             print(" Ball detection model loaded on CPU")
         
         print("=" * 70)
         print(" Enhanced Features Active:")
-        print("   • GPU-accelerated ball and pose detection")
-        print("   • Enhanced bounce detection with yellow circle visualization")
-        print("   • Multi-criteria bounce validation (angle, velocity, wall proximity)")
-        print("   • Real-time coaching data collection & analysis")
-        print("   • Optimized memory management")
+        print("    GPU-accelerated ball and pose detection")
+        print("    Enhanced bounce detection with yellow circle visualization")
+        print("    Multi-criteria bounce validation (angle, velocity, wall proximity)")
+        print("    Real-time coaching data collection & analysis")
+        print("    Optimized memory management")
         print("=" * 70)
         ballvideopath = "output/balltracking.mp4"
         cap = cv2.VideoCapture(path)
@@ -3778,8 +4074,8 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         validate_reference_points(reference_points, reference_points_3d)
         print(f"loaded everything in {time.time()-start} seconds")
         
-        # 🚀 ULTRA-FAST MAIN PROCESSING LOOP WITH OPTIMIZED FRAME HANDLING
-        print(" 🚀 Starting ultra-fast video processing...")
+        #  ULTRA-FAST MAIN PROCESSING LOOP WITH OPTIMIZED FRAME HANDLING
+        print("  Starting ultra-fast video processing...")
         
         # Pre-allocate memory for faster processing
         frame_buffer = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
@@ -3790,13 +4086,13 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             if not success:
                 break
 
-            # 🚀 OPTIMIZED FRAME PROCESSING - Direct resize without copy
+            #  OPTIMIZED FRAME PROCESSING - Direct resize without copy
             frame = cv2.resize(frame, (frame_width, frame_height), interpolation=cv2.INTER_LINEAR)
             frame_count += 1
             
             # Check frame limit for testing
             if max_frames is not None and frame_count > max_frames:
-                print(f"🛑 Reached frame limit ({max_frames}), stopping processing")
+                print(f" Reached frame limit ({max_frames}), stopping processing")
                 break
 
             if len(references1) != 0 and len(references2) != 0:
@@ -3867,7 +4163,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 embeddings=[],
                 plast=[[],[]]
             ):
-                # 🚀 ULTRA-FAST POSE DETECTION WITH OPTIMIZED PROCESSING
+                #  ULTRA-FAST POSE DETECTION WITH OPTIMIZED PROCESSING
                 global known_players_features
                 try:
                     # Use optimized inference with pre-configured settings
@@ -4143,23 +4439,23 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 past_ball_pos_3d=None
             ):
                 try:
-                    # 🚀 ULTRA-FAST BALL DETECTION WITH OPTIMIZED PROCESSING
+                    #  ULTRA-FAST BALL DETECTION WITH OPTIMIZED PROCESSING
                     # Use optimized inference with pre-configured settings
                     ball = ballmodel(frame, **model_optimizations, verbose=False)
                     
-                    # 🚀 OPTIMIZED BALL DETECTION - Direct GPU processing
+                    #  OPTIMIZED BALL DETECTION - Direct GPU processing
                     x1, y1, x2, y2 = 0, 0, 0, 0
                     highestconf = 0.0
                     label = "ball"
                     ball_detected = False
                     
-                    # 🚀 FAST DETECTION PROCESSING - Minimize CPU-GPU transfers
+                    #  FAST DETECTION PROCESSING - Minimize CPU-GPU transfers
                     if ball and len(ball) > 0 and hasattr(ball[0], 'boxes') and ball[0].boxes is not None and len(ball[0].boxes) > 0:
                         # Find the highest confidence detection with optimized processing
                         best_box = None
                         best_conf = 0
                         
-                        # 🚀 VECTORIZED PROCESSING for speed
+                        #  VECTORIZED PROCESSING for speed
                         boxes = ball[0].boxes
                         if len(boxes) > 0:
                             # Get all confidences at once
@@ -4171,7 +4467,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                             if best_conf > 0.2:  # Optimized threshold
                                 best_box = boxes[best_idx]
                                 try:
-                                    # 🚀 OPTIMIZED COORDINATE EXTRACTION
+                                    #  OPTIMIZED COORDINATE EXTRACTION
                                     coords = best_box.xyxy[0].cpu().numpy()
                                     if len(coords) >= 4:
                                         x1, y1, x2, y2 = coords[0], coords[1], coords[2], coords[3]
@@ -4181,7 +4477,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                                 except Exception as e:
                                     ball_detected = False
                     
-                    # 🚀 OPTIMIZED VISUALIZATION - Only draw if detected
+                    #  OPTIMIZED VISUALIZATION - Only draw if detected
                     if ball_detected:
                         cv2.rectangle(annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
                         cv2.putText(
@@ -4194,7 +4490,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                             2,
                         )
 
-                    # 🚀 OPTIMIZED FRAME DISPLAY - Minimal text rendering
+                    #  OPTIMIZED FRAME DISPLAY - Minimal text rendering
                     if frame_count % 10 == 0:  # Only update every 10 frames for speed
                         cv2.putText(
                             annotated_frame,
@@ -4206,7 +4502,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                             2,
                         )
                     
-                    # 🚀 ENHANCED BALL POSITION UPDATE WITH 3D POSITIONING
+                    #  ENHANCED BALL POSITION UPDATE WITH 3D POSITIONING
                     if ball_detected:
                         # Calculate ball center with optimized math
                         avg_x = int((x1 + x2) / 2)
@@ -4462,7 +4758,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                                 from enhanced_framepose import save_reid_references, get_reid_statistics
                                 save_reid_references(f"output/reid_references_frame_{frame_count}.json")
                                 reid_stats = get_reid_statistics()
-                                print(f"📊 ReID Stats at frame {frame_count}: {reid_stats}")
+                                print(f" ReID Stats at frame {frame_count}: {reid_stats}")
                         except Exception as e:
                             print(f"Error saving ReID stats: {e}")
                     
@@ -4610,7 +4906,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             if 'idata' in locals() and idata:
                 alldata.append(idata)
             
-            # 🔥 ENHANCED BALL DETECTION PROCESSING
+            #  ENHANCED BALL DETECTION PROCESSING
             if enhanced_detection_enabled and enhanced_integrator:
                 try:
                     # Process with enhanced physics-based detection
@@ -4636,7 +4932,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                         event_summary = {}
                         for event in shot_events:
                             event_summary[event.event_type] = event_summary.get(event.event_type, 0) + 1
-                        print(f"🎯 Frame {frame_count}: Enhanced events detected: {event_summary}")
+                        print(f" Frame {frame_count}: Enhanced events detected: {event_summary}")
                     
                 except Exception as e:
                     print(f"Enhanced detection error: {e}, falling back to legacy")
@@ -4712,11 +5008,96 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 except Exception as e:
                     print(f"Action classification error: {e}")
             
-            # Enhanced coaching data collection with comprehensive metrics
+            # Enhanced coaching data collection with comprehensive metrics and shot analysis
             try:
                 coaching_data = collect_coaching_data(
                     players, past_ball_pos, type_of_shot, who_hit, match_in_play, frame_count
                 )
+                
+                # Add enhanced shot tracking data
+                shot_stats = shot_tracker.get_shot_statistics()
+                coaching_data['shot_tracking'] = {
+                    'total_shots': shot_stats['total_shots'],
+                    'active_shots': shot_stats['active_shots'],
+                    'player_shots': shot_stats['shots_by_player'],
+                    'shot_types': shot_stats['shots_by_type'],
+                    'shot_phases': shot_stats['shots_by_phase'],
+                    'average_duration': shot_stats['average_shot_duration'],
+                    'hit_confidence_avg': shot_stats['hit_confidence_average'],
+                    'wall_hits_distribution': shot_stats['wall_hits_distribution']
+                }
+                
+                # Add enhanced classification metrics
+                if 'enhanced_stats' in shot_stats:
+                    coaching_data['enhanced_metrics'] = {
+                        'avg_difficulty': shot_stats['enhanced_stats']['avg_difficulty'],
+                        'avg_effectiveness': shot_stats['enhanced_stats']['avg_effectiveness'],
+                        'court_coverage': shot_stats['enhanced_stats']['court_coverage_avg'],
+                        'ball_speed_metrics': shot_stats['enhanced_stats']['ball_speed_stats'],
+                        'classification_confidence': shot_stats['enhanced_stats']['classification_confidence_avg'],
+                        'tactical_patterns': shot_stats['enhanced_stats']['tactical_patterns']
+                    }
+                
+                # Add individual player performance data
+                coaching_data['player_performance'] = {}
+                for player_id in [1, 2]:
+                    player_perf = shot_stats['player_performance'][player_id]
+                    coaching_data['player_performance'][f'player_{player_id}'] = {
+                        'total_shots': player_perf['shots'],
+                        'avg_difficulty': player_perf['avg_difficulty'],
+                        'avg_effectiveness': player_perf['avg_effectiveness'],
+                        'preferred_shots': player_perf['preferred_shots'],
+                        'shot_percentage': (player_perf['shots'] / max(shot_stats['total_shots'], 1)) * 100
+                    }
+                
+                # Add current shot information if active
+                if shot_tracker.active_shots:
+                    active_shot = shot_tracker.active_shots[-1]
+                    coaching_data['current_shot'] = {
+                        'shot_id': active_shot['id'],
+                        'player': active_shot['player_who_hit'],
+                        'shot_type': active_shot['shot_type'],
+                        'phase': active_shot.get('phase', 'unknown'),
+                        'trajectory_length': len(active_shot['trajectory']),
+                        'classification_confidence': active_shot.get('classification_confidence', 0.0),
+                        'enhanced_features': active_shot.get('shot_features', {}),
+                        'wall_hits': active_shot.get('wall_hits', 0)
+                    }
+                
+                # Add recent completed shots for pattern analysis
+                if shot_tracker.completed_shots:
+                    recent_shots = shot_tracker.completed_shots[-5:]  # Last 5 shots
+                    coaching_data['recent_shots'] = []
+                    
+                    for shot in recent_shots:
+                        shot_summary = {
+                            'shot_id': shot['id'],
+                            'player': shot['player_who_hit'],
+                            'shot_type': shot.get('final_shot_type', shot['shot_type']),
+                            'duration': shot.get('duration', 0),
+                            'phase_completed': shot.get('phase', 'unknown'),
+                            'wall_hits': shot.get('wall_hits', 0),
+                            'hit_confidence': shot.get('hit_confidence', 0.0)
+                        }
+                        
+                        # Add enhanced classification data if available
+                        enhanced_classification = shot.get('enhanced_classification')
+                        if enhanced_classification:
+                            shot_summary['enhanced_analysis'] = {
+                                'difficulty': enhanced_classification.difficulty_score,
+                                'effectiveness': enhanced_classification.effectiveness_score,
+                                'tactical_intent': enhanced_classification.tactical_context.get('tactical_intent', 'unknown'),
+                                'court_position': enhanced_classification.tactical_context.get('court_position', 'unknown'),
+                                'placement': enhanced_classification.tactical_context.get('placement', 'unknown')
+                            }
+                        elif shot.get('shot_features'):
+                            shot_summary['enhanced_analysis'] = {
+                                'difficulty': shot['shot_features'].get('difficulty_score', 0.0),
+                                'effectiveness': shot['shot_features'].get('effectiveness_score', 0.0),
+                                'tactical_intent': shot['shot_features'].get('tactical_context', {}).get('tactical_intent', 'unknown')
+                            }
+                        
+                        coaching_data['recent_shots'].append(shot_summary)
                 
                 # Add enhanced detection results to coaching data if available
                 if enhanced_detection_enabled and 'shot_analysis' in locals():
@@ -4752,13 +5133,25 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                             for event in shot_events
                         ]
                 
+                # Add tactical insights and patterns
+                if shot_tracker.enhanced_classifier:
+                    patterns = shot_tracker.enhanced_classifier.get_shot_patterns()
+                    coaching_data['tactical_insights'] = {
+                        'most_common_shots': patterns.get('most_common_shots', []),
+                        'average_difficulty': patterns.get('average_difficulty', 0.0),
+                        'average_effectiveness': patterns.get('average_effectiveness', 0.0),
+                        'tactical_tendencies': dict(patterns.get('tactical_tendencies', {})),
+                        'court_coverage_patterns': dict(patterns.get('court_coverage', {}))
+                    }
+                
                 # Ensure coaching_data is a dictionary
                 if not isinstance(coaching_data, dict):
                     coaching_data = {'base_data': coaching_data}
                 
-                # Add simple ball tracking metrics to coaching data
+                # Add comprehensive ball tracking metrics
                 coaching_data['ball_tracking_confidence'] = 1.0 if len(past_ball_pos) > 0 else 0.0
                 coaching_data['ball_tracking_state'] = "tracking" if len(past_ball_pos) > 0 else "searching"
+                coaching_data['total_ball_positions'] = len(past_ball_pos)
                 
                 # Add enhanced trajectory analysis
                 if len(past_ball_pos) > 5:
@@ -4791,7 +5184,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 coaching_data_collection.append(coaching_data)
                 
             except Exception as e:
-                print(f"⚠️  Error in coaching data collection: {e}")
+                print(f"  Error in coaching data collection: {e}")
                 # Create basic coaching data as fallback
                 basic_coaching_data = {
                     'frame_count': frame_count,
@@ -4810,7 +5203,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 ball_hit = False
             try:
                 reorganize_shots(alldata)
-                 # print(f"organized data: {organizeddata}")
+                # print(f"organized data: {organizeddata}")
             except Exception as e:
                 print(f"error reorganizing: {e}")
                 pass
@@ -5518,7 +5911,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                     # Save coaching data for final comprehensive analysis
                     # Interim reports disabled to avoid duplicate AI analysis calls
                     if len(coaching_data_collection) > 50 and running_frame % 500 == 0:
-                        print(f"📊 Coaching data collected: {len(coaching_data_collection)} points (frame {running_frame})")
+                        print(f" Coaching data collected: {len(coaching_data_collection)} points (frame {running_frame})")
                             
                 except Exception as e:
                     print(f"error: {e}")
@@ -5534,7 +5927,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 1,
             )
             
-            # 🚀 OPTIMIZED GPU MEMORY MONITORING - Less frequent for speed
+            #  OPTIMIZED GPU MEMORY MONITORING - Less frequent for speed
             if frame_count % 30 == 0 and torch.cuda.is_available():
                 allocated = torch.cuda.memory_allocated(0) / 1e6
                 cached = torch.cuda.memory_reserved(0) / 1e6
@@ -5543,14 +5936,14 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
             # Generate periodic outputs every 1500 frames
             if frame_count % 1500 == 0:
                 try:
-                    print(f"🔄 Generating periodic outputs at frame {frame_count}...")
+                    print(f" Generating periodic outputs at frame {frame_count}...")
                     periodic_outputs = generate_comprehensive_outputs(
                         frame_count, players, past_ball_pos, shot_tracker, 
                         coaching_data_collection, path
                     )
-                    print(f"✅ Generated {len(periodic_outputs)} periodic outputs")
+                    print(f" Generated {len(periodic_outputs)} periodic outputs")
                 except Exception as e:
-                    print(f"⚠️ Error generating periodic outputs: {e}")
+                    print(f" Error generating periodic outputs: {e}")
             
             # Draw shot trajectories and enhanced ball visualization
             current_ball_pos = past_ball_pos[-1] if past_ball_pos else None
@@ -5609,7 +6002,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         
         # Generate comprehensive outputs
         try:
-            print("🎯 Generating comprehensive outputs...")
+            print(" Generating comprehensive outputs...")
             
             # Call comprehensive output generation
             outputs_generated = generate_comprehensive_outputs(
@@ -5617,7 +6010,7 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
                 coaching_data_collection, path
             )
             
-            print(f"✅ Generated {len(outputs_generated)} comprehensive outputs")
+            print(f" Generated {len(outputs_generated)} comprehensive outputs")
         except Exception as e:
             print(f"Error generating comprehensive outputs: {e}")
             outputs_generated = []  # Ensure outputs_generated is defined even if generation fails
@@ -5673,25 +6066,25 @@ def main(path="self2.mp4", input_frame_width=640, input_frame_height=360, max_fr
         except Exception:
             pass
         
-        # 🔥 EXPORT ENHANCED BALL PHYSICS DATA
+        #  EXPORT ENHANCED BALL PHYSICS DATA
         if enhanced_detection_enabled and enhanced_integrator:
             try:
-                print("\n🔥 Exporting Enhanced Ball Physics and Shot Detection Data...")
+                print("\n Exporting Enhanced Ball Physics and Shot Detection Data...")
                 enhanced_integrator.export_enhanced_data("output/enhanced_shots")
                 
                 # Get comprehensive shot statistics
                 enhanced_stats = enhanced_integrator.get_shot_statistics()
-                print(f"✓ Enhanced Detection Statistics:")
-                print(f"   • Total frames processed: {enhanced_stats['system_performance']['total_frames_processed']}")
-                print(f"   • Enhanced detections: {enhanced_stats['system_performance']['enhanced_detections']}")
-                print(f"   • Total shots detected: {enhanced_stats['shot_detection']['total_shots']}")
-                print(f"   • Total events detected: {enhanced_stats['system_performance']['total_events_detected']}")
-                print(f"   • Detection success rate: {enhanced_stats['detection_success_rate']:.2%}")
-                print(f"   • Processing rate: {enhanced_stats['frame_processing_rate']:.1f} fps")
+                print(f" Enhanced Detection Statistics:")
+                print(f"    Total frames processed: {enhanced_stats['system_performance']['total_frames_processed']}")
+                print(f"    Enhanced detections: {enhanced_stats['system_performance']['enhanced_detections']}")
+                print(f"    Total shots detected: {enhanced_stats['shot_detection']['total_shots']}")
+                print(f"    Total events detected: {enhanced_stats['system_performance']['total_events_detected']}")
+                print(f"    Detection success rate: {enhanced_stats['detection_success_rate']:.2%}")
+                print(f"    Processing rate: {enhanced_stats['frame_processing_rate']:.1f} fps")
                 
                 # Create enhanced summary report
                 enhanced_summary = f"""
-🔥 ENHANCED BALL PHYSICS SHOT DETECTION REPORT
+ENHANCED BALL PHYSICS SHOT DETECTION REPORT
 ==============================================
 
 SYSTEM PERFORMANCE:
@@ -5718,11 +6111,11 @@ SHOT TYPE DISTRIBUTION:
 PERFORMANCE ASSESSMENT: {enhanced_stats['shot_detection'].get('system_performance', 'Good')}
 
 This enhanced system provides:
-✓ Physics-based trajectory modeling with Kalman filters
-✓ Multi-modal event detection (racket hits, wall impacts, floor bounces)
-✓ Real-time collision detection with confidence scoring
-✓ Autonomous shot segmentation and classification
-✓ Advanced signal processing for trajectory analysis
+Physics-based trajectory modeling with Kalman filters
+Multi-modal event detection (racket hits, wall impacts, floor bounces)
+Real-time collision detection with confidence scoring
+Autonomous shot segmentation and classification
+Advanced signal processing for trajectory analysis
 
 """
                 
@@ -5730,13 +6123,13 @@ This enhanced system provides:
                 with open("output/enhanced_shot_detection_summary.txt", "w", encoding='utf-8') as f:
                     f.write(enhanced_summary)
                     
-                print("✓ Enhanced shot detection summary saved to output/enhanced_shot_detection_summary.txt")
+                print(" Enhanced shot detection summary saved to output/enhanced_shot_detection_summary.txt")
                 
             except Exception as e:
-                print(f"⚠️  Enhanced data export error: {e}")
+                print(f"  Enhanced data export error: {e}")
         
         # Enhanced autonomous coaching analysis and report generation
-        print("\n🎾 Generating Enhanced Autonomous Coaching Analysis with Shot Tracking...")
+        print("\n Generating Enhanced Autonomous Coaching Analysis with Shot Tracking...")
         
         # Generate shot analysis report
         try:
@@ -5751,75 +6144,75 @@ This enhanced system provides:
 ENHANCED SHOT TRACKING ANALYSIS
 =======================================
 
-📊 SHOT STATISTICS:
+SHOT STATISTICS:
 -----------------
-• Total Shots Tracked: {shot_stats['total_shots']}
-• Player 1 Shots: {shot_stats['shots_by_player'].get(1, 0)}
-• Player 2 Shots: {shot_stats['shots_by_player'].get(2, 0)}
-• Average Shot Duration: {shot_stats['average_shot_duration']:.1f} frames
+Total Shots Tracked: {shot_stats['total_shots']}
+Player 1 Shots: {shot_stats['shots_by_player'].get(1, 0)}
+Player 2 Shots: {shot_stats['shots_by_player'].get(2, 0)}
+Average Shot Duration: {shot_stats['average_shot_duration']:.1f} frames
 
-🏓 WALL HIT DETECTION STATISTICS:
+WALL HIT DETECTION STATISTICS:
 ------------------------------
-• Total Wall Hits Detected: {total_wall_hits}
-• Wall Hit Distribution: {total_bounces}
-• Legacy Detection Algorithm: Direction-based hit detection
+Total Wall Hits Detected: {total_wall_hits}
+Wall Hit Distribution: {total_bounces}
+Legacy Detection Algorithm: Direction-based hit detection
 
-🎯 SHOT TYPE BREAKDOWN:
+SHOT TYPE BREAKDOWN:
 ---------------------
 """
             for shot_type, count in shot_stats['shots_by_type'].items():
                 percentage = (count / shot_stats['total_shots'] * 100) if shot_stats['total_shots'] > 0 else 0
-                shot_analysis_report += f"• {shot_type}: {count} ({percentage:.1f}%)\n"
+                shot_analysis_report += f" {shot_type}: {count} ({percentage:.1f}%)\n"
                 
             shot_analysis_report += f"""
 
-📈 ENHANCED VISUALIZATION FEATURES:
+ENHANCED VISUALIZATION FEATURES:
 ----------------------------------
-• Real-time trajectory visualization with color coding
-• Clear shot START markers: Large circles with "START" text
-• Clear shot END markers: Square markers with "END" text  
-• Active shot indicators: "ACTIVE" labels on current ball
-• Crosscourt shots: Green trajectory lines
-• Straight shots: Yellow trajectory lines  
-• Boast shots: Magenta trajectory lines
-• Drop shots: Orange trajectory lines
-• Lob shots: Blue trajectory lines
-• Bounce visualization: Multi-colored confidence-based markers
+Real-time trajectory visualization with color coding
+Clear shot START markers: Large circles with "START" text
+Clear shot END markers: Square markers with "END" text  
+Active shot indicators: "ACTIVE" labels on current ball
+Crosscourt shots: Green trajectory lines
+Straight shots: Yellow trajectory lines  
+Boast shots: Magenta trajectory lines
+Drop shots: Orange trajectory lines
+Lob shots: Blue trajectory lines
+Bounce visualization: Multi-colored confidence-based markers
 
-🔬 TECHNICAL IMPROVEMENTS:
+TECHNICAL IMPROVEMENTS:
 -------------------------
-• Enhanced player-ball hit detection using weighted keypoints
-• Multi-factor scoring system (proximity + movement + trajectory)
-• Real-time shot classification with trajectory analysis
-• Automatic shot completion detection
-• Comprehensive 4-algorithm bounce detection system
-• Physics-based bounce validation
-• Velocity vector analysis for precise hit detection
-• Wall proximity analysis with gradient scoring
-• Trajectory curvature analysis for direction changes
-• Complete shot data with bounce information saved to: output/shots_log.jsonl
+Enhanced player-ball hit detection using weighted keypoints
+Multi-factor scoring system (proximity + movement + trajectory)
+Real-time shot classification with trajectory analysis
+Automatic shot completion detection
+Comprehensive 4-algorithm bounce detection system
+Physics-based bounce validation
+Velocity vector analysis for precise hit detection
+Wall proximity analysis with gradient scoring
+Trajectory curvature analysis for direction changes
+Complete shot data with bounce information saved to: output/shots_log.jsonl
 
-🎨 VISUAL MARKERS LEGEND:
+VISUAL MARKERS LEGEND:
 ------------------------
-• START: Large circle with white center and colored border
-• END: Square marker with red center and colored border  
-• ACTIVE: Current ball position with enhanced highlighting
-• Bounces: Color-coded by confidence (Green=High, Yellow=Medium, Orange=Low)
-• Shot Duration: Displayed next to END markers
-• Algorithm Count: Shows how many detection algorithms agreed
+START: Large circle with white center and colored border
+END: Square marker with red center and colored border  
+ACTIVE: Current ball position with enhanced highlighting
+Bounces: Color-coded by confidence (Green=High, Yellow=Medium, Orange=Low)
+Shot Duration: Displayed next to END markers
+Algorithm Count: Shows how many detection algorithms agreed
 """
             
             # Save shot analysis report
             with open("output/shot_analysis_report.txt", "w", encoding='utf-8') as f:
                 f.write(shot_analysis_report)
                 
-            print("✅ Shot analysis report saved to output/shot_analysis_report.txt")
-            print(f"✅ {shot_stats['total_shots']} shots tracked and saved to output/shots_log.jsonl")
+            print(" Shot analysis report saved to output/shot_analysis_report.txt")
+            print(f" {shot_stats['total_shots']} shots tracked and saved to output/shots_log.jsonl")
             
             # Analyze shot patterns from saved data
             shot_patterns = analyze_shot_patterns()
             if shot_patterns:
-                print(f"📊 Advanced shot pattern analysis completed")
+                print(f" Advanced shot pattern analysis completed")
                 print(f"   - Total shots analyzed: {shot_patterns['total_shots']}")
                 print(f"   - Average shot duration: {shot_patterns['average_duration']:.1f} frames")
             
@@ -5827,13 +6220,13 @@ ENHANCED SHOT TRACKING ANALYSIS
             create_enhancement_summary()
             
         except Exception as e:
-            print(f"⚠️ Error generating shot analysis: {e}")
+            print(f" Error generating shot analysis: {e}")
         
         try:
-            # 🚀 APPLY ULTIMATE COACHING ENHANCEMENT
-            print("\n🔥 Applying ULTIMATE coaching enhancement for maximum insights...")
+            #  APPLY ULTIMATE COACHING ENHANCEMENT
+            print("\n Applying ULTIMATE coaching enhancement for maximum insights...")
             ultimate_analysis = apply_ultimate_enhancement(coaching_data_collection)
-            print("✅ Ultimate enhancement analysis completed!")
+            print(" Ultimate enhancement analysis completed!")
             
             # Get the global autonomous coach instance using memory manager
             autonomous_coach = llm_manager.get_model('autonomous_coaching')
@@ -5842,7 +6235,7 @@ ENHANCED SHOT TRACKING ANALYSIS
             if autonomous_coach:
                 coaching_insights = autonomous_coach.analyze_match_data(coaching_data_collection)
             else:
-                print("⚠️ Autonomous coaching model not available, skipping analysis")
+                print(" Autonomous coaching model not available, skipping analysis")
                 coaching_insights = {"error": "Model not available"}
             
             # Enhanced coaching report with bounce and shot analysis
@@ -5854,35 +6247,35 @@ Analysis Date: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Video Analyzed: {path}
 Total Frames Processed: {frame_count}
 Enhanced Coaching Data Points: {len(coaching_data_collection)}
-GPU Acceleration: {'✅ Enabled' if torch.cuda.is_available() else '❌ CPU Only'}
+GPU Acceleration: {' Enabled' if torch.cuda.is_available() else ' CPU Only'}
 
 ENHANCED BALL TRACKING ANALYSIS:
 ------------------------------
-• Total trajectory points: {len(past_ball_pos)}
-• Enhanced bounce detection: GPU-accelerated
-• Multi-criteria validation: Angle, velocity, wall proximity
-• Visualization: Real-time colored trajectory indicators
-• Shot tracking: {shot_tracker.get_shot_statistics()['total_shots']} complete shots analyzed
+Total trajectory points: {len(past_ball_pos)}
+Enhanced bounce detection: GPU-accelerated
+Multi-criteria validation: Angle, velocity, wall proximity
+Visualization: Real-time colored trajectory indicators
+Shot tracking: {shot_tracker.get_shot_statistics()['total_shots']} complete shots analyzed
 
 {coaching_insights}
 
 TECHNICAL ENHANCEMENTS:
 ---------------------
-• 🎾 GPU-optimized ball detection and tracking
-• 🎯 Enhanced shot tracking with real-time visualization
-• 🔍 Enhanced bounce detection with multiple validation criteria
-• 📊 Real-time trajectory analysis with physics modeling
-• 🤖 Comprehensive coaching data collection
-• 📈 Advanced ball bounce pattern analysis
-• 🎨 Color-coded shot visualization system
+GPU-optimized ball detection and tracking
+Enhanced shot tracking with real-time visualization
+Enhanced bounce detection with multiple validation criteria
+Real-time trajectory analysis with physics modeling
+Comprehensive coaching data collection
+Advanced ball bounce pattern analysis
+Color-coded shot visualization system
 
 SYSTEM PERFORMANCE:
 -----------------
-• Processing device: {'GPU' if torch.cuda.is_available() else 'CPU'}
-• Ball detection accuracy: Enhanced with trained model
-• Bounce detection: Multi-algorithm validation
-• Shot tracking: ✅ Active throughout session
-• Real-time analysis: ✅ Active throughout session
+Processing device: {'GPU' if torch.cuda.is_available() else 'CPU'}
+Ball detection accuracy: Enhanced with trained model
+Bounce detection: Multi-algorithm validation
+Shot tracking:  Active throughout session
+Real-time analysis:  Active throughout session
 
 ================================================
 """
@@ -5915,8 +6308,8 @@ ENHANCED PLAYER RE-IDENTIFICATION REPORT
 =======================================
 
 Total Track ID Swaps Detected: {reid_stats.get('total_swaps_detected', 0)}
-Player 1 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(1) else '❌ Incomplete'}
-Player 2 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(2) else '❌ Incomplete'}
+Player 1 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(1) else ' Incomplete'}
+Player 2 Initialization: {'Complete' if reid_stats.get('initialization_status', {}).get(2) else ' Incomplete'}
 
 Reference Feature Counts:
 - Player 1: {reid_stats.get('reference_counts', {}).get(1, 0)} appearance features
@@ -5946,17 +6339,17 @@ close proximity between players.
                 print(f"Error generating ReID report: {e}")
             
             # Generate comprehensive visualizations and analytics
-            print("\n🎨 Generating comprehensive visualizations and analytics...")
+            print("\n Generating comprehensive visualizations and analytics...")
             try:
                 from autonomous_coaching import create_graphics, view_all_graphics
                 
                 # Generate all visualizations based on final.csv data
                 visualization_files = create_graphics()
-                print(f"✅ {len(visualization_files)} visualizations generated successfully!")
+                print(f" {len(visualization_files)} visualizations generated successfully!")
                 
                 # Display summary of generated graphics
                 view_all_graphics()
-                print("📊 Graphics summary and analytics displayed!")
+                print(" Graphics summary and analytics displayed!")
                 
                 # Generate enhanced shot analytics if available
                 if enhanced_detection_enabled and enhanced_integrator:
@@ -5964,78 +6357,91 @@ close proximity between players.
                         enhanced_stats = enhanced_integrator.get_shot_statistics()
                         enhanced_integrator.export_enhanced_data("output/enhanced_shots")
                         
-                        print("\n🔥 Enhanced Shot Detection Summary:")
-                        print(f"   • Total frames processed: {enhanced_stats['system_performance']['total_frames_processed']}")
-                        print(f"   • Enhanced detections: {enhanced_stats['system_performance']['enhanced_detections']}")
-                        print(f"   • Total shots detected: {enhanced_stats['shot_detection']['total_shots']}")
-                        print(f"   • Processing rate: {enhanced_stats['frame_processing_rate']:.1f} fps")
-                        print(f"   • Detection success rate: {enhanced_stats['detection_success_rate']*100:.1f}%")
+                        print("\n Enhanced Shot Detection Summary:")
+                        print(f"    Total frames processed: {enhanced_stats['system_performance']['total_frames_processed']}")
+                        print(f"    Enhanced detections: {enhanced_stats['system_performance']['enhanced_detections']}")
+                        print(f"    Total shots detected: {enhanced_stats['shot_detection']['total_shots']}")
+                        print(f"    Processing rate: {enhanced_stats['frame_processing_rate']:.1f} fps")
+                        print(f"    Detection success rate: {enhanced_stats['detection_success_rate']*100:.1f}%")
                         
                         if enhanced_stats['shot_detection']['total_shots'] > 0:
                             shot_types = enhanced_stats['shot_detection'].get('shot_types', {})
-                            print(f"   • Shot types detected: {', '.join(shot_types.keys())}")
+                            print(f"    Shot types detected: {', '.join(shot_types.keys())}")
                         
                     except Exception as enhanced_error:
-                        print(f"⚠️ Enhanced statistics export error: {enhanced_error}")
+                        print(f" Enhanced statistics export error: {enhanced_error}")
                 
             except Exception as viz_error:
-                print(f"⚠️ Error generating visualizations: {viz_error}")
+                print(f" Error generating visualizations: {viz_error}")
                 print("   Pipeline completed successfully, but visualizations could not be generated.")
             
         except Exception as e:
-            print(f"  Error in enhanced coaching analysis: {e}")
-            print("   Generating basic coaching report as fallback...")
+            print(f" Error in enhanced coaching analysis: {e}")
+            print(" Generating basic coaching report as fallback...")
+            # Memory cleanup before fallback
+            print(" Cleaning memory before fallback coaching report...")
+            llm_manager.force_cleanup()
+            
             # Fallback to basic coaching report if enhanced analysis fails
             try:
                 if not basic_coaching_attempted:
+                    print(" Memory status before fallback coaching:")
+                    llm_manager.print_memory_status()
+                    
                     generate_coaching_report(coaching_data_collection, path, frame_count)
-                    print("✅ Basic coaching report generated successfully as fallback.")
+                    print(" Basic coaching report generated successfully as fallback.")
                 else:
-                    print("   Basic coaching data was prepared, enhanced analysis failed.")
+                    print(" Basic coaching data was prepared, enhanced analysis failed.")
             except Exception as fallback_error:
-                print(f"⚠️ Fallback coaching report also failed: {fallback_error}")
+                print(f" Fallback coaching report also failed: {fallback_error}")
+                print(" Final emergency cleanup...")
+                llm_manager.force_cleanup()
         
-        print("\n🎾 ULTIMATE SQUASH COACHING ANALYSIS COMPLETE! 🎾")
+        # Final memory cleanup before ending
+        print("\n Pre-completion memory cleanup...")
+        llm_manager.force_cleanup()
+        
+        print("\n ULTIMATE SQUASH COACHING ANALYSIS COMPLETE! ")
         print("=" * 70)
-        print("🚀 ENHANCED FEATURES ACTIVATED:")
-        print(f"   • Enhanced Ball Physics Detection: {'✅ ACTIVE' if enhanced_detection_enabled else '❌ FAILED'}")
-        print(f"   • AI-Powered Coaching Analysis: ✅ ACTIVE")
-        print(f"   • Advanced Shot Classification: ✅ ACTIVE")
-        print(f"   • Physics-Based Trajectory Modeling: ✅ ACTIVE")
-        print(f"   • Real-time Event Detection: ✅ ACTIVE")
-        print(f"   • Comprehensive Visualizations: ✅ ACTIVE")
-        print(f"   • Player Re-identification: ✅ ACTIVE")
-        print(f"   • Bounce Pattern Analysis: ✅ ACTIVE")
+        print(" ENHANCED FEATURES ACTIVATED:")
+        print(f"    Enhanced Ball Physics Detection: {' ACTIVE' if enhanced_detection_enabled else ' FAILED'}")
+        print(f"    AI-Powered Coaching Analysis:  ACTIVE")
+        print(f"    Advanced Shot Classification:  ACTIVE")
+        print(f"    Physics-Based Trajectory Modeling:  ACTIVE")
+        print(f"    Real-time Event Detection:  ACTIVE")
+        print(f"    Comprehensive Visualizations:  ACTIVE")
+        print(f"    Player Re-identification:  ACTIVE")
+        print(f"    Bounce Pattern Analysis:  ACTIVE")
         print("=" * 70)
-        print("\n📁 COMPREHENSIVE OUTPUT FILES GENERATED:")
-        print("   🤖 AI COACHING REPORTS:")
-        print("      • enhanced_autonomous_coaching_report.txt - AI coaching insights")
-        print("      • autonomous_coaching_report.txt - Standard coaching analysis")
-        print("   📊 DATA FILES:")
-        print("      • enhanced_coaching_data.json - Complete enhanced analysis data")
-        print("      • final.csv - Frame-by-frame trajectory and shot data")
-        print("      • final.json - Structured match data")
-        print("   🎯 SHOT ANALYSIS:")
-        print("      • enhanced_shots/ - Physics-based shot detection exports")
-        print("      • shots_log.jsonl - Detailed shot event logging")
-        print("      • bounce_analysis.jsonl - Ball bounce pattern analysis")
-        print("   🎨 VISUALIZATIONS:")
-        print("      • graphics/ - Complete visual analytics suite")
-        print("      • heatmaps/ - Player and ball position heatmaps")
-        print("      • trajectories/ - 2D and 3D trajectory visualizations")
-        print("   👥 PLAYER ANALYSIS:")
-        print("      • reid_analysis_report.txt - Player tracking and identification")
-        print("      • final_reid_references.json - Player appearance references")
-        print("      • annotated.mp4 - Video with enhanced visualization")
+        print("\n COMPREHENSIVE OUTPUT FILES GENERATED:")
+        print("    AI COACHING REPORTS:")
+        print("       enhanced_autonomous_coaching_report.txt - AI coaching insights")
+        print("       autonomous_coaching_report.txt - Standard coaching analysis")
+        print("    DATA FILES:")
+        print("       enhanced_coaching_data.json - Complete enhanced analysis data")
+        print("       final.csv - Frame-by-frame trajectory and shot data")
+        print("       final.json - Structured match data")
+        print("    SHOT ANALYSIS:")
+        print("       enhanced_shots/ - Physics-based shot detection exports")
+        print("       shots_log.jsonl - Detailed shot event logging")
+        print("       bounce_analysis.jsonl - Ball bounce pattern analysis")
+        print("    VISUALIZATIONS:")
+        print("       graphics/ - Complete visual analytics suite")
+        print("       heatmaps/ - Player and ball position heatmaps")
+        print("       trajectories/ - 2D and 3D trajectory visualizations")
+        print("    PLAYER ANALYSIS:")
+        print("       reid_analysis_report.txt - Player tracking and identification")
+        print("       final_reid_references.json - Player appearance references")
+        print("       annotated.mp4 - Video with enhanced visualization")
         print("=" * 70)
-        print(f"\n📈 SESSION STATISTICS:")
-        print(f"   • Total frames processed: {frame_count:,}")
-        print(f"   • Coaching data points collected: {len(coaching_data_collection):,}")
-        print(f"   • Video processing completed: {path}")
+        print(f"\n SESSION STATISTICS:")
+        print(f"    Total frames processed: {frame_count:,}")
+        print(f"    Coaching data points collected: {len(coaching_data_collection):,}")
+        print(f"    Video processing completed: {path}")
         if enhanced_detection_enabled:
-            print(f"   • Enhanced detection mode: ACTIVE with physics modeling")
+            print(f"    Enhanced detection mode: ACTIVE with physics modeling")
         print("=" * 70)
-        print("\n🎯 WHAT YOU GET:")
+        print("\n WHAT YOU GET:")
         print("   1. TECHNICAL ANALYSIS - Shot accuracy, technique evaluation")
         print("   2. TACTICAL INSIGHTS - Pattern recognition, strategy analysis")
         print("   3. PHYSICAL ASSESSMENT - Movement efficiency, court coverage")
@@ -6044,11 +6450,11 @@ close proximity between players.
         print("   6. VISUAL ANALYTICS - Interactive charts and heatmaps")
         print("=" * 70)
         print("\n ENHANCED REID SYSTEM FEATURES:")
-        print("   • Initial player appearance capture (frames 100-150)")
-        print("   • Continuous track ID swap detection")
-        print("   • Deep learning-based appearance features")
-        print("   • Multi-modal identity verification (appearance + position)")
-        print("   • Real-time confidence scoring")
+        print("    Initial player appearance capture (frames 100-150)")
+        print("    Continuous track ID swap detection")
+        print("    Deep learning-based appearance features")
+        print("    Multi-modal identity verification (appearance + position)")
+        print("    Real-time confidence scoring")
         print("=" * 50)
 
         cap.release()
@@ -6151,7 +6557,7 @@ def estimate_ball_height_physics(pixel_point, past_ball_pos, frame_count, fps):
     
     # Physics-based height estimation
     # Squash ball physics: gravity affects vertical motion
-    g = 9.81  # m/s²
+    g = 9.81  # m/s
     time_since_last = (frame_count - recent_positions[-1][2]) / fps
     
     # Estimate initial vertical velocity from trajectory
@@ -6435,7 +6841,7 @@ def enhanced_ball_detection_validation(x, y, w, h, confidence, past_ball_pos, fr
                 )
                 if angle_change > 170:  # Degrees (increased from 150)
                     if frame_count == 73:
-                        print(f"Frame 73: Angle change {angle_change:.1f}° too large (threshold: 170°)")
+                        print(f"Frame 73: Angle change {angle_change:.1f} too large (threshold: 170)")
                     return False
     
     return True
@@ -6505,7 +6911,7 @@ def predict_ball_3d_position_advanced(past_ball_pos_3d, frames_ahead=3):
     avg_velocity = np.mean(velocities_3d, axis=0)
     
     # Apply physics constraints (gravity affects Z component)
-    g = 9.81  # m/s²
+    g = 9.81  # m/s
     time_ahead = frames_ahead / 30.0  # Assuming 30 fps
     
     # Predict position with physics
@@ -6527,16 +6933,16 @@ def ensure_venv_usage():
     import subprocess
     import os
     
-    print("🔧 Checking virtual environment setup...")
+    print(" Checking virtual environment setup...")
     
     # Check if we're in a virtual environment
     in_venv = hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix)
     
     if in_venv:
-        print(f"✅ Virtual environment detected: {sys.prefix}")
+        print(f" Virtual environment detected: {sys.prefix}")
     else:
-        print("⚠️ No virtual environment detected")
-        print("💡 Consider activating your virtual environment for better dependency management")
+        print(" No virtual environment detected")
+        print(" Consider activating your virtual environment for better dependency management")
     
     # Check for required packages
     required_packages = [
@@ -6552,25 +6958,25 @@ def ensure_venv_usage():
             missing_packages.append(package)
     
     if missing_packages:
-        print(f"⚠️ Missing packages: {', '.join(missing_packages)}")
-        print("💡 Install missing packages with: pip install -r requirements.txt")
+        print(f" Missing packages: {', '.join(missing_packages)}")
+        print(" Install missing packages with: pip install -r requirements.txt")
     else:
-        print("✅ All required packages are available")
+        print(" All required packages are available")
     
     # Check CUDA availability
     if torch.cuda.is_available():
-        print(f"🚀 CUDA available: {torch.cuda.get_device_name(0)}")
+        print(f" CUDA available: {torch.cuda.get_device_name(0)}")
     else:
-        print("⚠️ CUDA not available - using CPU")
+        print(" CUDA not available - using CPU")
     
-    print("🔧 Virtual environment check complete\n")
+    print(" Virtual environment check complete\n")
 
 # Comprehensive Output Generation Functions
 def generate_comprehensive_outputs(frame_count, players, past_ball_pos, shot_tracker, coaching_data_collection, path):
     """
     Generate all outputs including graphics, clips, heatmaps, highlights, patterns, raw data, stats, reports, trajectories, visualizations
     """
-    print("🎯 Generating comprehensive outputs...")
+    print(" Generating comprehensive outputs...")
     
     # Create all output directories
     output_dirs = [
@@ -6617,11 +7023,11 @@ def generate_comprehensive_outputs(frame_count, players, past_ball_pos, shot_tra
     # 10. Llama AI-Enhanced Analysis
     outputs_generated.extend(generate_llama_enhanced_analysis(frame_count, players, past_ball_pos, shot_tracker, coaching_data_collection))
     
-    print(f"✅ Generated {len(outputs_generated)} comprehensive outputs")
+    print(f" Generated {len(outputs_generated)} comprehensive outputs")
     return outputs_generated
 
 def generate_graphics_outputs(frame_count, players, past_ball_pos, shot_tracker):
-    """Generate graphics and visualizations"""
+    """Generate enhanced graphics and visualizations with shot analysis"""
     outputs = []
     
     # Ensure output directories exist
@@ -6629,17 +7035,30 @@ def generate_graphics_outputs(frame_count, players, past_ball_pos, shot_tracker)
     os.makedirs('output/heatmaps', exist_ok=True)
     os.makedirs('output/heatmaps/players', exist_ok=True)
     os.makedirs('output/heatmaps/ball', exist_ok=True)
+    os.makedirs('output/visualizations', exist_ok=True)
+    os.makedirs('output/visualizations/shots', exist_ok=True)
+    os.makedirs('output/visualizations/patterns', exist_ok=True)
     
     try:
-        # Always create a basic court visualization
-        fig, ax = plt.subplots(figsize=(12, 8))
+        # 1. Enhanced Court Visualization with Shot Tracking
+        fig, ax = plt.subplots(figsize=(15, 10))
         
-        # Draw court outline
+        # Draw enhanced court with professional layout
         court_width, court_height = 640, 360
-        ax.add_patch(plt.Rectangle((0, 0), court_width, court_height, fill=False, color='black', linewidth=2))
         
-        # Plot player positions if available
+        # Court outline
+        ax.add_patch(patches.Rectangle((0, 0), court_width, court_height, 
+                                fill=False, color='navy', linewidth=3))
+        
+        # Court lines (service boxes, etc.)
+        ax.axvline(x=court_width/2, color='navy', linewidth=2, alpha=0.7, linestyle='--')
+        ax.axhline(y=court_height*0.3, color='navy', linewidth=1, alpha=0.5)
+        ax.axhline(y=court_height*0.7, color='navy', linewidth=1, alpha=0.5)
+        
+        # Plot enhanced player positions with movement tracking
         players_plotted = 0
+        player_colors = ['red', 'blue']
+        
         for player_id in [1, 2]:
             if players.get(player_id) and players.get(player_id).get_latest_pose():
                 try:
@@ -6647,157 +7066,439 @@ def generate_graphics_outputs(frame_count, players, past_ball_pos, shot_tracker)
                     if hasattr(pose, 'xyn') and len(pose.xyn) > 0 and len(pose.xyn[0]) > 16:
                         ankle_x = pose.xyn[0][16][0] * court_width
                         ankle_y = pose.xyn[0][16][1] * court_height
-                        ax.scatter(ankle_x, ankle_y, s=100, label=f'Player {player_id}', alpha=0.7)
+                        
+                        # Enhanced player visualization
+                        ax.scatter(ankle_x, ankle_y, s=200, c=player_colors[player_id-1], 
+                                label=f'Player {player_id}', alpha=0.8, edgecolors='white', linewidth=2)
+                        
+                        # Add player stats if available
+                        shot_stats = shot_tracker.get_shot_statistics()
+                        player_shots = shot_stats['player_performance'][player_id]['shots']
+                        ax.annotate(f'P{player_id}: {player_shots} shots', 
+                                (ankle_x + 15, ankle_y + 15), fontsize=10, 
+                                bbox=dict(boxstyle="round,pad=0.3", facecolor=player_colors[player_id-1], alpha=0.7))
                         players_plotted += 1
                 except Exception as e:
                     print(f"Error plotting player {player_id}: {e}")
         
-        # Plot ball trajectory if available
-        if past_ball_pos and len(past_ball_pos) > 5:
-            try:
-                ball_x = [pos[0] for pos in past_ball_pos[-20:]]
-                ball_y = [pos[1] for pos in past_ball_pos[-20:]]
-                ax.plot(ball_x, ball_y, 'g-', alpha=0.6, linewidth=2, label='Ball Trajectory')
-                ax.scatter(ball_x[-1], ball_y[-1], c='red', s=50, label='Current Ball Position')
-            except Exception as e:
-                print(f"Error plotting ball trajectory: {e}")
+        # Plot enhanced ball trajectory with shot classifications
+        if past_ball_pos and len(past_ball_pos) > 1:
+            ball_x = [pos[0] for pos in past_ball_pos[-50:]]  # Last 50 positions
+            ball_y = [pos[1] for pos in past_ball_pos[-50:]]
+            
+            # Color-coded trajectory based on shot types
+            ax.plot(ball_x, ball_y, 'yellow', linewidth=3, alpha=0.8, label='Ball Trajectory')
+            ax.scatter(ball_x[-1], ball_y[-1], s=150, c='orange', marker='o', 
+                    edgecolors='red', linewidth=2, label='Current Ball Position')
         
+        # Plot completed shots with enhanced visualization
+        shot_stats = shot_tracker.get_shot_statistics()
+        if shot_tracker.completed_shots:
+            for shot in shot_tracker.completed_shots[-10:]:  # Last 10 shots
+                if len(shot['trajectory']) > 1:
+                    shot_x = [pos[0] for pos in shot['trajectory']]
+                    shot_y = [pos[1] for pos in shot['trajectory']]
+                    
+                    # Color by shot type
+                    shot_type = shot.get('shot_type', 'unknown')
+                    shot_color = {
+                        'straight_drive': 'yellow',
+                        'crosscourt': 'green', 
+                        'boast': 'magenta',
+                        'drop_shot': 'orange',
+                        'lob': 'blue',
+                        'volley': 'cyan'
+                    }.get(shot_type, 'gray')
+                    
+                    ax.plot(shot_x, shot_y, color=shot_color, linewidth=2, alpha=0.6)
+                    
+                    # Mark shot start and end
+                    if shot_x and shot_y:
+                        # Check if labels already exist
+                        existing_labels = [t.get_text() for t in ax.get_legend().get_texts()] if ax.get_legend() else []
+                        
+                        start_label = 'Shot Start' if 'Shot Start' not in existing_labels else None
+                        end_label = 'Shot End' if 'Shot End' not in existing_labels else None
+                        
+                        ax.scatter(shot_x[0], shot_y[0], s=100, c='green', marker='^', 
+                                alpha=0.8, label=start_label)
+                        ax.scatter(shot_x[-1], shot_y[-1], s=100, c='red', marker='v', 
+                                alpha=0.8, label=end_label)
+        
+        # Enhanced annotations and statistics
         ax.set_xlim(0, court_width)
         ax.set_ylim(0, court_height)
-        ax.set_title(f'Court Positioning - Frame {frame_count}')
-        if players_plotted > 0 or (past_ball_pos and len(past_ball_pos) > 5):
-            ax.legend()
+        ax.set_xlabel('Court Width (pixels)', fontsize=12)
+        ax.set_ylabel('Court Height (pixels)', fontsize=12)
+        ax.set_title('Enhanced Squash Court Analysis - Shot Tracking & Player Movement', fontsize=14, fontweight='bold')
+        ax.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
         ax.grid(True, alpha=0.3)
         
-        plt.savefig('output/graphics/court_positioning.png', dpi=300, bbox_inches='tight')
-        plt.close()
-        outputs.append('output/graphics/court_positioning.png')
+        # Add comprehensive statistics panel
+        stats_text = f"""MATCH STATISTICS:
         
-        # Shot analysis visualization - create even if no shots detected
-        fig, ax = plt.subplots(figsize=(10, 6))
+Total Shots: {shot_stats['total_shots']}
+Active Shots: {shot_stats['active_shots']}
+Player 1 Shots: {shot_stats['shots_by_player'][1]}
+Player 2 Shots: {shot_stats['shots_by_player'][2]}
+
+Enhanced Metrics:
+Avg Difficulty: {shot_stats['enhanced_stats']['avg_difficulty']:.2f}
+Avg Effectiveness: {shot_stats['enhanced_stats']['avg_effectiveness']:.2f}
+Avg Court Coverage: {shot_stats['enhanced_stats']['court_coverage_avg']:.2f}
+Avg Ball Speed: {shot_stats['enhanced_stats']['ball_speed_stats']['avg']:.1f}
+
+Most Common Shots:
+{', '.join([f"{k}: {v}" for k, v in shot_stats['shots_by_type'].items()])}
+        """
         
-        if shot_tracker.completed_shots:
-            shot_types = [shot.get('shot_type', 'unknown') for shot in shot_tracker.completed_shots]
-            shot_counts = {}
-            for shot_type in shot_types:
-                shot_counts[shot_type] = shot_counts.get(shot_type, 0) + 1
-            
-            if shot_counts:
-                types = list(shot_counts.keys())
-                counts = list(shot_counts.values())
-                ax.bar(types, counts, color='skyblue', alpha=0.7)
-                ax.set_title('Shot Type Distribution')
-                ax.set_xlabel('Shot Type')
-                ax.set_ylabel('Count')
-                plt.xticks(rotation=45)
-            else:
-                ax.text(0.5, 0.5, 'No shots detected', ha='center', va='center', transform=ax.transAxes, fontsize=14)
-                ax.set_title('Shot Type Distribution - No Data')
-        else:
-            ax.text(0.5, 0.5, 'No shots detected', ha='center', va='center', transform=ax.transAxes, fontsize=14)
-            ax.set_title('Shot Type Distribution - No Data')
+        ax.text(1.02, 0.5, stats_text, transform=ax.transAxes, fontsize=10,
+                verticalalignment='center', bbox=dict(boxstyle="round,pad=0.5", facecolor='lightgray', alpha=0.8))
         
         plt.tight_layout()
-        plt.savefig('output/graphics/shot_analysis.png', dpi=300, bbox_inches='tight')
+        plt.savefig('output/graphics/enhanced_court_analysis.png', dpi=300, bbox_inches='tight')
         plt.close()
-        outputs.append('output/graphics/shot_analysis.png')
+        outputs.append('output/graphics/enhanced_court_analysis.png')
         
-        # Create a basic statistics visualization
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # Basic statistics
-        stats_data = {
-            'Total Frames': frame_count,
-            'Ball Positions': len(past_ball_pos) if past_ball_pos else 0,
-            'Completed Shots': len(shot_tracker.completed_shots) if shot_tracker.completed_shots else 0,
-            'Active Shots': len(shot_tracker.active_shots) if shot_tracker.active_shots else 0
-        }
-        
-        categories = list(stats_data.keys())
-        values = list(stats_data.values())
-        
-        bars = ax.bar(categories, values, color=['blue', 'green', 'orange', 'red'], alpha=0.7)
-        ax.set_title('Session Statistics')
-        ax.set_ylabel('Count')
-        
-        # Add value labels on bars
-        for bar, value in zip(bars, values):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
-                str(value), ha='center', va='bottom')
-        
-        plt.tight_layout()
-        plt.savefig('output/graphics/basic_statistics.png', dpi=300, bbox_inches='tight')
-        plt.close()
-        outputs.append('output/graphics/basic_statistics.png')
+        # 2. Shot Pattern Visualization
+        if shot_stats['shots_by_type']:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
             
-    except Exception as e:
-        print(f"Error generating graphics: {e}")
-        # Create a minimal error visualization
-        try:
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.text(0.5, 0.5, f'Graphics generation error:\n{str(e)}', 
-                ha='center', va='center', transform=ax.transAxes, fontsize=12)
-            ax.set_title('Error in Graphics Generation')
-            plt.savefig('output/graphics/error_visualization.png', dpi=300, bbox_inches='tight')
+            # Shot type distribution
+            shot_types = list(shot_stats['shots_by_type'].keys())
+            shot_counts = list(shot_stats['shots_by_type'].values())
+            colors = plt.cm.Set3(np.linspace(0, 1, len(shot_types)))
+            
+            ax1.pie(shot_counts, labels=shot_types, autopct='%1.1f%%', colors=colors, startangle=90)
+            ax1.set_title('Shot Type Distribution', fontsize=14, fontweight='bold')
+            
+            # Player performance comparison
+            if shot_stats['player_performance'][1]['shots'] > 0 or shot_stats['player_performance'][2]['shots'] > 0:
+                players_data = ['Player 1', 'Player 2']
+                shots_data = [shot_stats['player_performance'][1]['shots'], shot_stats['player_performance'][2]['shots']]
+                difficulty_data = [shot_stats['player_performance'][1]['avg_difficulty'], shot_stats['player_performance'][2]['avg_difficulty']]
+                effectiveness_data = [shot_stats['player_performance'][1]['avg_effectiveness'], shot_stats['player_performance'][2]['avg_effectiveness']]
+                
+                x = np.arange(len(players_data))
+                width = 0.25
+                
+                ax2.bar(x - width, shots_data, width, label='Total Shots', alpha=0.8)
+                ax2.bar(x, difficulty_data, width, label='Avg Difficulty', alpha=0.8)
+                ax2.bar(x + width, effectiveness_data, width, label='Avg Effectiveness', alpha=0.8)
+                
+                ax2.set_xlabel('Players')
+                ax2.set_ylabel('Metrics')
+                ax2.set_title('Player Performance Comparison', fontweight='bold')
+                ax2.set_xticks(x)
+                ax2.set_xticklabels(players_data)
+                ax2.legend()
+                ax2.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            plt.savefig('output/visualizations/shot_patterns.png', dpi=300, bbox_inches='tight')
             plt.close()
-            outputs.append('output/graphics/error_visualization.png')
+            outputs.append('output/visualizations/shot_patterns.png')
+        
+        # 3. Real-time Performance Dashboard
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        
+        # Court coverage heatmap
+        if past_ball_pos and len(past_ball_pos) > 10:
+            ball_x = np.array([pos[0] for pos in past_ball_pos])
+            ball_y = np.array([pos[1] for pos in past_ball_pos])
+            
+            # Create 2D histogram for heatmap
+            heatmap, xedges, yedges = np.histogram2d(ball_x, ball_y, bins=[32, 18], 
+                                                range=[[0, court_width], [0, court_height]])
+            
+            im1 = ax1.imshow(heatmap.T, origin='lower', aspect='auto', cmap='hot', 
+                        extent=[0, court_width, 0, court_height])
+            ax1.set_title('Ball Position Heatmap', fontweight='bold')
+            ax1.set_xlabel('Court Width')
+            ax1.set_ylabel('Court Height')
+            plt.colorbar(im1, ax=ax1)
+        
+        # Shot timeline
+        if shot_tracker.completed_shots:
+            shot_frames = [shot['start_frame'] for shot in shot_tracker.completed_shots[-20:]]
+            shot_types_timeline = [shot.get('shot_type', 'unknown') for shot in shot_tracker.completed_shots[-20:]]
+            
+            # Create color map for shot types
+            unique_types = list(set(shot_types_timeline))
+            colors_timeline = plt.cm.tab10(np.linspace(0, 1, len(unique_types)))
+            color_map = dict(zip(unique_types, colors_timeline))
+            
+            for i, (frame, shot_type) in enumerate(zip(shot_frames, shot_types_timeline)):
+                ax2.scatter(frame, i, c=[color_map[shot_type]], s=100, alpha=0.7)
+                ax2.annotate(shot_type, (frame, i), xytext=(5, 0), textcoords='offset points', 
+                        fontsize=8, rotation=45)
+            
+            ax2.set_title('Shot Timeline', fontweight='bold')
+            ax2.set_xlabel('Frame Number')
+            ax2.set_ylabel('Shot Sequence')
+            ax2.grid(True, alpha=0.3)
+        
+        # Tactical pattern analysis
+        if shot_stats['enhanced_stats']['tactical_patterns']:
+            tactical_types = list(shot_stats['enhanced_stats']['tactical_patterns'].keys())
+            tactical_counts = list(shot_stats['enhanced_stats']['tactical_patterns'].values())
+            
+            ax3.bar(tactical_types, tactical_counts, color='skyblue', alpha=0.7)
+            ax3.set_title('Tactical Intent Distribution', fontweight='bold')
+            ax3.set_xlabel('Tactical Intent')
+            ax3.set_ylabel('Frequency')
+            ax3.tick_params(axis='x', rotation=45)
+            ax3.grid(True, alpha=0.3)
+        
+        # Performance metrics over time
+        if shot_tracker.completed_shots and len(shot_tracker.completed_shots) > 5:
+            recent_shots = shot_tracker.completed_shots[-20:]
+            
+            difficulties = []
+            effectiveness_scores = []
+            shot_indices = []
+            
+            for i, shot in enumerate(recent_shots):
+                enhanced_classification = shot.get('enhanced_classification')
+                if enhanced_classification:
+                    difficulties.append(enhanced_classification.difficulty_score)
+                    effectiveness_scores.append(enhanced_classification.effectiveness_score)
+                    shot_indices.append(i)
+                elif shot.get('shot_features'):
+                    difficulties.append(shot['shot_features'].get('difficulty_score', 0.5))
+                    effectiveness_scores.append(shot['shot_features'].get('effectiveness_score', 0.5))
+                    shot_indices.append(i)
+            
+            if difficulties and effectiveness_scores:
+                ax4.plot(shot_indices, difficulties, 'o-', label='Difficulty', linewidth=2, markersize=6)
+                ax4.plot(shot_indices, effectiveness_scores, 's-', label='Effectiveness', linewidth=2, markersize=6)
+                ax4.set_title('Performance Metrics Trend', fontweight='bold')
+                ax4.set_xlabel('Shot Number')
+                ax4.set_ylabel('Score (0-1)')
+                ax4.legend()
+                ax4.grid(True, alpha=0.3)
+                ax4.set_ylim(0, 1)
+        
+        plt.tight_layout()
+        plt.savefig('output/visualizations/performance_dashboard.png', dpi=300, bbox_inches='tight')
+        plt.close()
+        outputs.append('output/visualizations/performance_dashboard.png')
+        
+    except Exception as e:
+        print(f"Error generating enhanced graphics: {e}")
+        # Fallback to basic visualization
+        try:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.text(0.5, 0.5, f'Enhanced Graphics Generation Error:\n{str(e)}\n\nBasic visualization will be used instead.', 
+                ha='center', va='center', transform=ax.transAxes, fontsize=12,
+                bbox=dict(boxstyle="round,pad=0.5", facecolor='yellow', alpha=0.7))
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.set_title('Graphics Generation Status')
+            plt.savefig('output/graphics/basic_status.png', dpi=150)
+            plt.close()
+            outputs.append('output/graphics/basic_status.png')
         except:
             pass
     
     return outputs
 
 def generate_heatmap_outputs(players, past_ball_pos):
-    """Generate heatmaps for players and ball"""
+    """Generate enhanced heatmaps for players and ball with advanced analytics"""
     outputs = []
     
+    # Ensure directories exist
+    os.makedirs('output/heatmaps/players', exist_ok=True)
+    os.makedirs('output/heatmaps/ball', exist_ok=True)
+    os.makedirs('output/heatmaps/combined', exist_ok=True)
+    os.makedirs('output/heatmaps/analysis', exist_ok=True)
+    
     try:
-        # Player heatmap
+        # 1. Enhanced Player Movement Heatmaps
         if players.get(1) and players.get(2):
-            heatmap = np.zeros((360, 640), dtype=np.float32)
+            # Create separate heatmaps for each player
+            for player_id in [1, 2]:
+                player_heatmap = np.zeros((360, 640), dtype=np.float32)
+                
+                if players[player_id].get_latest_pose():
+                    pose = players[player_id].get_latest_pose()
+                    if hasattr(pose, 'xyn') and len(pose.xyn) > 0 and len(pose.xyn[0]) > 16:
+                        # Use ankle position (keypoint 16)
+                        x = int(pose.xyn[0][16][0] * 640)
+                        y = int(pose.xyn[0][16][1] * 360)
+                        
+                        if 0 <= x < 640 and 0 <= y < 360:
+                            # Create a larger influence area for the player
+                            cv2.circle(player_heatmap, (x, y), 30, 1.0, -1)
+                
+                # Apply Gaussian blur for smooth heatmap
+                player_heatmap = cv2.GaussianBlur(player_heatmap, (51, 51), 0)
+                
+                # Normalize and apply colormap
+                if np.max(player_heatmap) > 0:
+                    heatmap_norm = cv2.normalize(player_heatmap, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                    
+                    # Use different colormaps for different players
+                    colormap = cv2.COLORMAP_OCEAN if player_id == 1 else cv2.COLORMAP_PLASMA
+                    heatmap_colored = cv2.applyColorMap(heatmap_norm, colormap)
+                    
+                    # Add court outline
+                    cv2.rectangle(heatmap_colored, (0, 0), (639, 359), (255, 255, 255), 2)
+                    cv2.line(heatmap_colored, (320, 0), (320, 359), (255, 255, 255), 1)
+                    
+                    # Save individual player heatmap
+                    filename = f'output/heatmaps/players/player_{player_id}_movement.png'
+                    cv2.imwrite(filename, heatmap_colored)
+                    outputs.append(filename)
             
-            # Collect player positions over time
+            # Combined player heatmap
+            combined_heatmap = np.zeros((360, 640, 3), dtype=np.uint8)
+            
             for player_id in [1, 2]:
                 if players[player_id].get_latest_pose():
                     pose = players[player_id].get_latest_pose()
-                    if len(pose.xyn[0]) > 16:
+                    if hasattr(pose, 'xyn') and len(pose.xyn) > 0 and len(pose.xyn[0]) > 16:
                         x = int(pose.xyn[0][16][0] * 640)
                         y = int(pose.xyn[0][16][1] * 360)
+                        
                         if 0 <= x < 640 and 0 <= y < 360:
-                            heatmap[y, x] += 1
+                            # Use different colors for each player
+                            color = (255, 0, 0) if player_id == 1 else (0, 0, 255)  # Red for P1, Blue for P2
+                            cv2.circle(combined_heatmap, (x, y), 25, color, -1)
             
-            # Apply Gaussian blur for smooth heatmap
-            heatmap = cv2.GaussianBlur(heatmap, (51, 51), 0)
+            # Apply blur to combined heatmap
+            combined_heatmap = cv2.GaussianBlur(combined_heatmap, (31, 31), 0)
             
-            # Normalize and apply colormap
-            heatmap_norm = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-            heatmap_colored = cv2.applyColorMap(heatmap_norm, cv2.COLORMAP_JET)
+            # Add court lines
+            cv2.rectangle(combined_heatmap, (0, 0), (639, 359), (255, 255, 255), 2)
+            cv2.line(combined_heatmap, (320, 0), (320, 359), (255, 255, 255), 1)
             
-            # Save player heatmap
-            cv2.imwrite('output/heatmaps/players/player_positions.png', heatmap_colored)
-            outputs.append('output/heatmaps/players/player_positions.png')
+            # Add labels
+            cv2.putText(combined_heatmap, 'Player 1 (Red)', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            cv2.putText(combined_heatmap, 'Player 2 (Blue)', (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            cv2.imwrite('output/heatmaps/combined/players_combined.png', combined_heatmap)
+            outputs.append('output/heatmaps/combined/players_combined.png')
         
-        # Ball heatmap
+        # 2. Enhanced Ball Movement Heatmaps
         if past_ball_pos and len(past_ball_pos) > 10:
+            # Main ball trajectory heatmap
             ball_heatmap = np.zeros((360, 640), dtype=np.float32)
             
-            for pos in past_ball_pos[-50:]:  # Last 50 positions
+            # Weight recent positions more heavily
+            for i, pos in enumerate(past_ball_pos[-100:]):  # Last 100 positions
                 x, y = int(pos[0]), int(pos[1])
                 if 0 <= x < 640 and 0 <= y < 360:
-                    ball_heatmap[y, x] += 1
+                    # Recent positions get higher weight
+                    weight = (i + 1) / len(past_ball_pos[-100:])
+                    ball_heatmap[y, x] += weight * 10
             
             # Apply Gaussian blur
-            ball_heatmap = cv2.GaussianBlur(ball_heatmap, (31, 31), 0)
+            ball_heatmap = cv2.GaussianBlur(ball_heatmap, (21, 21), 0)
             
             # Normalize and apply colormap
-            ball_heatmap_norm = cv2.normalize(ball_heatmap, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-            ball_heatmap_colored = cv2.applyColorMap(ball_heatmap_norm, cv2.COLORMAP_HOT)
+            if np.max(ball_heatmap) > 0:
+                ball_heatmap_norm = cv2.normalize(ball_heatmap, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                ball_heatmap_colored = cv2.applyColorMap(ball_heatmap_norm, cv2.COLORMAP_INFERNO)
+                
+                # Add court outline and center line
+                cv2.rectangle(ball_heatmap_colored, (0, 0), (639, 359), (255, 255, 255), 2)
+                cv2.line(ball_heatmap_colored, (320, 0), (320, 359), (255, 255, 255), 1)
+                
+                # Add service boxes
+                cv2.line(ball_heatmap_colored, (0, 108), (640, 108), (255, 255, 255), 1)  # 30% line
+                cv2.line(ball_heatmap_colored, (0, 252), (640, 252), (255, 255, 255), 1)  # 70% line
+                
+                cv2.imwrite('output/heatmaps/ball/ball_trajectory_enhanced.png', ball_heatmap_colored)
+                outputs.append('output/heatmaps/ball/ball_trajectory_enhanced.png')
             
-            # Save ball heatmap
-            cv2.imwrite('output/heatmaps/ball/ball_trajectory.png', ball_heatmap_colored)
-            outputs.append('output/heatmaps/ball/ball_trajectory.png')
+            # Ball speed heatmap
+            ball_speed_heatmap = np.zeros((360, 640), dtype=np.float32)
             
+            if len(past_ball_pos) > 1:
+                for i in range(1, len(past_ball_pos[-50:])):  # Last 50 positions
+                    pos1 = past_ball_pos[-(50-i)]
+                    pos2 = past_ball_pos[-(50-i-1)]
+                    
+                    # Calculate speed
+                    distance = np.sqrt((pos2[0] - pos1[0])**2 + (pos2[1] - pos1[1])**2)
+                    speed = distance  # Simplified speed calculation
+                    
+                    x, y = int(pos2[0]), int(pos2[1])
+                    if 0 <= x < 640 and 0 <= y < 360:
+                        ball_speed_heatmap[y, x] += speed
+                
+                # Apply Gaussian blur
+                ball_speed_heatmap = cv2.GaussianBlur(ball_speed_heatmap, (21, 21), 0)
+                
+                if np.max(ball_speed_heatmap) > 0:
+                    speed_heatmap_norm = cv2.normalize(ball_speed_heatmap, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                    speed_heatmap_colored = cv2.applyColorMap(speed_heatmap_norm, cv2.COLORMAP_VIRIDIS)
+                    
+                    # Add court outline
+                    cv2.rectangle(speed_heatmap_colored, (0, 0), (639, 359), (255, 255, 255), 2)
+                    cv2.line(speed_heatmap_colored, (320, 0), (320, 359), (255, 255, 255), 1)
+                    
+                    # Add title
+                    cv2.putText(speed_heatmap_colored, 'Ball Speed Heatmap', (10, 30), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    
+                    cv2.imwrite('output/heatmaps/ball/ball_speed_heatmap.png', speed_heatmap_colored)
+                    outputs.append('output/heatmaps/ball/ball_speed_heatmap.png')
+        
+        # 3. Court Zone Analysis Heatmap
+        zone_analysis = np.zeros((360, 640, 3), dtype=np.uint8)
+        
+        # Define court zones with different colors
+        zones = {
+            'front_court': {'color': (0, 255, 0), 'region': [(0, 0), (640, 108)]},      # Green
+            'mid_court': {'color': (255, 255, 0), 'region': [(0, 108), (640, 252)]},   # Yellow  
+            'back_court': {'color': (255, 0, 0), 'region': [(0, 252), (640, 360)]},    # Red
+        }
+        
+        # Draw zones
+        for zone_name, zone_info in zones.items():
+            color = zone_info['color']
+            (x1, y1), (x2, y2) = zone_info['region']
+            cv2.rectangle(zone_analysis, (x1, y1), (x2, y2), color, -1)
+        
+        # Apply transparency
+        zone_analysis = cv2.addWeighted(zone_analysis, 0.3, np.zeros_like(zone_analysis), 0.7, 0)
+        
+        # Add court outline and center line
+        cv2.rectangle(zone_analysis, (0, 0), (639, 359), (255, 255, 255), 3)
+        cv2.line(zone_analysis, (320, 0), (320, 359), (255, 255, 255), 2)
+        cv2.line(zone_analysis, (0, 108), (640, 108), (255, 255, 255), 2)
+        cv2.line(zone_analysis, (0, 252), (640, 252), (255, 255, 255), 2)
+        
+        # Add zone labels
+        cv2.putText(zone_analysis, 'FRONT COURT', (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        cv2.putText(zone_analysis, 'MID COURT', (260, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        cv2.putText(zone_analysis, 'BACK COURT', (250, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        
+        # Add ball positions overlaid on zones
+        if past_ball_pos and len(past_ball_pos) > 10:
+            for pos in past_ball_pos[-20:]:  # Last 20 positions
+                x, y = int(pos[0]), int(pos[1])
+                if 0 <= x < 640 and 0 <= y < 360:
+                    cv2.circle(zone_analysis, (x, y), 3, (255, 255, 255), -1)
+        
+        cv2.imwrite('output/heatmaps/analysis/court_zones.png', zone_analysis)
+        outputs.append('output/heatmaps/analysis/court_zones.png')
+        
+        print(f" Generated {len(outputs)} enhanced heatmap visualizations")
+        
     except Exception as e:
-        print(f"Error generating heatmaps: {e}")
+        print(f"Error generating enhanced heatmaps: {e}")
+        # Fallback to basic heatmap
+        try:
+            basic_heatmap = np.zeros((360, 640, 3), dtype=np.uint8)
+            cv2.putText(basic_heatmap, f'Heatmap Error: {str(e)[:50]}...', (10, 180), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            cv2.imwrite('output/heatmaps/error_fallback.png', basic_heatmap)
+            outputs.append('output/heatmaps/error_fallback.png')
+        except:
+            pass
     
     return outputs
 
@@ -7230,47 +7931,84 @@ def generate_enhanced_visualizations(frame_count, players, past_ball_pos, shot_t
 
 
 def generate_llama_enhanced_analysis(frame_count, players, past_ball_pos, shot_tracker, coaching_data_collection):
-    """Generate enhanced analysis using Llama 3.1-8B-Instruct model"""
+    """Generate enhanced analysis using Llama 3.1-8B-Instruct model with memory management"""
     outputs = []
     
     try:
-        print("🤖 Initializing Llama AI coaching enhancement...")
+        print(" Initializing Llama AI coaching enhancement...")
+        print(" Pre-Llama memory status:")
+        llm_manager.print_memory_status()
+        
+        # Force cleanup before loading Llama
+        print(" Cleaning memory before Llama model loading...")
+        llm_manager.force_cleanup()
+        
+        # Load Llama model
         llama_enhancer = llm_manager.get_model('llama')
         
         if not llama_enhancer or not llama_enhancer.is_initialized:
-            print("⚠️ Llama model not available, skipping enhanced analysis")
+            print(" Llama model not available, skipping enhanced analysis")
             return outputs
         
-        print("🧠 Generating AI-powered coaching insights...")
+        print(" Generating AI-powered coaching insights...")
+        print(" Post-Llama load memory status:")
+        llm_manager.print_memory_status()
         
         # Ensure output directories exist
         os.makedirs('output/reports', exist_ok=True)
         os.makedirs('output/ai_analysis', exist_ok=True)
         
-        # 1. Shot Pattern Analysis
+        # 1. Shot Pattern Analysis with memory checks
         if shot_tracker.completed_shots:
-            print("🎯 Analyzing shot patterns with AI...")
-            shot_analysis = llama_enhancer.analyze_shot_patterns(shot_tracker.completed_shots)
+            print(" Analyzing shot patterns with AI...")
             
-            with open('output/ai_analysis/shot_pattern_analysis.json', 'w') as f:
-                json.dump(shot_analysis, f, indent=2, cls=NumpyEncoder)
-            outputs.append('output/ai_analysis/shot_pattern_analysis.json')
+            # Check memory before analysis
+            needs_cleanup, reason = llm_manager.should_cleanup()
+            if needs_cleanup:
+                print(f" Memory warning before shot analysis: {reason}")
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
-            # Create human-readable report
-            shot_report = f"""
-🎾 AI-POWERED SHOT PATTERN ANALYSIS
+            try:
+                shot_analysis = llama_enhancer.analyze_shot_patterns(shot_tracker.completed_shots)
+                
+                with open('output/ai_analysis/shot_pattern_analysis.json', 'w') as f:
+                    json.dump(shot_analysis, f, indent=2, cls=NumpyEncoder)
+                outputs.append('output/ai_analysis/shot_pattern_analysis.json')
+                
+                # Create human-readable report
+                shot_report = f"""
+AI-POWERED SHOT PATTERN ANALYSIS
 Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Model: Llama 3.1-8B-Instruct
 
-📊 SHOT STATISTICS:
+SHOT STATISTICS:
 Total Shots: {shot_analysis.get('total_shots', 0)}
 Shot Distribution: {json.dumps(shot_analysis.get('shot_distribution', {}), indent=2)}
 
-🧠 AI ANALYSIS:
+AI ANALYSIS:
 {shot_analysis.get('ai_analysis', 'No analysis available')}
 
-💡 RECOMMENDATIONS:
+RECOMMENDATIONS:
+{shot_analysis.get('recommendations', 'No recommendations available')}
 """
+                
+                with open('output/reports/ai_shot_analysis.txt', 'w', encoding='utf-8') as f:
+                    f.write(shot_report)
+                outputs.append('output/reports/ai_shot_analysis.txt')
+                
+                print(" Shot pattern analysis completed")
+                
+                # Memory cleanup after shot analysis
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    
+            except Exception as e:
+                print(f" Error in shot pattern analysis: {e}")
+                # Continue with other analyses even if this fails
+
             for i, rec in enumerate(shot_analysis.get('recommendations', []), 1):
                 shot_report += f"{i}. {rec}\n"
             
@@ -7278,87 +8016,181 @@ Shot Distribution: {json.dumps(shot_analysis.get('shot_distribution', {}), inden
                 f.write(shot_report)
             outputs.append('output/reports/ai_shot_analysis.txt')
         
-        # 2. Player Movement Analysis
+        # 2. Player Movement Analysis with memory management
         if players:
-            print("🏃 Analyzing player movement with AI...")
-            player_positions = {}
-            for player_id, player in players.items():
-                if hasattr(player, 'get_latest_pose') and player.get_latest_pose():
-                    # Collect recent positions (simplified)
-                    player_positions[player_id] = [(0.5, 0.5)]  # Mock data
+            print(" Analyzing player movement with AI...")
+            print(" Memory status before movement analysis:")
+            llm_manager.print_memory_status()
             
-            movement_analysis = llama_enhancer.analyze_player_movement(player_positions, (640, 360))
+            # Memory check
+            needs_cleanup, reason = llm_manager.should_cleanup()
+            if needs_cleanup:
+                print(f" Memory warning before movement analysis: {reason}")
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             
-            with open('output/ai_analysis/movement_analysis.json', 'w') as f:
-                json.dump(movement_analysis, f, indent=2, cls=NumpyEncoder)
-            outputs.append('output/ai_analysis/movement_analysis.json')
+            try:
+                player_positions = {}
+                for player_id, player in players.items():
+                    if hasattr(player, 'get_latest_pose') and player.get_latest_pose():
+                        # Collect recent positions (simplified)
+                        player_positions[player_id] = [(0.5, 0.5)]  # Mock data
+                
+                movement_analysis = llama_enhancer.analyze_player_movement(player_positions, (640, 360))
+                
+                with open('output/ai_analysis/movement_analysis.json', 'w') as f:
+                    json.dump(movement_analysis, f, indent=2, cls=NumpyEncoder)
+                outputs.append('output/ai_analysis/movement_analysis.json')
+                
+                print(" Player movement analysis completed")
+                
+                # Memory cleanup after movement analysis
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                    
+            except Exception as e:
+                print(f" Error in movement analysis: {e}")
+    
+        # 3. Match Report Generation with memory management
+        print(" Generating comprehensive match report...")
+        print(" Memory status before match report:")
+        llm_manager.print_memory_status()
         
-        # 3. Match Report Generation
-        print("📋 Generating comprehensive match report...")
-        match_data = {
-            "frame_count": frame_count,
-            "total_shots": len(shot_tracker.completed_shots) if shot_tracker.completed_shots else 0,
-            "active_shots": len(shot_tracker.active_shots) if shot_tracker.active_shots else 0,
-            "ball_positions": len(past_ball_pos) if past_ball_pos else 0,
-            "coaching_data": coaching_data_collection.get_summary() if coaching_data_collection else {}
-        }
+        # Memory check
+        needs_cleanup, reason = llm_manager.should_cleanup()
+        if needs_cleanup:
+            print(f" Memory warning before match report: {reason}")
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         
-        match_report = llama_enhancer.generate_match_report(match_data)
-        
-        with open('output/ai_analysis/match_report.json', 'w') as f:
-            json.dump(match_report, f, indent=2, cls=NumpyEncoder)
-        outputs.append('output/ai_analysis/match_report.json')
-        
-        # Create human-readable match report
-        readable_report = f"""
-🎾 AI-GENERATED COMPREHENSIVE MATCH REPORT
+        try:
+            # Create summary of coaching data collection
+            coaching_summary = {}
+            if coaching_data_collection:
+                coaching_summary = {
+                    "total_data_points": len(coaching_data_collection),
+                    "frames_with_shots": len([d for d in coaching_data_collection if d.get('shot_type')]),
+                    "frames_with_ball_hits": len([d for d in coaching_data_collection if d.get('ball_hit_detected', False)]),
+                    "frames_in_play": len([d for d in coaching_data_collection if d.get('match_active', False)]),
+                    "shot_types": list(set([d.get('shot_type', 'unknown') for d in coaching_data_collection if d.get('shot_type')])),
+                    "players_detected": list(set([d.get('player_who_hit', 0) for d in coaching_data_collection if d.get('player_who_hit', 0) > 0]))
+                }
+            
+            match_data = {
+                "frame_count": frame_count,
+                "total_shots": len(shot_tracker.completed_shots) if shot_tracker.completed_shots else 0,
+                "active_shots": len(shot_tracker.active_shots) if shot_tracker.active_shots else 0,
+                "ball_positions": len(past_ball_pos) if past_ball_pos else 0,
+                "coaching_data": coaching_summary
+            }
+            
+            match_report = llama_enhancer.generate_match_report(match_data)
+            
+            with open('output/ai_analysis/match_report.json', 'w') as f:
+                json.dump(match_report, f, indent=2, cls=NumpyEncoder)
+            outputs.append('output/ai_analysis/match_report.json')
+            
+            # Create human-readable match report
+            readable_report = f"""
+AI-GENERATED COMPREHENSIVE MATCH REPORT
 Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Model: Llama 3.1-8B-Instruct
 
 {match_report.get('match_report', 'No report available')}
 """
+            
+            with open('output/reports/ai_match_report.txt', 'w', encoding='utf-8') as f:
+                f.write(readable_report)
+            outputs.append('output/reports/ai_match_report.txt')
+            
+            print(" Match report generation completed")
+            
+            # Memory cleanup after match report
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                
+        except Exception as e:
+            print(f" Error in match report generation: {e}")
         
-        with open('output/reports/ai_match_report.txt', 'w', encoding='utf-8') as f:
-            f.write(readable_report)
-        outputs.append('output/reports/ai_match_report.txt')
+        # 4. Personalized Coaching Plan with memory management
+        print(" Generating personalized coaching plan...")
+        print(" Memory status before coaching plan:")
+        llm_manager.print_memory_status()
         
-        # 4. Personalized Coaching Plan
-        print("📝 Generating personalized coaching plan...")
-        player_profile = {
-            "session_data": {
-                "frames_processed": frame_count,
-                "total_shots": len(shot_tracker.completed_shots) if shot_tracker.completed_shots else 0,
-                "session_duration": "Variable"
-            },
-            "performance_metrics": match_data,
-            "coaching_preferences": "General improvement focus"
-        }
+        # Final memory check before coaching plan
+        needs_cleanup, reason = llm_manager.should_cleanup()
+        if needs_cleanup:
+            print(f" Memory warning before coaching plan: {reason}")
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         
-        coaching_plan = llama_enhancer.generate_personalized_coaching_plan(player_profile)
-        
-        with open('output/ai_analysis/personalized_coaching_plan.json', 'w') as f:
-            json.dump(coaching_plan, f, indent=2, cls=NumpyEncoder)
-        outputs.append('output/ai_analysis/personalized_coaching_plan.json')
-        
-        # Create human-readable coaching plan
-        plan_text = f"""
-🎾 AI-GENERATED PERSONALIZED COACHING PLAN
+        try:
+            player_profile = {
+                "session_data": {
+                    "frames_processed": frame_count,
+                    "total_shots": len(shot_tracker.completed_shots) if shot_tracker.completed_shots else 0,
+                    "session_duration": "Variable"
+                },
+                "performance_metrics": match_data,
+                "coaching_preferences": "General improvement focus"
+            }
+            
+            coaching_plan = llama_enhancer.generate_personalized_coaching_plan(player_profile)
+            
+            with open('output/ai_analysis/personalized_coaching_plan.json', 'w') as f:
+                json.dump(coaching_plan, f, indent=2, cls=NumpyEncoder)
+            outputs.append('output/ai_analysis/personalized_coaching_plan.json')
+            
+            # Create human-readable coaching plan
+            plan_text = f"""
+AI-GENERATED PERSONALIZED COACHING PLAN
 Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Model: Llama 3.1-8B-Instruct
 
 {coaching_plan.get('coaching_plan', 'No plan available')}
 """
+            
+            with open('output/reports/ai_coaching_plan.txt', 'w', encoding='utf-8') as f:
+                f.write(plan_text)
+            outputs.append('output/reports/ai_coaching_plan.txt')
+            
+            print(" Personalized coaching plan generation completed")
+            
+        except Exception as e:
+            print(f" Error in coaching plan generation: {e}")
         
-        with open('output/reports/ai_coaching_plan.txt', 'w', encoding='utf-8') as f:
-            f.write(plan_text)
-        outputs.append('output/reports/ai_coaching_plan.txt')
+        # Final cleanup after all AI analysis
+        print(" Final Llama analysis cleanup...")
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
         
-        print(f"✅ AI-enhanced analysis completed! Generated {len(outputs)} outputs")
+        print(" Final memory status after Llama analysis:")
+        llm_manager.print_memory_status()
+        
+        print(f" AI-enhanced analysis completed! Generated {len(outputs)} outputs")
         
     except Exception as e:
-        print(f"❌ Error in AI-enhanced analysis: {e}")
+        print(f" Error in AI-enhanced analysis: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Cleanup on error
+        print(" Emergency cleanup due to error...")
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    
+    finally:
+        # Always cleanup Llama model after use to free memory
+        print(" Unloading Llama model to free memory...")
+        llm_manager.unload_current_model()
     
     return outputs
 
@@ -7366,12 +8198,12 @@ def generate_output_summary(outputs_generated, frame_count, path):
     """Generate a comprehensive summary of all outputs created"""
     try:
         summary_report = f"""
-🎾 COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
+COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
 Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}
 Video: {path}
 Total Frames Processed: {frame_count:,}
 
-📁 OUTPUT CATEGORIES AND FILES:
+OUTPUT CATEGORIES AND FILES:
 """
         
         # Categorize outputs
@@ -7417,49 +8249,49 @@ Total Frames Processed: {frame_count:,}
                 for file_path in files:
                     try:
                         file_size = os.path.getsize(file_path)
-                        summary_report += f"  • {os.path.basename(file_path)} ({file_size:,} bytes)\n"
+                        summary_report += f"   {os.path.basename(file_path)} ({file_size:,} bytes)\n"
                     except:
-                        summary_report += f"  • {os.path.basename(file_path)}\n"
+                        summary_report += f"   {os.path.basename(file_path)}\n"
         
         summary_report += f"""
 
-📊 SESSION STATISTICS:
-• Total outputs generated: {len(outputs_generated)}
-• Processing completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
-• Video duration: {frame_count/30:.1f} seconds (assuming 30fps)
-• Output categories: {len([cat for cat, files in categories.items() if files])}
+SESSION STATISTICS:
+Total outputs generated: {len(outputs_generated)}
+Processing completed: {time.strftime('%Y-%m-%d %H:%M:%S')}
+Video duration: {frame_count/30:.1f} seconds (assuming 30fps)
+Output categories: {len([cat for cat, files in categories.items() if files])}
 
-🎯 WHAT YOU GET:
-1. 📈 Real-time analytics and visualizations
-2. 🎨 Interactive graphics and heatmaps
-3. 📹 Shot and rally highlights
-4. 📊 Performance statistics and reports
-5. 🎾 Ball and player trajectory analysis
-6. 🔍 Pattern recognition and insights
-7. 📋 Comprehensive coaching recommendations
-8. 🚀 Enhanced 3D visualizations
+WHAT YOU GET:
+1.  Real-time analytics and visualizations
+2.  Interactive graphics and heatmaps
+3.  Shot and rally highlights
+4.  Performance statistics and reports
+5.  Ball and player trajectory analysis
+6.  Pattern recognition and insights
+7.  Comprehensive coaching recommendations
+8.  Enhanced 3D visualizations
 
-💡 NEXT STEPS:
-• Review generated reports for coaching insights
-• Analyze shot patterns and player positioning
-• Use heatmaps to understand court coverage
-• Examine trajectory data for technique improvement
-• Share highlights and clips for training purposes
+NEXT STEPS:
+Review generated reports for coaching insights
+Analyze shot patterns and player positioning
+Use heatmaps to understand court coverage
+Examine trajectory data for technique improvement
+Share highlights and clips for training purposes
 
-🎾 SQUASH COACHING ANALYSIS COMPLETE! 🎾
+SQUASH COACHING ANALYSIS COMPLETE! 
 """
         
         # Save summary report
         with open('output/comprehensive_output_summary.txt', 'w', encoding='utf-8') as f:
             f.write(summary_report)
         
-        print("📋 Comprehensive output summary generated: output/comprehensive_output_summary.txt")
+        print(" Comprehensive output summary generated: output/comprehensive_output_summary.txt")
         
         # Also print a brief summary to console
-        print(f"\n🎯 COMPREHENSIVE OUTPUTS GENERATED:")
-        print(f"   • Total files: {len(outputs_generated)}")
-        print(f"   • Categories: {len([cat for cat, files in categories.items() if files])}")
-        print(f"   • Summary saved: output/comprehensive_output_summary.txt")
+        print(f"\n COMPREHENSIVE OUTPUTS GENERATED:")
+        print(f"    Total files: {len(outputs_generated)}")
+        print(f"    Categories: {len([cat for cat, files in categories.items() if files])}")
+        print(f"    Summary saved: output/comprehensive_output_summary.txt")
         
     except Exception as e:
         print(f"Error generating output summary: {e}")
@@ -7468,15 +8300,66 @@ Total Frames Processed: {frame_count:,}
 if __name__ == "__main__":
     try:
         start=time.time()
+        print(" Starting Squash Vision Pipeline with Enhanced Memory Management")
+        print(" Initial memory status:")
+        llm_manager.print_memory_status()
+        
         main()
-        print(f"Execution time: {time.time() - start:.2f} seconds")
+        
+        print(f" Total execution time: {time.time() - start:.2f} seconds")
+        print(" Pipeline completed successfully!")
+        
     except KeyboardInterrupt:
-        print("\nProgram interrupted by user. All outputs have been generated.")
+        print("\n Program interrupted by user. All outputs have been generated.")
+    except MemoryError as e:
+        print(f" Memory error occurred: {e}")
+        print(" Performing emergency memory cleanup...")
+        llm_manager.force_cleanup()
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f" Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
-        # Clean up LLM models to free memory
-        print("🧹 Cleaning up LLM models...")
-        llm_manager.unload_current_model()
-        print("✅ Memory cleanup completed")
+        # Comprehensive cleanup
+        print(" Performing final comprehensive memory cleanup...")
+        
+        # Cleanup LLM models
+        llm_manager.cleanup_and_exit()
+        
+        # Reset autonomous coach
+        try:
+            from autonomous_coaching import reset_autonomous_coach
+            reset_autonomous_coach()
+        except:
+            pass
+        
+        # Clear matplotlib
+        try:
+            import matplotlib.pyplot as plt
+            plt.close('all')
+        except:
+            pass
+        
+        # Clear YOLO models
+        try:
+            if 'yolo_model' in globals():
+                del yolo_model
+        except:
+            pass
+        
+        # Final garbage collection
+        for _ in range(3):
+            gc.collect()
+        
+        # Final GPU cleanup
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+        
+        print(" Final memory cleanup completed")
+        print(" Final memory status:")
+        try:
+            llm_manager.print_memory_status()
+        except:
+            print("Memory status check unavailable")
         

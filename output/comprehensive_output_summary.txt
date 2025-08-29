@@ -1,66 +1,70 @@
 
-🎾 COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
-Generated: 2025-08-21 17:23:18
+COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
+Generated: 2025-08-29 15:06:21
 Video: self2.mp4
-Total Frames Processed: 21
+Total Frames Processed: 50
 
-📁 OUTPUT CATEGORIES AND FILES:
+OUTPUT CATEGORIES AND FILES:
 
-Graphics & Visualizations (3 files):
-  • court_positioning.png (110,625 bytes)
-  • shot_analysis.png (65,241 bytes)
-  • basic_statistics.png (76,030 bytes)
+Graphics & Visualizations (1 files):
+   enhanced_court_analysis.png (312,394 bytes)
 
-Heatmaps (1 files):
-  • player_positions.png (8,089 bytes)
+Heatmaps (5 files):
+   player_1_movement.png (16,442 bytes)
+   player_2_movement.png (20,026 bytes)
+   players_combined.png (16,350 bytes)
+   ball_trajectory_enhanced.png (11,395 bytes)
+   error_fallback.png (4,347 bytes)
 
 Clips & Highlights (1 files):
-  • rally_statistics.json (103 bytes)
+   rally_statistics.json (103 bytes)
 
 Patterns (1 files):
-  • player_patterns.json (343 bytes)
+   player_patterns.json (345 bytes)
 
 Raw Data (2 files):
-  • frame_data.json (654 bytes)
-  • ball_trajectory.json (425 bytes)
+   frame_data.json (1,084 bytes)
+   ball_trajectory.json (858 bytes)
 
 Statistics (2 files):
-  • overall_statistics.json (162 bytes)
-  • performance_metrics.json (119 bytes)
+   overall_statistics.json (163 bytes)
+   performance_metrics.json (119 bytes)
 
 Reports (2 files):
-  • session_summary.txt (490 bytes)
-  • technical_analysis.txt (244 bytes)
+   session_summary.txt (491 bytes)
+   technical_analysis.txt (243 bytes)
 
-Enhanced Visualizations (2 files):
-  • 3d_court_visualization.png (425,392 bytes)
-  • performance_dashboard.png (195,860 bytes)
+Trajectories (2 files):
+   ball_trajectory_analysis.json (1,020 bytes)
+   shot_trajectories.json (2 bytes)
 
-AI Analysis (1 files):
-  • movement_analysis.json (1,404 bytes)
+Enhanced Visualizations (3 files):
+   performance_dashboard.png (259,117 bytes)
+   3d_court_visualization.png (430,278 bytes)
+   performance_dashboard.png (259,117 bytes)
 
 
-📊 SESSION STATISTICS:
-• Total outputs generated: 15
-• Processing completed: 2025-08-21 17:23:18
-• Video duration: 0.7 seconds (assuming 30fps)
-• Output categories: 9
+SESSION STATISTICS:
+Total outputs generated: 19
+Processing completed: 2025-08-29 15:06:21
+Video duration: 1.7 seconds (assuming 30fps)
+Output categories: 9
 
-🎯 WHAT YOU GET:
-1. 📈 Real-time analytics and visualizations
-2. 🎨 Interactive graphics and heatmaps
-3. 📹 Shot and rally highlights
-4. 📊 Performance statistics and reports
-5. 🎾 Ball and player trajectory analysis
-6. 🔍 Pattern recognition and insights
-7. 📋 Comprehensive coaching recommendations
-8. 🚀 Enhanced 3D visualizations
+WHAT YOU GET:
+1.  Real-time analytics and visualizations
+2.  Interactive graphics and heatmaps
+3.  Shot and rally highlights
+4.  Performance statistics and reports
+5.  Ball and player trajectory analysis
+6.  Pattern recognition and insights
+7.  Comprehensive coaching recommendations
+8.  Enhanced 3D visualizations
 
-💡 NEXT STEPS:
-• Review generated reports for coaching insights
-• Analyze shot patterns and player positioning
-• Use heatmaps to understand court coverage
-• Examine trajectory data for technique improvement
-• Share highlights and clips for training purposes
+NEXT STEPS:
+Review generated reports for coaching insights
+Analyze shot patterns and player positioning
+Use heatmaps to understand court coverage
+Examine trajectory data for technique improvement
+Share highlights and clips for training purposes
 
-🎾 SQUASH COACHING ANALYSIS COMPLETE! 🎾
+SQUASH COACHING ANALYSIS COMPLETE! 

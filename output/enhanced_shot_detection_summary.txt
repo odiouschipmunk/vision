@@ -1,17 +1,17 @@
 
-🔥 ENHANCED BALL PHYSICS SHOT DETECTION REPORT
+ENHANCED BALL PHYSICS SHOT DETECTION REPORT
 ==============================================
 
 SYSTEM PERFORMANCE:
-- Total frames processed: 20
-- Enhanced detections success: 20
+- Total frames processed: 7703
+- Enhanced detections success: 7703
 - Legacy fallbacks used: 0
 - Detection success rate: 100.00%
-- Average processing rate: 20.0 fps
+- Average processing rate: 7703.0 fps
 
 SHOT ANALYSIS:
 - Total shots detected: 0
-- Total events detected: 0
+- Total events detected: 23974
 - Average events per shot: 0.0
 
 SHOT TYPE DISTRIBUTION:
@@ -19,9 +19,9 @@ SHOT TYPE DISTRIBUTION:
 PERFORMANCE ASSESSMENT: Good
 
 This enhanced system provides:
-✓ Physics-based trajectory modeling with Kalman filters
-✓ Multi-modal event detection (racket hits, wall impacts, floor bounces)
-✓ Real-time collision detection with confidence scoring
-✓ Autonomous shot segmentation and classification
-✓ Advanced signal processing for trajectory analysis
+Physics-based trajectory modeling with Kalman filters
+Multi-modal event detection (racket hits, wall impacts, floor bounces)
+Real-time collision detection with confidence scoring
+Autonomous shot segmentation and classification
+Advanced signal processing for trajectory analysis
 
