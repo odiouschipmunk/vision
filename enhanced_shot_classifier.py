@@ -41,7 +41,7 @@ class ShotFeatures:
 
 @dataclass 
 class ShotClassification:
-    """Shot classification result"""
+    """Shot classification result""" 
     shot_type: str
     confidence: float
     features: ShotFeatures
