@@ -2619,12 +2619,18 @@ def get_enhanced_player_movement(players, movement_threshold):
 
 def detect_ball_hit_advanced(pastballpos, ballthreshold, angle_thresh, velocity_thresh, advanced_analysis=True):
     """
-    Advanced ball hit detection using multiple algorithms and pattern recognition
+    Enhanced ball hit detection with clear event classification for:
+    1. Racket hits (shot start/opponent hit)
+    2. Wall hits (front wall vs side walls)
+    3. Ground bounces (shot/rally end)
     """
     hit_results = {
         'hit_detected': False,
         'confidence': 0.0,
-        'hit_type': 'none'
+        'hit_type': 'none',
+        'event_type': 'none',  # racket_hit, wall_hit, ground_bounce
+        'wall_type': 'none',   # front, side_left, side_right, back
+        'player_proximity': 0  # distance to nearest player when hit detected
     }
     
     if len(pastballpos) < ballthreshold:
@@ -2632,10 +2638,13 @@ def detect_ball_hit_advanced(pastballpos, ballthreshold, angle_thresh, velocity_
     
     recent_positions = pastballpos[-ballthreshold:]
     
-    # Multiple detection algorithms
+    # Multiple detection algorithms with enhanced event classification
     angle_detection = detect_hit_by_angle_change(recent_positions, angle_thresh)
     velocity_detection = detect_hit_by_velocity_change(recent_positions, velocity_thresh)
     direction_detection = detect_hit_by_direction_change(recent_positions)
+    
+    # Enhanced event type detection
+    event_classification = classify_ball_event(recent_positions)
     
     if advanced_analysis:
         # Advanced pattern recognition
@@ -2653,6 +2662,10 @@ def detect_ball_hit_advanced(pastballpos, ballthreshold, angle_thresh, velocity_
     # Calculate weighted confidence score
     total_confidence = sum(det['confidence'] * weight for det, weight in zip(detections, weights))
     
+    # Enhanced confidence with event classification
+    if event_classification['confidence'] > 0.5:
+        total_confidence = (total_confidence + event_classification['confidence']) / 2
+    
     # Determine if hit detected based on confidence threshold
     hit_threshold = 0.4
     hit_detected = total_confidence > hit_threshold
@@ -2666,10 +2679,251 @@ def detect_ball_hit_advanced(pastballpos, ballthreshold, angle_thresh, velocity_
     hit_results.update({
         'hit_detected': hit_detected,
         'confidence': total_confidence,
-        'hit_type': hit_type
+        'hit_type': hit_type,
+        'event_type': event_classification['event_type'],
+        'wall_type': event_classification.get('wall_type', 'none'),
+        'player_proximity': event_classification.get('player_proximity', 0)
     })
     
     return hit_results
+
+def classify_ball_event(positions, court_width=640, court_height=360):
+    """
+    Enhanced event classification to distinguish between:
+    1. Racket hits (high velocity changes, near player positions)
+    2. Wall hits (position-based, with wall type identification)
+    3. Ground bounces (height-based, bounce patterns)
+    """
+    event_result = {
+        'event_type': 'none',
+        'confidence': 0.0,
+        'wall_type': 'none',
+        'player_proximity': 0,
+        'details': {}
+    }
+    
+    if len(positions) < 3:
+        return event_result
+    
+    current_pos = positions[-1]
+    x, y = current_pos[0], current_pos[1]
+    
+    # Wall hit detection with type classification
+    wall_detection = detect_wall_hit_with_type(positions, court_width, court_height)
+    
+    # Ground bounce detection
+    ground_bounce = detect_ground_bounce(positions, court_height)
+    
+    # Racket hit detection (by elimination and characteristics)
+    racket_hit = detect_racket_hit_signature(positions)
+    
+    # Prioritize events by confidence and physics likelihood
+    candidates = [
+        ('wall_hit', wall_detection['confidence'], wall_detection),
+        ('ground_bounce', ground_bounce['confidence'], ground_bounce),
+        ('racket_hit', racket_hit['confidence'], racket_hit)
+    ]
+    
+    # Select most confident event
+    best_event = max(candidates, key=lambda x: x[1])
+    
+    if best_event[1] > 0.3:  # Minimum confidence threshold
+        event_result.update({
+            'event_type': best_event[0],
+            'confidence': best_event[1],
+            'wall_type': best_event[2].get('wall_type', 'none'),
+            'player_proximity': best_event[2].get('player_proximity', 0),
+            'details': best_event[2]
+        })
+    
+    return event_result
+
+def detect_wall_hit_with_type(positions, court_width=640, court_height=360):
+    """Detect wall hits and classify wall type (front, side_left, side_right, back)"""
+    result = {'confidence': 0.0, 'wall_type': 'none', 'player_proximity': 0}
+    
+    if len(positions) < 3:
+        return result
+    
+    current_pos = positions[-1]
+    x, y = current_pos[0], current_pos[1]
+    
+    # Define wall zones (pixels from edge)
+    wall_threshold = 30
+    
+    # Distance to each wall
+    dist_to_left = x
+    dist_to_right = court_width - x
+    dist_to_front = y  # Assuming front wall is at top (y=0)
+    dist_to_back = court_height - y
+    
+    min_wall_distance = min(dist_to_left, dist_to_right, dist_to_front, dist_to_back)
+    
+    # Check if ball is near any wall
+    if min_wall_distance < wall_threshold:
+        # Determine wall type and set base confidence
+        if min_wall_distance == dist_to_front:
+            result['wall_type'] = 'front'
+            result['confidence'] = 0.8  # High base confidence for front wall
+        elif min_wall_distance == dist_to_left:
+            result['wall_type'] = 'side_left'
+            result['confidence'] = 0.6  # Good confidence for side walls
+        elif min_wall_distance == dist_to_right:
+            result['wall_type'] = 'side_right'
+            result['confidence'] = 0.6
+        elif min_wall_distance == dist_to_back:
+            result['wall_type'] = 'back'
+            result['confidence'] = 0.5  # Lower confidence for back wall
+        
+        # If wall type was set, enhance confidence with velocity/direction change
+        if result['wall_type'] != 'none' and len(positions) >= 3:
+            velocity_change = check_velocity_direction_change(positions[-3:])
+            if velocity_change > 0.3:  # Significant direction change
+                result['confidence'] = min(0.95, result['confidence'] + velocity_change * 0.3)
+            
+            # Proximity bonus - closer to wall = higher confidence
+            proximity_factor = 1 - (min_wall_distance / wall_threshold)
+            result['confidence'] = min(0.95, result['confidence'] * (1 + proximity_factor * 0.2))
+    
+    return result
+
+def detect_ground_bounce(positions, court_height=360):
+    """Detect ball bouncing on the ground"""
+    result = {'confidence': 0.0, 'bounce_pattern': False}
+    
+    if len(positions) < 3:
+        return result
+    
+    # Check if ball is in lower portion of court (ground level)
+    current_pos = positions[-1]
+    y = current_pos[1]
+    
+    # Ground is typically in bottom 20% of court
+    ground_threshold = court_height * 0.8
+    
+    if y > ground_threshold:
+        # Check for bounce pattern (down then up movement)
+        if len(positions) >= 4:
+            recent_y_positions = [pos[1] for pos in positions[-4:]]
+            
+            # Look for down-then-up pattern (bounce)
+            if is_bounce_pattern(recent_y_positions):
+                result['confidence'] = 0.8
+                result['bounce_pattern'] = True
+            else:
+                result['confidence'] = 0.4  # Near ground but no clear bounce
+    
+    return result
+
+def detect_racket_hit_signature(positions):
+    """Detect racket hits by characteristic velocity/direction signatures"""
+    result = {'confidence': 0.0, 'velocity_spike': False, 'direction_change': False}
+    
+    if len(positions) < 4:
+        return result
+    
+    # Calculate velocities for recent positions
+    velocities = []
+    for i in range(1, len(positions)):
+        p1, p2 = positions[i-1], positions[i]
+        if len(p1) >= 3 and len(p2) >= 3:  # Check if frame info available
+            time_diff = p2[2] - p1[2] if p2[2] != p1[2] else 1
+            velocity = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2) / time_diff
+            velocities.append(velocity)
+    
+    if len(velocities) >= 2:
+        # Look for sudden velocity increase (characteristic of racket hit)
+        max_velocity = max(velocities)
+        avg_velocity = sum(velocities) / len(velocities)
+        
+        if max_velocity > avg_velocity * 1.5:  # 50% velocity spike
+            result['velocity_spike'] = True
+            result['confidence'] += 0.4
+        
+        # Look for sharp direction change
+        if len(positions) >= 4:
+            direction_change_score = calculate_direction_change_score(positions[-4:])
+            if direction_change_score > 0.6:
+                result['direction_change'] = True
+                result['confidence'] += 0.3
+    
+    return result
+
+def check_velocity_direction_change(positions):
+    """Check for significant velocity/direction change indicating collision"""
+    if len(positions) < 3:
+        return 0.0
+    
+    # Calculate velocity before and after middle point
+    p1, p2, p3 = positions[0], positions[1], positions[2]
+    
+    velocity_before = math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+    velocity_after = math.sqrt((p3[0] - p2[0])**2 + (p3[1] - p2[1])**2)
+    
+    # Direction vectors
+    dir_before = [(p2[0] - p1[0]), (p2[1] - p1[1])]
+    dir_after = [(p3[0] - p2[0]), (p3[1] - p2[1])]
+    
+    # Calculate direction change
+    if velocity_before > 0 and velocity_after > 0:
+        # Normalize direction vectors
+        dir_before = [dir_before[0]/velocity_before, dir_before[1]/velocity_before]
+        dir_after = [dir_after[0]/velocity_after, dir_after[1]/velocity_after]
+        
+        # Dot product to find direction similarity
+        dot_product = dir_before[0]*dir_after[0] + dir_before[1]*dir_after[1]
+        direction_similarity = max(-1, min(1, dot_product))
+        
+        # Lower similarity means more direction change
+        direction_change = 1 - (direction_similarity + 1) / 2
+        
+        return direction_change
+    
+    return 0.0
+
+def is_bounce_pattern(y_positions):
+    """Check if y-positions show a bounce pattern (down then up)"""
+    if len(y_positions) < 3:
+        return False
+    
+    # Look for local minimum (bounce point)
+    for i in range(1, len(y_positions) - 1):
+        if y_positions[i-1] < y_positions[i] > y_positions[i+1]:
+            # Found a peak (in screen coordinates, higher y is lower on court)
+            continue
+        elif y_positions[i-1] > y_positions[i] < y_positions[i+1]:
+            # Found a valley - this could be a bounce
+            return True
+    
+    return False
+
+def calculate_direction_change_score(positions):
+    """Calculate a score representing the amount of direction change"""
+    if len(positions) < 3:
+        return 0.0
+    
+    direction_changes = 0
+    total_angles = 0
+    
+    for i in range(len(positions) - 2):
+        p1, p2, p3 = positions[i], positions[i+1], positions[i+2]
+        
+        v1 = [p2[0] - p1[0], p2[1] - p1[1]]
+        v2 = [p3[0] - p2[0], p3[1] - p2[1]]
+        
+        angle = calculate_vector_angle(v1, v2)
+        if angle > 30:  # Significant direction change
+            direction_changes += 1
+        total_angles += angle
+    
+    if len(positions) <= 2:
+        return 0.0
+    
+    # Normalize by number of angle calculations
+    avg_angle_change = total_angles / (len(positions) - 2)
+    direction_score = min(1.0, avg_angle_change / 90.0)  # Normalize to 0-1
+    
+    return direction_score
 
 def detect_hit_by_angle_change(positions, angle_thresh):
     """Detect ball hit by analyzing trajectory angle changes"""
@@ -2989,6 +3243,126 @@ def count_wall_hits_legacy(past_ball_pos, threshold=15):
 
     return wall_hits
 
+def count_wall_hits_enhanced(past_ball_pos, threshold=15, court_width=640, court_height=360):
+    """
+    Enhanced wall hit detection with wall type identification and physics validation
+    Returns both count and detailed information about wall hits
+    """
+    if len(past_ball_pos) < 4:
+        return {'total_hits': 0, 'front_wall_hits': 0, 'side_wall_hits': 0, 'wall_events': []}
+    
+    wall_events = []
+    front_wall_hits = 0
+    side_wall_hits = 0
+    
+    # Wall detection zones
+    front_wall_zone = 25  # Front wall (y=0) zone
+    side_wall_zone = 30   # Side walls zone
+    back_wall_zone = 25   # Back wall zone
+    
+    for i in range(2, len(past_ball_pos) - 1):
+        # Get position context
+        prev_pos = past_ball_pos[i-1]
+        curr_pos = past_ball_pos[i]
+        next_pos = past_ball_pos[i+1]
+        
+        x, y = curr_pos[0], curr_pos[1]
+        
+        # Check proximity to walls
+        near_front = y < front_wall_zone
+        near_back = y > (court_height - back_wall_zone)
+        near_left = x < side_wall_zone
+        near_right = x > (court_width - side_wall_zone)
+        
+        if near_front or near_back or near_left or near_right:
+            # Check for physics signature of wall hit
+            wall_hit_confidence = detect_wall_collision_physics(
+                [prev_pos, curr_pos, next_pos], threshold
+            )
+            
+            if wall_hit_confidence > 0.6:
+                # Determine wall type
+                wall_type = 'unknown'
+                if near_front:
+                    wall_type = 'front'
+                    front_wall_hits += 1
+                elif near_left:
+                    wall_type = 'side_left'
+                    side_wall_hits += 1
+                elif near_right:
+                    wall_type = 'side_right'
+                    side_wall_hits += 1
+                elif near_back:
+                    wall_type = 'back'
+                    side_wall_hits += 1
+                
+                wall_events.append({
+                    'frame': curr_pos[2] if len(curr_pos) > 2 else i,
+                    'position': (x, y),
+                    'wall_type': wall_type,
+                    'confidence': wall_hit_confidence
+                })
+    
+    return {
+        'total_hits': len(wall_events),
+        'front_wall_hits': front_wall_hits,
+        'side_wall_hits': side_wall_hits,
+        'wall_events': wall_events
+    }
+
+def detect_wall_collision_physics(positions, threshold=15):
+    """
+    Detect wall collision using physics-based analysis
+    Returns confidence score (0-1) for wall collision
+    """
+    if len(positions) < 3:
+        return 0.0
+    
+    prev_pos, curr_pos, next_pos = positions
+    
+    # Calculate velocity before and after potential collision
+    vel_before = [curr_pos[0] - prev_pos[0], curr_pos[1] - prev_pos[1]]
+    vel_after = [next_pos[0] - curr_pos[0], next_pos[1] - curr_pos[1]]
+    
+    # Calculate speeds
+    speed_before = math.sqrt(vel_before[0]**2 + vel_before[1]**2)
+    speed_after = math.sqrt(vel_after[0]**2 + vel_after[1]**2)
+    
+    confidence = 0.0
+    
+    # Check for direction reversal (strong indicator of wall hit)
+    if speed_before > threshold and speed_after > threshold:
+        # Normalize velocity vectors
+        norm_vel_before = [vel_before[0]/speed_before, vel_before[1]/speed_before]
+        norm_vel_after = [vel_after[0]/speed_after, vel_after[1]/speed_after]
+        
+        # Calculate dot product (1 = same direction, -1 = opposite direction)
+        dot_product = (norm_vel_before[0] * norm_vel_after[0] + 
+                      norm_vel_before[1] * norm_vel_after[1])
+        
+        # Lower dot product indicates more direction change
+        direction_change = 1 - (dot_product + 1) / 2
+        
+        if direction_change > 0.7:  # Significant direction change
+            confidence += 0.6
+        elif direction_change > 0.4:  # Moderate direction change
+            confidence += 0.3
+    
+    # Check for speed reduction (energy loss in collision)
+    if speed_before > 0:
+        speed_ratio = speed_after / speed_before
+        if 0.5 <= speed_ratio <= 0.9:  # Realistic energy loss
+            confidence += 0.3
+        elif speed_ratio < 0.5:  # High energy loss
+            confidence += 0.4
+    
+    # Check for sharp angle change
+    angle_change = calculate_vector_angle(vel_before, vel_after)
+    if angle_change > 45:  # Sharp angle change
+        confidence += 0.2
+    
+    return min(1.0, confidence)
+
 def detect_bounces_by_angle_analysis(trajectory, angle_threshold=45):
     """Detect bounces by analyzing trajectory angle changes"""
     bounces = []
@@ -3082,6 +3456,442 @@ def calculate_shot_confidence(trajectory_metrics, previous_shot):
             confidence += 0.1
     
     return min(1.0, max(0.1, confidence))
+
+def detect_shot_boundaries(past_ball_pos, players_data=None, court_width=640, court_height=360):
+    """
+    Enhanced shot boundary detection to clearly identify:
+    1. Shot start (ball hit by racket)
+    2. Shot middle events (wall hits) 
+    3. Shot end (ground bounce or opponent hit)
+    """
+    shot_events = {
+        'shot_start': None,
+        'wall_hits': [],
+        'shot_end': None,
+        'new_shot_start': None,
+        'confidence': 0.0
+    }
+    
+    if len(past_ball_pos) < 5:
+        return shot_events
+    
+    # Analyze trajectory for different event types
+    trajectory_analysis = analyze_trajectory_events(past_ball_pos, court_width, court_height)
+    
+    # Detect racket hits (shot starts/opponent hits)
+    racket_hits = detect_racket_hits_in_trajectory(past_ball_pos, players_data)
+    
+    # Detect wall hits with classification
+    wall_analysis = count_wall_hits_enhanced(past_ball_pos, court_width=court_width, court_height=court_height)
+    
+    # Detect ground bounces (potential shot ends)
+    ground_bounces = detect_ground_bounces_in_trajectory(past_ball_pos, court_height)
+    
+    # Determine shot boundaries based on event sequence
+    shot_events = classify_shot_sequence(racket_hits, wall_analysis, ground_bounces, past_ball_pos)
+    
+    return shot_events
+
+def analyze_trajectory_events(trajectory, court_width=640, court_height=360):
+    """Analyze trajectory for different types of events"""
+    events = []
+    
+    if len(trajectory) < 3:
+        return events
+    
+    for i in range(1, len(trajectory) - 1):
+        prev_pos = trajectory[i-1]
+        curr_pos = trajectory[i]
+        next_pos = trajectory[i+1]
+        
+        # Use enhanced event classification
+        event_result = classify_ball_event([prev_pos, curr_pos, next_pos], court_width, court_height)
+        
+        if event_result['confidence'] > 0.5:
+            events.append({
+                'frame': curr_pos[2] if len(curr_pos) > 2 else i,
+                'position': (curr_pos[0], curr_pos[1]),
+                'event_type': event_result['event_type'],
+                'confidence': event_result['confidence'],
+                'details': event_result
+            })
+    
+    return events
+
+def detect_racket_hits_in_trajectory(trajectory, players_data=None):
+    """Detect potential racket hits in trajectory"""
+    racket_hits = []
+    
+    if len(trajectory) < 4:
+        return racket_hits
+    
+    for i in range(2, len(trajectory) - 1):
+        # Get position window for analysis
+        position_window = trajectory[i-2:i+2]
+        
+        # Check for racket hit signature
+        hit_signature = detect_racket_hit_signature(position_window)
+        
+        if hit_signature['confidence'] > 0.6:
+            # Try to identify which player hit the ball
+            player_id = identify_hitting_player(trajectory[i], players_data) if players_data else 0
+            
+            racket_hits.append({
+                'frame': trajectory[i][2] if len(trajectory[i]) > 2 else i,
+                'position': (trajectory[i][0], trajectory[i][1]),
+                'player_id': player_id,
+                'confidence': hit_signature['confidence'],
+                'hit_characteristics': hit_signature
+            })
+    
+    return racket_hits
+
+def detect_ground_bounces_in_trajectory(trajectory, court_height=360):
+    """Detect ground bounces in trajectory"""
+    ground_bounces = []
+    
+    if len(trajectory) < 4:
+        return ground_bounces
+    
+    # Ground zone is bottom 15% of court
+    ground_zone = court_height * 0.85
+    
+    for i in range(2, len(trajectory) - 1):
+        curr_pos = trajectory[i]
+        
+        if curr_pos[1] > ground_zone:  # Ball in ground zone
+            # Check for bounce pattern
+            position_window = trajectory[i-2:i+2]
+            bounce_result = detect_ground_bounce(position_window, court_height)
+            
+            if bounce_result['confidence'] > 0.6:
+                ground_bounces.append({
+                    'frame': curr_pos[2] if len(curr_pos) > 2 else i,
+                    'position': (curr_pos[0], curr_pos[1]),
+                    'confidence': bounce_result['confidence'],
+                    'bounce_pattern': bounce_result.get('bounce_pattern', False)
+                })
+    
+    return ground_bounces
+
+def classify_shot_sequence(racket_hits, wall_analysis, ground_bounces, trajectory):
+    """Classify the sequence of events to determine shot boundaries"""
+    shot_events = {
+        'shot_start': None,
+        'wall_hits': wall_analysis.get('wall_events', []),
+        'shot_end': None,
+        'new_shot_start': None,
+        'confidence': 0.0
+    }
+    
+    # Sort events by frame/time
+    all_events = []
+    
+    # Add racket hits
+    for hit in racket_hits:
+        all_events.append(('racket_hit', hit['frame'], hit))
+    
+    # Add wall hits  
+    for wall_hit in wall_analysis.get('wall_events', []):
+        all_events.append(('wall_hit', wall_hit['frame'], wall_hit))
+    
+    # Add ground bounces
+    for bounce in ground_bounces:
+        all_events.append(('ground_bounce', bounce['frame'], bounce))
+    
+    # Sort by frame
+    all_events.sort(key=lambda x: x[1])
+    
+    # Analyze event sequence to determine shot boundaries
+    if all_events:
+        first_event = all_events[0]
+        last_event = all_events[-1]
+        
+        # First racket hit is likely shot start
+        first_racket_hit = next((e for e in all_events if e[0] == 'racket_hit'), None)
+        if first_racket_hit:
+            shot_events['shot_start'] = first_racket_hit[2]
+        
+        # Last ground bounce or new racket hit is likely shot end
+        last_ground_bounce = next((e for e in reversed(all_events) if e[0] == 'ground_bounce'), None)
+        if last_ground_bounce:
+            shot_events['shot_end'] = last_ground_bounce[2]
+        
+        # Multiple racket hits indicate opponent hit (new shot start)
+        racket_hit_events = [e for e in all_events if e[0] == 'racket_hit']
+        if len(racket_hit_events) > 1:
+            shot_events['new_shot_start'] = racket_hit_events[-1][2]
+        
+        # Calculate overall confidence
+        total_confidence = sum(e[2].get('confidence', 0) for e in all_events)
+        shot_events['confidence'] = min(1.0, total_confidence / len(all_events))
+    
+    return shot_events
+
+def identify_hitting_player(ball_position, players_data):
+    """Identify which player is closest to ball when hit occurs"""
+    if not players_data:
+        return 0
+    
+    ball_x, ball_y = ball_position[0], ball_position[1]
+    min_distance = float('inf')
+    closest_player = 0
+    
+    for player_id, player_info in players_data.items():
+        if player_info and hasattr(player_info, 'get_latest_pose'):
+            pose = player_info.get_latest_pose()
+            if pose:
+                # Get player position (simplified - use center of bounding box)
+                try:
+                    if hasattr(pose, 'boxes') and len(pose.boxes) > 0:
+                        box = pose.boxes[0]
+                        if hasattr(box, 'xyxy'):
+                            coords = box.xyxy[0] if len(box.xyxy) == 1 else box.xyxy
+                            player_x = (coords[0] + coords[2]) / 2
+                            player_y = (coords[1] + coords[3]) / 2
+                            
+                            distance = math.sqrt((ball_x - player_x)**2 + (ball_y - player_y)**2)
+                            if distance < min_distance:
+                                min_distance = distance
+                                closest_player = player_id
+                except Exception:
+                    continue
+    
+    # Only return player ID if they're reasonably close (within 100 pixels)
+    return closest_player if min_distance < 100 else 0
+
+def enhanced_shot_detection_pipeline(past_ball_pos, players_data, frame_count, court_width=640, court_height=360):
+    """
+    Main enhanced shot detection pipeline that integrates all improvements
+    
+    Returns comprehensive shot analysis with clear event identification:
+    1. Ball hit from racket (shot start)
+    2. Ball hitting front wall vs side walls
+    3. Ball hit by opponent's racket (new shot start)
+    4. Ball bouncing to ground (shot end)
+    """
+    
+    enhanced_results = {
+        'shot_events': {},
+        'wall_analysis': {},
+        'hit_detection': {},
+        'autonomous_classification': {
+            'racket_hits': [],
+            'front_wall_hits': [],
+            'side_wall_hits': [],
+            'ground_bounces': [],
+            'opponent_hits': []
+        },
+        'shot_boundaries': {
+            'current_shot_active': False,
+            'shot_start_frame': None,
+            'last_wall_hit_frame': None,
+            'shot_end_frame': None
+        },
+        'confidence_scores': {
+            'overall': 0.0,
+            'event_detection': 0.0,
+            'player_assignment': 0.0
+        }
+    }
+    
+    if len(past_ball_pos) < 5:
+        return enhanced_results
+    
+    try:
+        # 1. Enhanced ball hit detection with event classification
+        hit_detection = detect_ball_hit_advanced(
+            past_ball_pos, 
+            ballthreshold=8,
+            angle_thresh=35,
+            velocity_thresh=2.5,
+            advanced_analysis=True
+        )
+        enhanced_results['hit_detection'] = hit_detection
+        
+        # 2. Enhanced wall hit analysis with type classification
+        wall_analysis = count_wall_hits_enhanced(
+            past_ball_pos, 
+            threshold=12, 
+            court_width=court_width, 
+            court_height=court_height
+        )
+        enhanced_results['wall_analysis'] = wall_analysis
+        
+        # 3. Shot boundary detection
+        shot_boundaries = detect_shot_boundaries(
+            past_ball_pos, 
+            players_data, 
+            court_width=court_width, 
+            court_height=court_height
+        )
+        enhanced_results['shot_events'] = shot_boundaries
+        
+        # 4. Autonomous event classification
+        autonomous_classification = classify_autonomous_events(
+            past_ball_pos, 
+            hit_detection, 
+            wall_analysis, 
+            shot_boundaries,
+            players_data,
+            frame_count
+        )
+        enhanced_results['autonomous_classification'] = autonomous_classification
+        
+        # 5. Update shot boundary tracking
+        boundary_tracking = update_shot_boundary_tracking(
+            shot_boundaries, 
+            autonomous_classification, 
+            frame_count
+        )
+        enhanced_results['shot_boundaries'] = boundary_tracking
+        
+        # 6. Calculate confidence scores
+        confidence_scores = calculate_enhanced_confidence_scores(
+            hit_detection, 
+            wall_analysis, 
+            shot_boundaries, 
+            autonomous_classification
+        )
+        enhanced_results['confidence_scores'] = confidence_scores
+        
+        return enhanced_results
+        
+    except Exception as e:
+        print(f"Error in enhanced shot detection pipeline: {e}")
+        return enhanced_results
+
+def classify_autonomous_events(past_ball_pos, hit_detection, wall_analysis, shot_boundaries, players_data, frame_count):
+    """Autonomously classify events into clear categories"""
+    
+    classification = {
+        'racket_hits': [],
+        'front_wall_hits': [],
+        'side_wall_hits': [],
+        'ground_bounces': [],
+        'opponent_hits': []
+    }
+    
+    # Classify wall hits by type
+    for wall_event in wall_analysis.get('wall_events', []):
+        if wall_event['wall_type'] == 'front':
+            classification['front_wall_hits'].append({
+                'frame': wall_event['frame'],
+                'position': wall_event['position'],
+                'confidence': wall_event['confidence'],
+                'description': f"Ball hit front wall at frame {wall_event['frame']}"
+            })
+        else:
+            classification['side_wall_hits'].append({
+                'frame': wall_event['frame'],
+                'position': wall_event['position'],
+                'wall_type': wall_event['wall_type'],
+                'confidence': wall_event['confidence'],
+                'description': f"Ball hit {wall_event['wall_type']} wall at frame {wall_event['frame']}"
+            })
+    
+    # Classify racket hits
+    if shot_boundaries.get('shot_start'):
+        classification['racket_hits'].append({
+            'frame': shot_boundaries['shot_start']['frame'],
+            'position': shot_boundaries['shot_start']['position'],
+            'player_id': shot_boundaries['shot_start'].get('player_id', 0),
+            'confidence': shot_boundaries['shot_start']['confidence'],
+            'description': f"Ball hit by player {shot_boundaries['shot_start'].get('player_id', 'unknown')} at frame {shot_boundaries['shot_start']['frame']}"
+        })
+    
+    # Classify opponent hits (new shot starts)
+    if shot_boundaries.get('new_shot_start'):
+        classification['opponent_hits'].append({
+            'frame': shot_boundaries['new_shot_start']['frame'],
+            'position': shot_boundaries['new_shot_start']['position'],
+            'player_id': shot_boundaries['new_shot_start'].get('player_id', 0),
+            'confidence': shot_boundaries['new_shot_start']['confidence'],
+            'description': f"Ball hit by opponent (player {shot_boundaries['new_shot_start'].get('player_id', 'unknown')}) - new shot started at frame {shot_boundaries['new_shot_start']['frame']}"
+        })
+    
+    # Classify ground bounces
+    if shot_boundaries.get('shot_end') and shot_boundaries['shot_end'].get('bounce_pattern'):
+        classification['ground_bounces'].append({
+            'frame': shot_boundaries['shot_end']['frame'],
+            'position': shot_boundaries['shot_end']['position'],
+            'confidence': shot_boundaries['shot_end']['confidence'],
+            'description': f"Ball bounced on ground at frame {shot_boundaries['shot_end']['frame']} - shot/rally ended"
+        })
+    
+    return classification
+
+def update_shot_boundary_tracking(shot_boundaries, autonomous_classification, frame_count):
+    """Update shot boundary tracking state"""
+    
+    boundary_state = {
+        'current_shot_active': False,
+        'shot_start_frame': None,
+        'last_wall_hit_frame': None,
+        'shot_end_frame': None,
+        'current_player': 0
+    }
+    
+    # Check if shot is currently active
+    if shot_boundaries.get('shot_start') and not shot_boundaries.get('shot_end'):
+        boundary_state['current_shot_active'] = True
+        boundary_state['shot_start_frame'] = shot_boundaries['shot_start']['frame']
+        boundary_state['current_player'] = shot_boundaries['shot_start'].get('player_id', 0)
+    
+    # Track last wall hit
+    front_wall_hits = autonomous_classification.get('front_wall_hits', [])
+    side_wall_hits = autonomous_classification.get('side_wall_hits', [])
+    all_wall_hits = front_wall_hits + side_wall_hits
+    
+    if all_wall_hits:
+        latest_wall_hit = max(all_wall_hits, key=lambda x: x['frame'])
+        boundary_state['last_wall_hit_frame'] = latest_wall_hit['frame']
+    
+    # Track shot end
+    if shot_boundaries.get('shot_end'):
+        boundary_state['shot_end_frame'] = shot_boundaries['shot_end']['frame']
+        boundary_state['current_shot_active'] = False
+    
+    return boundary_state
+
+def calculate_enhanced_confidence_scores(hit_detection, wall_analysis, shot_boundaries, autonomous_classification):
+    """Calculate comprehensive confidence scores"""
+    
+    scores = {
+        'overall': 0.0,
+        'event_detection': 0.0,
+        'player_assignment': 0.0,
+        'wall_classification': 0.0,
+        'shot_segmentation': 0.0
+    }
+    
+    # Event detection confidence
+    hit_conf = hit_detection.get('confidence', 0.0)
+    wall_conf = wall_analysis.get('wall_events', [])
+    wall_avg_conf = sum(w.get('confidence', 0) for w in wall_conf) / max(len(wall_conf), 1)
+    
+    scores['event_detection'] = (hit_conf + wall_avg_conf) / 2
+    
+    # Player assignment confidence
+    shot_start = shot_boundaries.get('shot_start', {})
+    player_conf = shot_start.get('confidence', 0.0) if shot_start.get('player_id', 0) > 0 else 0.0
+    scores['player_assignment'] = player_conf
+    
+    # Wall classification confidence
+    scores['wall_classification'] = wall_avg_conf
+    
+    # Shot segmentation confidence
+    scores['shot_segmentation'] = shot_boundaries.get('confidence', 0.0)
+    
+    # Overall confidence
+    scores['overall'] = (
+        scores['event_detection'] * 0.3 +
+        scores['player_assignment'] * 0.2 +
+        scores['wall_classification'] * 0.3 +
+        scores['shot_segmentation'] * 0.2
+    )
+    
+    return scores
 
 def is_ball_false_pos(past_ball_pos, speed_threshold=50, angle_threshold=45, min_size=5, max_size=50):
     """
