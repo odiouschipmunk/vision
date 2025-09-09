@@ -3,15 +3,15 @@ ENHANCED BALL PHYSICS SHOT DETECTION REPORT
 ==============================================
 
 SYSTEM PERFORMANCE:
-- Total frames processed: 7703
-- Enhanced detections success: 7703
+- Total frames processed: 258
+- Enhanced detections success: 258
 - Legacy fallbacks used: 0
 - Detection success rate: 100.00%
-- Average processing rate: 7703.0 fps
+- Average processing rate: 258.0 fps
 
 SHOT ANALYSIS:
 - Total shots detected: 0
-- Total events detected: 23974
+- Total events detected: 403
 - Average events per shot: 0.0
 
 SHOT TYPE DISTRIBUTION:

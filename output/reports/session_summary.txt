@@ -1,19 +1,19 @@
 
 SQUASH COACHING SESSION REPORT
-Generated: 2025-08-29 17:04:35
+Generated: 2025-09-09 19:57:03
 Video: self2.mp4
 
 SESSION OVERVIEW:
-- Total frames processed: 7,500
+- Total frames processed: 259
 - Total shots detected: 0
 - Active shots: 0
-- Ball positions recorded: 100
+- Ball positions recorded: 82
 - Players detected: 2
 
 SHOT ANALYSIS:
 
 PERFORMANCE METRICS:
-- Processing rate: 5.7 fps
+- Processing rate: 6.7 fps
 - GPU acceleration: Yes
 - Enhanced detection: Active
 

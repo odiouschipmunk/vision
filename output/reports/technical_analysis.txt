@@ -1,12 +1,12 @@
 
 TECHNICAL ANALYSIS REPORT
-Frame: 7500
+Frame: 259
 
 BALL TRACKING:
-- Current ball position: [517, 194, 7500]
-- Trajectory length: 100
+- Current ball position: [332, 86, 253]
+- Trajectory length: 82
 - Recent movement: Active
 
 PLAYER ANALYSIS:
-- Player 1: Position (327.8, 196.8)
-- Player 2: Position (301.9, 201.9)
+- Player 1: Position (445.4, 225.3)
+- Player 2: Position (316.7, 219.8)
