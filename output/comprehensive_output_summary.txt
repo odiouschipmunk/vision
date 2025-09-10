@@ -1,53 +1,54 @@
 
 COMPREHENSIVE SQUASH COACHING OUTPUT SUMMARY
-Generated: 2025-08-29 15:06:21
+Generated: 2025-09-09 19:57:06
 Video: self2.mp4
-Total Frames Processed: 50
+Total Frames Processed: 259
 
 OUTPUT CATEGORIES AND FILES:
 
 Graphics & Visualizations (1 files):
-   enhanced_court_analysis.png (312,394 bytes)
+   enhanced_court_analysis.png (335,255 bytes)
 
-Heatmaps (5 files):
-   player_1_movement.png (16,442 bytes)
-   player_2_movement.png (20,026 bytes)
-   players_combined.png (16,350 bytes)
-   ball_trajectory_enhanced.png (11,395 bytes)
-   error_fallback.png (4,347 bytes)
+Heatmaps (6 files):
+   player_1_movement.png (16,517 bytes)
+   player_2_movement.png (20,126 bytes)
+   players_combined.png (16,068 bytes)
+   ball_trajectory_enhanced.png (26,674 bytes)
+   ball_speed_heatmap.png (18,790 bytes)
+   court_zones.png (9,705 bytes)
 
 Clips & Highlights (1 files):
-   rally_statistics.json (103 bytes)
+   rally_statistics.json (104 bytes)
 
 Patterns (1 files):
-   player_patterns.json (345 bytes)
+   player_patterns.json (346 bytes)
 
 Raw Data (2 files):
-   frame_data.json (1,084 bytes)
-   ball_trajectory.json (858 bytes)
+   frame_data.json (1,304 bytes)
+   ball_trajectory.json (2,575 bytes)
 
 Statistics (2 files):
-   overall_statistics.json (163 bytes)
-   performance_metrics.json (119 bytes)
+   overall_statistics.json (164 bytes)
+   performance_metrics.json (118 bytes)
 
 Reports (2 files):
-   session_summary.txt (491 bytes)
-   technical_analysis.txt (243 bytes)
+   session_summary.txt (492 bytes)
+   technical_analysis.txt (246 bytes)
 
 Trajectories (2 files):
-   ball_trajectory_analysis.json (1,020 bytes)
+   ball_trajectory_analysis.json (1,237 bytes)
    shot_trajectories.json (2 bytes)
 
 Enhanced Visualizations (3 files):
-   performance_dashboard.png (259,117 bytes)
-   3d_court_visualization.png (430,278 bytes)
-   performance_dashboard.png (259,117 bytes)
+   performance_dashboard.png (280,711 bytes)
+   3d_court_visualization.png (429,878 bytes)
+   performance_dashboard.png (280,711 bytes)
 
 
 SESSION STATISTICS:
-Total outputs generated: 19
-Processing completed: 2025-08-29 15:06:21
-Video duration: 1.7 seconds (assuming 30fps)
+Total outputs generated: 20
+Processing completed: 2025-09-09 19:57:06
+Video duration: 8.6 seconds (assuming 30fps)
 Output categories: 9
 
 WHAT YOU GET:

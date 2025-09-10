@@ -14,7 +14,14 @@ def ensure_directories():
     """Create output and cache directories if they don't exist"""
     for directory in [OUTPUT_DIR, CACHE_DIR]:
         if not os.path.exists(directory):
-            os.makedirs(directory)
+            os.makedirs(directory, exist_ok=True)
+    
+    # Also ensure heatmap subdirectories
+    heatmap_dirs = ["heatmaps", "analysis", "visualizations"]
+    for subdir in heatmap_dirs:
+        full_path = os.path.join(OUTPUT_DIR, subdir)
+        if not os.path.exists(full_path):
+            os.makedirs(full_path, exist_ok=True)
 
 
 @lru_cache(maxsize=1)
@@ -25,12 +32,6 @@ def load_match_data(csv_path):
 
 def plot_3d_court():
     """Create a 3D squash court visualization"""
-    cache_path = os.path.join(CACHE_DIR, "court_3d.png")
-
-    # If cached visualization exists, return early
-    if os.path.exists(cache_path):
-        return
-
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111, projection="3d")
 
@@ -50,98 +51,109 @@ def plot_3d_court():
         "k-",
     )
     # Side walls
-    ax.plot([0, 0], [0, length], [0, 0], "k-")
-    ax.plot([0, 0], [length, length], [0, height], "k-")
-    ax.plot([width, width], [0, length], [0, 0], "k-")
-    ax.plot([width, width], [length, length], [0, height], "k-")
+    ax.plot([0, 0, 0, 0], [0, length, length, 0], [0, 0, height, height], "k-")
+    ax.plot([width, width, width, width], [0, length, length, 0], [0, 0, height, height], "k-")
 
-    # Service line and tin
-    ax.plot(
-        [0, width], [length - 4.26, length - 4.26], [0, 0], "k--", alpha=0.5
-    )  # Service line
-    ax.plot([0, width], [length, length], [0.48, 0.48], "r-", linewidth=2)  # Tin line
-
-    # Set labels and title
     ax.set_xlabel("Width (m)")
     ax.set_ylabel("Length (m)")
     ax.set_zlabel("Height (m)")
-
-    # Save to cache
-    plt.savefig(cache_path)
-    plt.close()
+    ax.set_title("3D Squash Court")
 
     return ax
 
 
 def visualize_3d_positions(df):
     """Create 3D visualization of player positions and ball trajectory"""
-    cache_path = os.path.join(CACHE_DIR, "../static/3d_match_visualization.png")
+    ensure_directories()  # Make sure directories exist
+    
+    cache_path = os.path.join(OUTPUT_DIR, "visualizations", "3d_match_visualization.png")
 
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
         return
 
-    ax = plot_3d_court()
+    try:
+        ax = plot_3d_court()
 
-    # Plot player positions
-    for player_num in [1, 2]:
-        positions = []
+        # Plot player positions
+        for player_num in [1, 2]:
+            positions = []
+            for row in df.iterrows():
+                try:
+                    pos = ast.literal_eval(row[1][f"Player {player_num} RL World Position"])
+                    if pos and not all(v == 0 for v in pos):
+                        positions.append(pos)
+                except:
+                    continue
+
+            if positions:
+                positions = np.array(positions)
+                color = "blue" if player_num == 1 else "red"
+                ax.scatter(
+                    positions[:, 0],
+                    positions[:, 1],
+                    positions[:, 2],
+                    c=color,
+                    alpha=0.3,
+                    label=f"Player {player_num}",
+                )
+
+        # Plot ball trajectory
+        ball_positions = []
         for row in df.iterrows():
             try:
-                pos = ast.literal_eval(row[1][f"Player {player_num} RL World Position"])
+                pos = ast.literal_eval(row[1]["Ball RL World Position"])
                 if pos and not all(v == 0 for v in pos):
-                    positions.append(pos)
+                    ball_positions.append(pos)
             except:
                 continue
 
-        if positions:
-            positions = np.array(positions)
-            color = "blue" if player_num == 1 else "red"
+        if ball_positions:
+            ball_positions = np.array(ball_positions)
             ax.scatter(
-                positions[:, 0],
-                positions[:, 1],
-                positions[:, 2],
-                c=color,
-                alpha=0.3,
-                label=f"Player {player_num}",
+                ball_positions[:, 0],
+                ball_positions[:, 1],
+                ball_positions[:, 2],
+                c="green",
+                alpha=0.5,
+                s=20,
+                label="Ball",
             )
 
-    # Plot ball trajectory
-    ball_positions = []
-    for row in df.iterrows():
-        try:
-            pos = ast.literal_eval(row[1]["Ball RL World Position"])
-            if pos and not all(v == 0 for v in pos):
-                ball_positions.append(pos)
-        except:
-            continue
+            # Draw lines connecting consecutive ball positions
+            for i in range(len(ball_positions) - 1):
+                ax.plot(
+                    [ball_positions[i, 0], ball_positions[i + 1, 0]],
+                    [ball_positions[i, 1], ball_positions[i + 1, 1]],
+                    [ball_positions[i, 2], ball_positions[i + 1, 2]],
+                    "g-",
+                    alpha=0.2,
+                )
 
-    if ball_positions:
-        ball_positions = np.array(ball_positions)
-        ax.scatter(
-            ball_positions[:, 0],
-            ball_positions[:, 1],
-            ball_positions[:, 2],
-            c="green",
-            alpha=0.5,
-            s=20,
-            label="Ball",
-        )
-
-        # Draw lines connecting consecutive ball positions
-        for i in range(len(ball_positions) - 1):
-            ax.plot(
-                [ball_positions[i, 0], ball_positions[i + 1, 0]],
-                [ball_positions[i, 1], ball_positions[i + 1, 1]],
-                [ball_positions[i, 2], ball_positions[i + 1, 2]],
-                "g-",
-                alpha=0.2,
-            )
-
-    ax.legend()
-    plt.title("3D Match Visualization")
-    plt.savefig(cache_path)
-    plt.close()
+        # Only add legend if there are labels
+        if ax.get_legend_handles_labels()[0]:  # Check if there are legend handles
+            ax.legend()
+            
+        plt.title("3D Match Visualization")
+        
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        plt.savefig(cache_path, dpi=150, bbox_inches='tight')
+        plt.close()
+        
+    except Exception as e:
+        print(f"Warning: Could not create 3D visualization: {e}")
+        # Create a simple fallback plot
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.text(0.5, 0.5, f"3D Visualization Error\n{str(e)[:100]}...", 
+                ha='center', va='center', transform=ax.transAxes,
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="lightcoral"))
+        ax.set_title("3D Visualization - Error Fallback")
+        ax.axis('off')
+        
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        plt.savefig(cache_path, dpi=150, bbox_inches='tight')
+        plt.close()
 
 
 def visualize_shot_trajectories(df):
@@ -258,40 +270,94 @@ def analyze_shot_distribution(df):
 
 def create_court_heatmap(df, player_column, title):
     """Create 2D heatmap of player positions on court"""
+    ensure_directories()  # Make sure directories exist
+    
     cache_path = os.path.join(
-        CACHE_DIR, f'{title.lower().replace(" ", "_")}_heatmap.png'
+        OUTPUT_DIR, "heatmaps", f'{title.lower().replace(" ", "_")}_heatmap.png'
     )
 
     # If cached visualization exists, return early
     if os.path.exists(cache_path):
-        return
+        return cache_path
 
-    positions = []
-    for pos in df[player_column]:
-        try:
-            keypoints = ast.literal_eval(pos)
-            ankles = np.array([keypoints[15], keypoints[16]])
-            valid_ankles = ankles[~np.all(ankles == [0, 0], axis=1)]
-            if len(valid_ankles) > 0:
-                avg_pos = np.mean(valid_ankles, axis=0)
-                positions.append(avg_pos)
-        except:
-            continue
+    try:
+        positions = []
+        for pos in df[player_column]:
+            try:
+                keypoints = ast.literal_eval(pos)
+                if keypoints and len(keypoints) >= 17:
+                    ankles = np.array([keypoints[15], keypoints[16]])
+                    valid_ankles = ankles[~np.all(ankles == [0, 0], axis=1)]
+                    if len(valid_ankles) > 0:
+                        avg_pos = np.mean(valid_ankles, axis=0)
+                        if avg_pos[0] > 0 and avg_pos[1] > 0:  # Valid position
+                            positions.append(avg_pos)
+            except:
+                continue
 
-    if positions:
-        positions = np.array(positions)
+        if positions:
+            positions = np.array(positions)
 
+            plt.figure(figsize=(12, 8))
+            heatmap, xedges, yedges = np.histogram2d(
+                positions[:, 0], positions[:, 1], bins=25, range=[[0, 1], [0, 1]]
+            )
+            
+            # Create enhanced heatmap
+            im = plt.imshow(heatmap.T, origin="lower", cmap="hot", aspect="auto", 
+                           extent=[0, 1, 0, 1], alpha=0.8)
+            plt.colorbar(im, label="Frequency")
+            plt.title(f"{title} Court Position Heatmap", fontsize=14, fontweight='bold')
+            plt.xlabel("Court Width (normalized)", fontsize=12)
+            plt.ylabel("Court Length (normalized)", fontsize=12)
+            
+            # Add court boundaries and markers
+            plt.axhline(y=0.3, color='white', linestyle='--', alpha=0.7, linewidth=1)
+            plt.axvline(x=0.5, color='white', linestyle='--', alpha=0.7, linewidth=1)
+            plt.plot(0.5, 0.47, 'wo', markersize=8, label='T-Position')
+            plt.legend()
+            
+            # Add statistics
+            stats_text = f"Total positions: {len(positions)}\nCoverage: {np.ptp(positions[:, 0]):.2f} × {np.ptp(positions[:, 1]):.2f}"
+            plt.text(0.02, 0.98, stats_text, transform=plt.gca().transAxes, 
+                    verticalalignment='top', bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.8))
+            
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            plt.savefig(cache_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+        else:
+            # Create fallback visualization
+            plt.figure(figsize=(10, 6))
+            plt.text(0.5, 0.5, f"No valid position data\nfor {title}", 
+                    ha='center', va='center', transform=plt.gca().transAxes,
+                    bbox=dict(boxstyle="round,pad=0.5", facecolor="lightcoral", alpha=0.8))
+            plt.title(f"{title} Court Position Heatmap - No Data", fontsize=14)
+            plt.xlabel("Court Width")
+            plt.ylabel("Court Length")
+            
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            plt.savefig(cache_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+        return cache_path
+        
+    except Exception as e:
+        print(f"Error creating court heatmap for {title}: {e}")
+        # Create error fallback
         plt.figure(figsize=(10, 6))
-        heatmap, xedges, yedges = np.histogram2d(
-            positions[:, 0], positions[:, 1], bins=20, range=[[0, 1], [0, 1]]
-        )
-        plt.imshow(heatmap.T, origin="lower", cmap="hot", aspect="auto")
-        plt.colorbar(label="Frequency")
-        plt.title(f"{title} Court Position Heatmap")
-        plt.xlabel("Court Width")
-        plt.ylabel("Court Length")
-        plt.savefig(cache_path)
+        plt.text(0.5, 0.5, f"Heatmap Generation Failed\n{title}\nError: {str(e)[:50]}...", 
+                ha='center', va='center', transform=plt.gca().transAxes,
+                bbox=dict(boxstyle="round,pad=0.5", facecolor="lightcoral", alpha=0.8))
+        plt.title(f"{title} Court Position Heatmap - Error", fontsize=14)
+        plt.axis('off')
+        
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+        plt.savefig(cache_path, dpi=300, bbox_inches='tight')
         plt.close()
+        
+        return cache_path
 
 
 def analyze_t_position_distance(df):
