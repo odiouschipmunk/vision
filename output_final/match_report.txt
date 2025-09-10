@@ -1,0 +1,28 @@
+Match Analysis Report
+===================
+
+1. Shot Distribution
+-------------------
+straight_drive: 53 shots (20.5%)
+crosscourt: 7 shots (2.7%)
+boast: 198 shots (76.7%)
+
+2. Shot Success Rates
+-------------------
+straight_drive: 77.4%
+crosscourt: 100.0%
+boast: 100.0%
+
+3. Average Distance from T Position
+--------------------------------
+Player 1: nan meters
+Player 2: nan meters
+
+4. Visualization Files Generated
+-----------------------------
+- 3D match visualization (3d_match_visualization.png)
+- Shot trajectories by type (3d_trajectory_*.png)
+- Player position heatmaps (3d_heatmap_*.png)
+- Shot distribution pie chart (shot_distribution.png)
+- T position distance graph (t_position_distance.png)
+- Shot success rate bar chart (shot_success_rate.png)
